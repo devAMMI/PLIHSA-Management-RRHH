@@ -1,0 +1,63 @@
+export type UserRole = 'superadmin' | 'admin' | 'rrhh' | 'manager' | 'employee' | 'viewer';
+
+export type Permission =
+  | 'users.create'
+  | 'users.read'
+  | 'users.update'
+  | 'users.delete'
+  | 'users.change_role'
+  | 'users.reset_password'
+  | 'employees.create'
+  | 'employees.read'
+  | 'employees.update'
+  | 'employees.delete'
+  | 'companies.create'
+  | 'companies.read'
+  | 'companies.update'
+  | 'companies.delete'
+  | 'departments.manage'
+  | 'departments.read'
+  | 'system.configure';
+
+export interface RolePermissions {
+  role: UserRole;
+  permissions: Permission[];
+}
+
+export interface SystemUser {
+  id: string;
+  user_id: string;
+  employee_id?: string;
+  company_id: string;
+  role: UserRole;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  email?: string;
+  employee?: {
+    first_name: string;
+    last_name: string;
+    photo_url?: string;
+  };
+  company?: {
+    name: string;
+  };
+}
+
+export const ROLE_LABELS: Record<UserRole, string> = {
+  superadmin: 'Super Administrador',
+  admin: 'Administrador',
+  rrhh: 'Recursos Humanos',
+  manager: 'Gerente',
+  employee: 'Empleado',
+  viewer: 'Visitante'
+};
+
+export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
+  superadmin: 'Acceso total al sistema. Puede gestionar todo incluyendo usuarios y configuraciones.',
+  admin: 'Administrador de empresa. Acceso completo a su empresa.',
+  rrhh: 'Recursos Humanos. Gestión completa de empleados.',
+  manager: 'Gerente. Acceso de lectura y escritura limitado.',
+  employee: 'Empleado. Acceso de solo lectura.',
+  viewer: 'Visitante. Acceso muy limitado.'
+};
