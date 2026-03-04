@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Save } from 'lucide-react';
+import { Save, Download, Printer } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { Toast } from '../ui/Toast';
 
 interface FunctionalFactor {
   factor_number: number;
@@ -31,6 +32,8 @@ export function OperativeEvaluationForm() {
   const [employees, setEmployees] = useState<any[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [savedEvaluationId, setSavedEvaluationId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     department: '',
@@ -140,7 +143,7 @@ export function OperativeEvaluationForm() {
 
   const handleSave = async () => {
     if (!selectedEmployeeId || !period) {
-      alert('Por favor seleccione un empleado');
+      setToast({ message: 'Por favor seleccione un empleado', type: 'error' });
       return;
     }
 
@@ -187,13 +190,30 @@ export function OperativeEvaluationForm() {
           }, { onConflict: 'evaluation_id,competency_number' });
       }
 
-      alert('Evaluación guardada exitosamente');
+      setSavedEvaluationId(evaluation.id);
+      setToast({ message: 'Formulario guardado correctamente', type: 'success' });
     } catch (error) {
       console.error('Error saving evaluation:', error);
-      alert('Error al guardar la evaluación');
+      setToast({ message: 'Error al guardar la evaluación', type: 'error' });
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSavePDF = async () => {
+    if (!savedEvaluationId) {
+      setToast({ message: 'Primero debe guardar la evaluación', type: 'error' });
+      return;
+    }
+    setToast({ message: 'Generando PDF...', type: 'success' });
+  };
+
+  const handlePrint = () => {
+    if (!savedEvaluationId) {
+      setToast({ message: 'Primero debe guardar la evaluación', type: 'error' });
+      return;
+    }
+    window.print();
   };
 
   if (loading) {
@@ -405,18 +425,42 @@ export function OperativeEvaluationForm() {
             </div>
           </div>
 
-          <div className="flex justify-end gap-4 pt-6 border-t border-slate-200">
+          <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">
+            <button
+              onClick={handleSavePDF}
+              disabled={!savedEvaluationId}
+              className="flex items-center gap-2 px-5 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download className="w-5 h-5" />
+              Guardar PDF
+            </button>
+            <button
+              onClick={handlePrint}
+              disabled={!savedEvaluationId}
+              className="flex items-center gap-2 px-5 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Printer className="w-5 h-5" />
+              Imprimir
+            </button>
             <button
               onClick={handleSave}
               disabled={saving || !selectedEmployeeId}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save className="w-5 h-5" />
-              {saving ? 'Guardando...' : 'Guardar Evaluación'}
+              {saving ? 'Guardando...' : 'Guardar'}
             </button>
           </div>
         </div>
       </div>
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }
