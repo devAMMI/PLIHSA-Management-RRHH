@@ -38,9 +38,9 @@ function AppContent() {
       case 'employees':
         return 'Gestión de Empleados';
       case 'evaluation-admin-enero':
-        return 'Evaluación Administrativo - Enero 2025';
+        return 'Evaluación Administrativo - Marzo 2026';
       case 'evaluation-operative-enero':
-        return 'Evaluación Operativo - Enero 2025';
+        return 'Evaluación Operativo - Marzo 2026';
       case 'system-users':
         return 'Usuarios del Sistema';
       case 'companies':

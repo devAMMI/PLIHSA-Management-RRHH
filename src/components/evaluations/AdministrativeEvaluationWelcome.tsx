@@ -15,7 +15,7 @@ export function AdministrativeEvaluationWelcome({ onStartEvaluation }: Administr
             </div>
             <div className="text-white">
               <h1 className="text-3xl font-bold mb-2">Evaluación de Desempeño Administrativo</h1>
-              <p className="text-blue-100">Definición de Factores y Revisión del Desempeño - Enero 2025</p>
+              <p className="text-blue-100">Definición de Metas Individuales y Competencias - Marzo 2026</p>
             </div>
           </div>
         </div>
