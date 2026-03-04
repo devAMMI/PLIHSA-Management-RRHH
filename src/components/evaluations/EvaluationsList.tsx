@@ -62,7 +62,10 @@ export function EvaluationsList({ evaluationType, onBack, onNewEvaluation }: Eva
   };
 
   const loadEvaluations = async () => {
+    console.log('=== Starting loadEvaluations ===');
     try {
+      console.log('Fetching admin and operative evaluations...');
+
       const [adminResult, operativeResult] = await Promise.all([
         supabase
           .from('administrative_evaluations')
@@ -73,7 +76,7 @@ export function EvaluationsList({ evaluationType, onBack, onNewEvaluation }: Eva
             department,
             employee_id,
             evaluation_period_id,
-            employees!inner (
+            employees (
               id,
               first_name,
               last_name,
@@ -94,7 +97,7 @@ export function EvaluationsList({ evaluationType, onBack, onNewEvaluation }: Eva
             department,
             employee_id,
             evaluation_period_id,
-            employees!inner (
+            employees (
               id,
               first_name,
               last_name,
@@ -109,14 +112,18 @@ export function EvaluationsList({ evaluationType, onBack, onNewEvaluation }: Eva
       ]);
 
       console.log('Admin evaluations result:', adminResult);
+      console.log('Admin data count:', adminResult.data?.length);
       console.log('Operative evaluations result:', operativeResult);
+      console.log('Operative data count:', operativeResult.data?.length);
 
       if (adminResult.error) {
-        console.error('Error loading administrative evaluations:', adminResult.error);
+        console.error('ERROR loading administrative evaluations:', adminResult.error);
+        console.error('Error details:', JSON.stringify(adminResult.error, null, 2));
       }
 
       if (operativeResult.error) {
-        console.error('Error loading operative evaluations:', operativeResult.error);
+        console.error('ERROR loading operative evaluations:', operativeResult.error);
+        console.error('Error details:', JSON.stringify(operativeResult.error, null, 2));
       }
 
       const [companiesResult, departmentsResult, plantsResult, periodsResult] = await Promise.all([
@@ -135,45 +142,55 @@ export function EvaluationsList({ evaluationType, onBack, onNewEvaluation }: Eva
       const plantsMap = new Map((plantsResult.data || []).map(p => [p.id, p.name]));
       const periodsMap = new Map((periodsResult.data || []).map(p => [p.id, p.name]));
 
-      const adminEvals = (adminResult.data || []).map(item => ({
-        id: item.id,
-        status: item.status,
-        created_at: item.created_at,
-        employee_id: item.employees?.id || '',
-        employee_name: `${item.employees?.first_name || ''} ${item.employees?.last_name || ''}`.trim(),
-        position: item.employees?.position || '',
-        employee_type: item.employees?.employee_type || 'administrativo',
-        period_name: periodsMap.get(item.evaluation_period_id) || '',
-        department: departmentsMap.get(item.employees?.department_id) || item.department || 'Sin departamento',
-        company_name: companiesMap.get(item.employees?.company_id) || '',
-        company_id: item.employees?.company_id || '',
-        plant_name: plantsMap.get(item.employees?.plant_id) || ''
-      }));
+      console.log('Processing admin evaluations...');
+      const adminEvals = (adminResult.data || []).map(item => {
+        console.log('Processing admin item:', item);
+        return {
+          id: item.id,
+          status: item.status,
+          created_at: item.created_at,
+          employee_id: item.employees?.id || item.employee_id || '',
+          employee_name: item.employees ? `${item.employees.first_name || ''} ${item.employees.last_name || ''}`.trim() : 'Sin nombre',
+          position: item.employees?.position || '',
+          employee_type: item.employees?.employee_type || 'administrativo',
+          period_name: periodsMap.get(item.evaluation_period_id) || 'Sin período',
+          department: departmentsMap.get(item.employees?.department_id) || item.department || 'Sin departamento',
+          company_name: companiesMap.get(item.employees?.company_id) || '',
+          company_id: item.employees?.company_id || '',
+          plant_name: plantsMap.get(item.employees?.plant_id) || ''
+        };
+      });
 
-      const operativeEvals = (operativeResult.data || []).map(item => ({
-        id: item.id,
-        status: item.status,
-        created_at: item.created_at,
-        employee_id: item.employees?.id || '',
-        employee_name: `${item.employees?.first_name || ''} ${item.employees?.last_name || ''}`.trim(),
-        position: item.employees?.position || '',
-        employee_type: item.employees?.employee_type || 'operativo',
-        period_name: periodsMap.get(item.evaluation_period_id) || '',
-        department: departmentsMap.get(item.employees?.department_id) || item.department || 'Sin departamento',
-        company_name: companiesMap.get(item.employees?.company_id) || '',
-        company_id: item.employees?.company_id || '',
-        plant_name: plantsMap.get(item.employees?.plant_id) || ''
-      }));
+      console.log('Processing operative evaluations...');
+      const operativeEvals = (operativeResult.data || []).map(item => {
+        console.log('Processing operative item:', item);
+        return {
+          id: item.id,
+          status: item.status,
+          created_at: item.created_at,
+          employee_id: item.employees?.id || item.employee_id || '',
+          employee_name: item.employees ? `${item.employees.first_name || ''} ${item.employees.last_name || ''}`.trim() : 'Sin nombre',
+          position: item.employees?.position || '',
+          employee_type: item.employees?.employee_type || 'operativo',
+          period_name: periodsMap.get(item.evaluation_period_id) || 'Sin período',
+          department: departmentsMap.get(item.employees?.department_id) || item.department || 'Sin departamento',
+          company_name: companiesMap.get(item.employees?.company_id) || '',
+          company_id: item.employees?.company_id || '',
+          plant_name: plantsMap.get(item.employees?.plant_id) || ''
+        };
+      });
 
       const allEvaluations = [...adminEvals, ...operativeEvals].sort((a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
-      console.log('Admin evals processed:', adminEvals);
-      console.log('Operative evals processed:', operativeEvals);
-      console.log('All evaluations:', allEvaluations);
+      console.log('Admin evals processed:', adminEvals.length, 'items');
+      console.log('Operative evals processed:', operativeEvals.length, 'items');
+      console.log('All evaluations TOTAL:', allEvaluations.length);
+      console.log('All evaluations data:', allEvaluations);
 
       setEvaluations(allEvaluations);
+      console.log('=== Evaluations set in state ===');
     } catch (error) {
       console.error('Error loading evaluations:', error);
     } finally {
