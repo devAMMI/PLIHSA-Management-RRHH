@@ -29,27 +29,46 @@ export function Dashboard() {
         .select('*', { count: 'exact', head: true })
         .eq('status', 'active');
 
-      const { count: evaluationCount } = await supabase
-        .from('evaluations')
-        .select('*', { count: 'exact', head: true })
-        .in('status', ['pending_employee', 'pending_manager', 'pending_hr']);
+      const [adminEvalResult, operativeEvalResult] = await Promise.all([
+        supabase
+          .from('administrative_evaluations')
+          .select('*', { count: 'exact', head: true })
+          .in('status', ['in_progress', 'pending_review']),
+        supabase
+          .from('operative_evaluations')
+          .select('*', { count: 'exact', head: true })
+          .in('status', ['in_progress', 'pending_review'])
+      ]);
 
-      const { count: completedCount } = await supabase
-        .from('evaluations')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'completed')
-        .eq('year', new Date().getFullYear());
+      const [adminCompletedResult, operativeCompletedResult] = await Promise.all([
+        supabase
+          .from('administrative_evaluations')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'completed'),
+        supabase
+          .from('operative_evaluations')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'completed')
+      ]);
 
-      const { count: totalEvals } = await supabase
-        .from('evaluations')
-        .select('*', { count: 'exact', head: true })
-        .eq('year', new Date().getFullYear());
+      const [adminTotalResult, operativeTotalResult] = await Promise.all([
+        supabase
+          .from('administrative_evaluations')
+          .select('*', { count: 'exact', head: true }),
+        supabase
+          .from('operative_evaluations')
+          .select('*', { count: 'exact', head: true })
+      ]);
+
+      const activeEvaluations = (adminEvalResult.count || 0) + (operativeEvalResult.count || 0);
+      const completedCount = (adminCompletedResult.count || 0) + (operativeCompletedResult.count || 0);
+      const totalEvals = (adminTotalResult.count || 0) + (operativeTotalResult.count || 0);
 
       setStats({
         totalEmployees: employeeCount || 0,
-        activeEvaluations: evaluationCount || 0,
+        activeEvaluations: activeEvaluations,
         companies: 4,
-        completionRate: totalEvals ? Math.round(((completedCount || 0) / totalEvals) * 100) : 0,
+        completionRate: totalEvals ? Math.round((completedCount / totalEvals) * 100) : 0,
       });
     } catch (error) {
       console.error('Error loading stats:', error);

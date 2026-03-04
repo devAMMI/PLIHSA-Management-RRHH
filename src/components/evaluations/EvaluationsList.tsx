@@ -108,6 +108,9 @@ export function EvaluationsList({ evaluationType, onBack, onNewEvaluation }: Eva
           .order('created_at', { ascending: false })
       ]);
 
+      console.log('Admin evaluations result:', adminResult);
+      console.log('Operative evaluations result:', operativeResult);
+
       if (adminResult.error) {
         console.error('Error loading administrative evaluations:', adminResult.error);
       }
@@ -122,6 +125,10 @@ export function EvaluationsList({ evaluationType, onBack, onNewEvaluation }: Eva
         supabase.from('plants').select('id, name'),
         supabase.from('evaluation_periods').select('id, name')
       ]);
+
+      console.log('Companies:', companiesResult.data);
+      console.log('Departments:', departmentsResult.data);
+      console.log('Periods:', periodsResult.data);
 
       const companiesMap = new Map((companiesResult.data || []).map(c => [c.id, c.name]));
       const departmentsMap = new Map((departmentsResult.data || []).map(d => [d.id, d.name]));
@@ -158,9 +165,15 @@ export function EvaluationsList({ evaluationType, onBack, onNewEvaluation }: Eva
         plant_name: plantsMap.get(item.employees?.plant_id) || ''
       }));
 
-      setEvaluations([...adminEvals, ...operativeEvals].sort((a, b) =>
+      const allEvaluations = [...adminEvals, ...operativeEvals].sort((a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      ));
+      );
+
+      console.log('Admin evals processed:', adminEvals);
+      console.log('Operative evals processed:', operativeEvals);
+      console.log('All evaluations:', allEvaluations);
+
+      setEvaluations(allEvaluations);
     } catch (error) {
       console.error('Error loading evaluations:', error);
     } finally {
