@@ -13,6 +13,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'employees', label: 'Empleados', icon: Users },
     { id: 'evaluation-admin-enero', label: 'Evaluación Administrativo - Enero', icon: ClipboardCheck },
+    { id: 'evaluation-operative-enero', label: 'Evaluación Operativo - Enero', icon: ClipboardCheck },
     { id: 'system-users', label: 'Usuarios', icon: Shield, requiredRoles: ['superadmin', 'admin'] },
     { id: 'companies', label: 'Empresas', icon: Building2, requiredRoles: ['superadmin'] },
     { id: 'settings', label: 'Configuración', icon: Settings, requiredRoles: ['superadmin'] },

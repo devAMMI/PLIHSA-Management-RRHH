@@ -9,6 +9,7 @@ import { EmployeeList } from './components/employees/EmployeeList';
 import { UserProfile } from './components/profile/UserProfile';
 import { UserList } from './components/users/UserList';
 import { AdministrativeEvaluationForm } from './components/evaluations/AdministrativeEvaluationForm';
+import { OperativeEvaluationForm } from './components/evaluations/OperativeEvaluationForm';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -38,6 +39,8 @@ function AppContent() {
         return 'Gestión de Empleados';
       case 'evaluation-admin-enero':
         return 'Evaluación Administrativo - Enero 2025';
+      case 'evaluation-operative-enero':
+        return 'Evaluación Operativo - Enero 2025';
       case 'system-users':
         return 'Usuarios del Sistema';
       case 'companies':
@@ -59,6 +62,8 @@ function AppContent() {
         return <EmployeeList />;
       case 'evaluation-admin-enero':
         return <AdministrativeEvaluationForm />;
+      case 'evaluation-operative-enero':
+        return <OperativeEvaluationForm />;
       case 'system-users':
         return <UserList />;
       case 'profile':
