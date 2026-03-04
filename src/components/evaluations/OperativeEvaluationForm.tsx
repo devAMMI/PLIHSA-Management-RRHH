@@ -218,6 +218,10 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: Opera
 
     setSaving(true);
     try {
+      const evaluationCode = !savedEvaluationId ?
+        `OPE-${selectedEmployee?.employee_code?.replace(/-/g, '') || 'XXX'}-${new Date().toISOString().split('T')[0].replace(/-/g, '')}`
+        : undefined;
+
       const evaluationData = {
         evaluation_period_id: period.id,
         employee_id: selectedEmployeeId,
@@ -229,7 +233,8 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: Opera
         definition_date: formData.definition_date || null,
         manager_comments: formData.manager_comments,
         employee_comments: formData.employee_comments,
-        status: 'draft'
+        status: 'draft',
+        ...(evaluationCode && { evaluation_code: evaluationCode })
       };
 
       let evaluation;
