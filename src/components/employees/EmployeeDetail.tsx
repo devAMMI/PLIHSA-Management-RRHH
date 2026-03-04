@@ -1,4 +1,4 @@
-import { X, User, Briefcase, Mail, Phone, MapPin, GraduationCap, Calendar, Edit2, Trash2, Users } from 'lucide-react';
+import { X, User, Briefcase, Mail, Phone, MapPin, GraduationCap, Calendar, CreditCard as Edit2, Trash2, Users } from 'lucide-react';
 
 interface EmployeeDetailProps {
   employee: any;
@@ -153,6 +153,18 @@ export function EmployeeDetail({ employee, onClose, onEdit, onDelete }: Employee
                 <div>
                   <p className="text-sm text-slate-500">Planta</p>
                   <p className="text-slate-800 font-medium">{employee.plant.name}</p>
+                </div>
+              )}
+              {employee.work_location && (
+                <div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <MapPin className="w-4 h-4 text-blue-600" />
+                    <p className="text-sm text-slate-500 font-medium">Ubicación Física</p>
+                  </div>
+                  <p className="text-slate-800 font-semibold">{employee.work_location.name}</p>
+                  {employee.work_location.city && (
+                    <p className="text-sm text-slate-600">{employee.work_location.city}</p>
+                  )}
                 </div>
               )}
               <div>

@@ -18,6 +18,12 @@ interface Employee {
   photo_url: string | null;
   position: string;
   email: string | null;
+  work_location?: {
+    id: string;
+    name: string;
+    city: string;
+    code: string;
+  } | null;
 }
 
 interface AuthContextType {
@@ -58,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (systemUserData?.employee_id) {
             const { data: employeeData } = await supabase
               .from('employees')
-              .select('id, first_name, last_name, photo_url, position, email')
+              .select('id, first_name, last_name, photo_url, position, email, work_location:work_locations(id, name, city, code)')
               .eq('id', systemUserData.employee_id)
               .maybeSingle();
 
@@ -89,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (systemUserData?.employee_id) {
             const { data: employeeData } = await supabase
               .from('employees')
-              .select('id, first_name, last_name, photo_url, position, email')
+              .select('id, first_name, last_name, photo_url, position, email, work_location:work_locations(id, name, city, code)')
               .eq('id', systemUserData.employee_id)
               .maybeSingle();
 

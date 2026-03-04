@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Lock, Mail, Camera, Save, X } from 'lucide-react';
+import { User, Lock, Mail, Camera, Save, X, MapPin } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 
@@ -310,6 +310,23 @@ export function UserProfile() {
                     {formData.position || 'Sin cargo asignado'}
                   </div>
                 </div>
+
+                {employee?.work_location && (
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-slate-500 mb-1">
+                      Ubicación Física
+                    </label>
+                    <div className="flex items-start gap-2 text-slate-800 bg-blue-50 border border-blue-100 rounded-lg p-3">
+                      <MapPin className="w-5 h-5 text-blue-600 mt-0.5" />
+                      <div>
+                        <p className="font-semibold">{employee.work_location.name}</p>
+                        {employee.work_location.city && (
+                          <p className="text-sm text-slate-600">{employee.work_location.city}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="pt-6 border-t border-slate-200">

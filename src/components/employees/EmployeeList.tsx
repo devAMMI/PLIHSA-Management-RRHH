@@ -64,6 +64,7 @@ export function EmployeeList() {
           company:companies(id, name, logo_url),
           department:departments(name),
           plant:plants(name),
+          work_location:work_locations(id, name, city, code),
           manager:manager_id(id, first_name, last_name, position)
         `)
         .eq('status', 'active')

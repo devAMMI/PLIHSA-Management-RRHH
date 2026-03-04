@@ -22,6 +22,13 @@ interface Plant {
   name: string;
 }
 
+interface WorkLocation {
+  id: string;
+  name: string;
+  code: string;
+  city: string;
+}
+
 interface Manager {
   id: string;
   first_name: string;
@@ -33,6 +40,7 @@ export function EmployeeModal({ employee, onClose }: EmployeeModalProps) {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [plants, setPlants] = useState<Plant[]>([]);
+  const [workLocations, setWorkLocations] = useState<WorkLocation[]>([]);
   const [managers, setManagers] = useState<Manager[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -49,6 +57,7 @@ export function EmployeeModal({ employee, onClose }: EmployeeModalProps) {
     company_id: employee?.company_id || '',
     department_id: employee?.department_id || '',
     plant_id: employee?.plant_id || '',
+    work_location_id: employee?.work_location_id || '',
     manager_id: employee?.manager_id || '',
     email: employee?.email || '',
     phone: employee?.phone || '',
@@ -95,6 +104,7 @@ export function EmployeeModal({ employee, onClose }: EmployeeModalProps) {
 
     if (formData.company_id) {
       loadDepartmentsAndPlants(formData.company_id);
+      loadWorkLocations(formData.company_id);
       loadManagers(formData.company_id);
     }
   };
@@ -116,6 +126,17 @@ export function EmployeeModal({ employee, onClose }: EmployeeModalProps) {
     setPlants(plantData || []);
   };
 
+  const loadWorkLocations = async (companyId: string) => {
+    const { data: workLocationData } = await supabase
+      .from('work_locations')
+      .select('id, name, code, city')
+      .eq('company_id', companyId)
+      .eq('is_active', true)
+      .order('name');
+
+    setWorkLocations(workLocationData || []);
+  };
+
   const loadManagers = async (companyId: string) => {
     const { data: managersData } = await supabase
       .from('employees')
@@ -128,8 +149,9 @@ export function EmployeeModal({ employee, onClose }: EmployeeModalProps) {
   };
 
   const handleCompanyChange = (companyId: string) => {
-    setFormData({ ...formData, company_id: companyId, department_id: '', plant_id: '', manager_id: '' });
+    setFormData({ ...formData, company_id: companyId, department_id: '', plant_id: '', work_location_id: '', manager_id: '' });
     loadDepartmentsAndPlants(companyId);
+    loadWorkLocations(companyId);
     loadManagers(companyId);
   };
 
@@ -203,6 +225,7 @@ export function EmployeeModal({ employee, onClose }: EmployeeModalProps) {
         company_id: formData.company_id,
         department_id: formData.department_id || null,
         plant_id: formData.plant_id || null,
+        work_location_id: formData.work_location_id || null,
         manager_id: formData.manager_id || null,
         first_name: formData.first_name,
         last_name: formData.last_name,
@@ -518,6 +541,28 @@ export function EmployeeModal({ employee, onClose }: EmployeeModalProps) {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Ubicación Física *
+                </label>
+                <select
+                  value={formData.work_location_id}
+                  onChange={(e) => setFormData({ ...formData, work_location_id: e.target.value })}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  disabled={!formData.company_id}
+                  required
+                >
+                  <option value="">Seleccionar...</option>
+                  {workLocations.map((location) => (
+                    <option key={location.id} value={location.id}>
+                      {location.name} - {location.city}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-slate-500 mt-1">
+                  Edificio o planta donde trabaja físicamente
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
