@@ -456,18 +456,28 @@ export default function NuevaEvaluacionAdministrativa() {
     try {
       const { data: employeesData, error: empError } = await supabase
         .from('employees')
-        .select('id, employee_code, first_name, last_name, position, department, hire_date')
+        .select(`
+          id,
+          employee_code,
+          first_name,
+          last_name,
+          position,
+          hire_date,
+          departments:department_id(name),
+          sub_departments:sub_department_id(name)
+        `)
+        .eq('status', 'active')
         .order('first_name');
 
       if (empError) throw empError;
 
-      const mappedEmployees: Employee[] = (employeesData || []).map(e => ({
+      const mappedEmployees: Employee[] = (employeesData || []).map((e: any) => ({
         id: e.id,
         code: e.employee_code || '',
         name: `${e.first_name} ${e.last_name}`,
         position: e.position || '',
-        department: e.department || '',
-        sub_department: '',
+        department: e.departments?.name || '',
+        sub_department: e.sub_departments?.name || '',
         hire_date: e.hire_date || '',
       }));
 
@@ -475,15 +485,25 @@ export default function NuevaEvaluacionAdministrativa() {
 
       const { data: systemUsers, error: usersError } = await supabase
         .from('system_users')
-        .select('id, first_name, last_name, role')
-        .in('role', ['admin', 'superadmin', 'manager']);
+        .select(`
+          id,
+          first_name,
+          last_name,
+          role,
+          employees:employee_id(position)
+        `)
+        .in('role', ['admin', 'superadmin', 'manager', 'rrhh'])
+        .order('first_name');
 
       if (usersError) throw usersError;
 
-      const mappedManagers: Manager[] = (systemUsers || []).map(u => ({
+      const mappedManagers: Manager[] = (systemUsers || []).map((u: any) => ({
         id: u.id,
         name: `${u.first_name} ${u.last_name}`,
-        position: u.role === 'superadmin' ? 'Super Administrador' : u.role === 'admin' ? 'Administrador' : 'Gerente',
+        position: u.employees?.position ||
+          (u.role === 'superadmin' ? 'Super Administrador' :
+           u.role === 'admin' ? 'Administrador' :
+           u.role === 'rrhh' ? 'Recursos Humanos' : 'Gerente'),
       }));
 
       setManagers(mappedManagers);
@@ -678,14 +698,29 @@ export default function NuevaEvaluacionAdministrativa() {
               </div>
 
               <div style={cardStyle}>
-                <SectionHeader>Datos del Colaborador</SectionHeader>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <SectionHeader>Datos del Colaborador</SectionHeader>
+                  {employees.length > 0 && (
+                    <div style={{ fontSize: 11, color: "#757575", fontWeight: 600 }}>
+                      {employees.length} empleado{employees.length !== 1 ? 's' : ''} disponible{employees.length !== 1 ? 's' : ''}
+                    </div>
+                  )}
+                </div>
                 <div style={{ marginTop: 14 }}>
                   <div style={rowStyle}>
                     <div style={colStyle}>
                       <Label required>Nombre del Colaborador</Label>
                       <Select value={form.employee_id} onChange={set("employee_id")}
                         placeholder="Seleccione un colaborador"
-                        options={employees.map(e => ({ value: e.id, label: `${e.name} — ${e.position}` }))} />
+                        options={employees.map(e => ({
+                          value: e.id,
+                          label: `${e.code} — ${e.name} — ${e.department || 'Sin departamento'}`
+                        }))} />
+                      {employees.length === 0 && (
+                        <div style={{ fontSize: 10, color: "#f57c00", marginTop: 4 }}>
+                          No hay empleados activos disponibles
+                        </div>
+                      )}
                     </div>
                     <div style={colStyle}>
                       <Label>Posición del Colaborador</Label>
