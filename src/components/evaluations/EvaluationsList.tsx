@@ -73,26 +73,15 @@ export function EvaluationsList({ evaluationType, onBack, onNewEvaluation }: Eva
             department,
             employee_id,
             evaluation_period_id,
-            employees (
+            employees!inner (
               id,
               first_name,
               last_name,
               position,
               employee_type,
               company_id,
-              companies (
-                id,
-                name
-              ),
-              departments (
-                name
-              ),
-              plants (
-                name
-              )
-            ),
-            evaluation_periods (
-              name
+              department_id,
+              plant_id
             )
           `)
           .order('created_at', { ascending: false }),
@@ -105,44 +94,53 @@ export function EvaluationsList({ evaluationType, onBack, onNewEvaluation }: Eva
             department,
             employee_id,
             evaluation_period_id,
-            employees (
+            employees!inner (
               id,
               first_name,
               last_name,
               position,
               employee_type,
               company_id,
-              companies (
-                id,
-                name
-              ),
-              departments (
-                name
-              ),
-              plants (
-                name
-              )
-            ),
-            evaluation_periods (
-              name
+              department_id,
+              plant_id
             )
           `)
           .order('created_at', { ascending: false })
       ]);
+
+      if (adminResult.error) {
+        console.error('Error loading administrative evaluations:', adminResult.error);
+      }
+
+      if (operativeResult.error) {
+        console.error('Error loading operative evaluations:', operativeResult.error);
+      }
+
+      const [companiesResult, departmentsResult, plantsResult, periodsResult] = await Promise.all([
+        supabase.from('companies').select('id, name'),
+        supabase.from('departments').select('id, name'),
+        supabase.from('plants').select('id, name'),
+        supabase.from('evaluation_periods').select('id, name')
+      ]);
+
+      const companiesMap = new Map((companiesResult.data || []).map(c => [c.id, c.name]));
+      const departmentsMap = new Map((departmentsResult.data || []).map(d => [d.id, d.name]));
+      const plantsMap = new Map((plantsResult.data || []).map(p => [p.id, p.name]));
+      const periodsMap = new Map((periodsResult.data || []).map(p => [p.id, p.name]));
 
       const adminEvals = (adminResult.data || []).map(item => ({
         id: item.id,
         status: item.status,
         created_at: item.created_at,
         employee_id: item.employees?.id || '',
-        employee_name: `${item.employees?.first_name} ${item.employees?.last_name}`,
+        employee_name: `${item.employees?.first_name || ''} ${item.employees?.last_name || ''}`.trim(),
         position: item.employees?.position || '',
         employee_type: item.employees?.employee_type || 'administrativo',
-        period_name: item.evaluation_periods?.name || '',
-        department: item.employees?.departments?.name || item.department || 'Sin departamento',
-        company_name: item.employees?.companies?.name || '',
+        period_name: periodsMap.get(item.evaluation_period_id) || '',
+        department: departmentsMap.get(item.employees?.department_id) || item.department || 'Sin departamento',
+        company_name: companiesMap.get(item.employees?.company_id) || '',
         company_id: item.employees?.company_id || '',
-        plant_name: item.employees?.plants?.name || ''
+        plant_name: plantsMap.get(item.employees?.plant_id) || ''
       }));
 
       const operativeEvals = (operativeResult.data || []).map(item => ({
@@ -150,14 +148,14 @@ export function EvaluationsList({ evaluationType, onBack, onNewEvaluation }: Eva
         status: item.status,
         created_at: item.created_at,
         employee_id: item.employees?.id || '',
-        employee_name: `${item.employees?.first_name} ${item.employees?.last_name}`,
+        employee_name: `${item.employees?.first_name || ''} ${item.employees?.last_name || ''}`.trim(),
         position: item.employees?.position || '',
         employee_type: item.employees?.employee_type || 'operativo',
-        period_name: item.evaluation_periods?.name || '',
-        department: item.employees?.departments?.name || item.department || 'Sin departamento',
-        company_name: item.employees?.companies?.name || '',
+        period_name: periodsMap.get(item.evaluation_period_id) || '',
+        department: departmentsMap.get(item.employees?.department_id) || item.department || 'Sin departamento',
+        company_name: companiesMap.get(item.employees?.company_id) || '',
         company_id: item.employees?.company_id || '',
-        plant_name: item.employees?.plants?.name || ''
+        plant_name: plantsMap.get(item.employees?.plant_id) || ''
       }));
 
       setEvaluations([...adminEvals, ...operativeEvals].sort((a, b) =>
