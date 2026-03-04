@@ -237,7 +237,7 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
           </div>
 
           <p className="text-center text-slate-500 text-xs mt-6">
-            © 2025 AMMI Group. Todos los derechos reservados.
+            © 2026 AMMI Group. Todos los derechos reservados.
           </p>
         </div>
       </div>
