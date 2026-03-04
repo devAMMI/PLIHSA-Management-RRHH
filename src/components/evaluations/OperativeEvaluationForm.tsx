@@ -88,7 +88,7 @@ export function OperativeEvaluationForm() {
         setPeriod(periodData);
       }
 
-      const { data: employeesData } = await supabase
+      const { data: employeesData, error: empError } = await supabase
         .from('employees')
         .select(`
           id,
@@ -100,15 +100,18 @@ export function OperativeEvaluationForm() {
           employee_type,
           hire_date,
           department_id,
-          direct_manager_id,
+          manager_id,
           departments (
             name
           )
         `)
         .eq('employee_type', 'operativo')
-        .eq('company_id', (await supabase.from('companies').select('id').eq('name', 'PLIHSA').maybeSingle()).data?.id)
         .eq('status', 'active')
         .order('first_name');
+
+      if (empError) {
+        console.error('Error loading employees:', empError);
+      }
 
       const formattedEmployees = (employeesData || []).map(emp => ({
         ...emp,
@@ -152,7 +155,7 @@ export function OperativeEvaluationForm() {
           department: formData.department,
           sub_department: formData.sub_department,
           hire_date: selectedEmployee?.hire_date,
-          manager_id: selectedEmployee?.direct_manager_id,
+          manager_id: selectedEmployee?.manager_id,
           definition_date: formData.definition_date || null,
           manager_comments: formData.manager_comments,
           employee_comments: formData.employee_comments,
