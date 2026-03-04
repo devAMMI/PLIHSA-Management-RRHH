@@ -10,6 +10,7 @@ import { UserProfile } from './components/profile/UserProfile';
 import { UserList } from './components/users/UserList';
 import { AdministrativeEvaluationContainer } from './components/evaluations/AdministrativeEvaluationContainer';
 import { OperativeEvaluationContainer } from './components/evaluations/OperativeEvaluationContainer';
+import { EvaluationsList } from './components/evaluations/EvaluationsList';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -37,6 +38,8 @@ function AppContent() {
         return 'Dashboard';
       case 'employees':
         return 'Gestión de Empleados';
+      case 'evaluations-list':
+        return 'Evaluaciones Guardadas';
       case 'evaluation-admin-enero':
         return 'Evaluación Administrativo - Marzo 2026';
       case 'evaluation-operative-enero':
@@ -60,6 +63,8 @@ function AppContent() {
         return <Dashboard />;
       case 'employees':
         return <EmployeeList />;
+      case 'evaluations-list':
+        return <EvaluationsList />;
       case 'evaluation-admin-enero':
         return <AdministrativeEvaluationContainer />;
       case 'evaluation-operative-enero':
