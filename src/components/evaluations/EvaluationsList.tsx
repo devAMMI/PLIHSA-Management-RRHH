@@ -194,6 +194,14 @@ export function EvaluationsList({ evaluationType, onBack, onNewEvaluation, onEdi
       console.log('Operative evals processed:', operativeEvals.length, 'items');
       console.log('All evaluations TOTAL:', allEvaluations.length);
       console.log('All evaluations data:', allEvaluations);
+      console.log('Admin result error?:', adminResult.error);
+      console.log('Operative result error?:', operativeResult.error);
+
+      if (allEvaluations.length === 0) {
+        console.warn('⚠️ NO EVALUATIONS FOUND! Check RLS policies or data');
+        console.warn('Admin result:', adminResult);
+        console.warn('Operative result:', operativeResult);
+      }
 
       setEvaluations(allEvaluations);
       console.log('=== Evaluations set in state ===');
