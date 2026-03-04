@@ -8,8 +8,8 @@ import { Dashboard } from './components/dashboard/Dashboard';
 import { EmployeeList } from './components/employees/EmployeeList';
 import { UserProfile } from './components/profile/UserProfile';
 import { UserList } from './components/users/UserList';
-import { AdministrativeEvaluationForm } from './components/evaluations/AdministrativeEvaluationForm';
-import { OperativeEvaluationForm } from './components/evaluations/OperativeEvaluationForm';
+import { AdministrativeEvaluationContainer } from './components/evaluations/AdministrativeEvaluationContainer';
+import { OperativeEvaluationContainer } from './components/evaluations/OperativeEvaluationContainer';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -61,9 +61,9 @@ function AppContent() {
       case 'employees':
         return <EmployeeList />;
       case 'evaluation-admin-enero':
-        return <AdministrativeEvaluationForm />;
+        return <AdministrativeEvaluationContainer />;
       case 'evaluation-operative-enero':
-        return <OperativeEvaluationForm />;
+        return <OperativeEvaluationContainer />;
       case 'system-users':
         return <UserList />;
       case 'profile':
