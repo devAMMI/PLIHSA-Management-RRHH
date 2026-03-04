@@ -13,14 +13,15 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'employees', label: 'Empleados', icon: Users },
     { id: 'evaluations', label: 'Evaluaciones', icon: ClipboardCheck },
-    { id: 'system-users', label: 'Usuarios', icon: Shield, adminOnly: true },
-    { id: 'companies', label: 'Empresas', icon: Building2, adminOnly: true },
-    { id: 'settings', label: 'Configuración', icon: Settings },
+    { id: 'system-users', label: 'Usuarios', icon: Shield, requiredRoles: ['superadmin', 'admin'] },
+    { id: 'companies', label: 'Empresas', icon: Building2, requiredRoles: ['superadmin'] },
+    { id: 'settings', label: 'Configuración', icon: Settings, requiredRoles: ['superadmin'] },
   ];
 
-  const filteredItems = menuItems.filter(
-    item => !item.adminOnly || systemUser?.role === 'admin' || systemUser?.role === 'rrhh'
-  );
+  const filteredItems = menuItems.filter(item => {
+    if (!item.requiredRoles) return true;
+    return item.requiredRoles.includes(systemUser?.role || '');
+  });
 
   return (
     <div className="w-64 bg-white border-r border-slate-200 flex flex-col h-screen">
@@ -83,6 +84,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
             </div>
           </div>
           <div className="px-2 py-1 bg-blue-100 rounded text-xs font-medium text-blue-700 text-center">
+            {systemUser?.role === 'superadmin' && 'Superadministrador'}
             {systemUser?.role === 'admin' && 'Administrador'}
             {systemUser?.role === 'rrhh' && 'Recursos Humanos'}
             {systemUser?.role === 'manager' && 'Manager'}
