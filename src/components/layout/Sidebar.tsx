@@ -14,6 +14,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
     { id: 'employees', label: 'Empleados', icon: Users },
     { id: 'new-evaluations-plihsa', label: 'Evaluaciones PLIHSA', icon: BarChart3 },
     { id: 'evaluations-list', label: 'Ver Evaluaciones', icon: FileText },
+    { id: 'nueva-evaluacion-administrativa', label: 'Nueva Evaluación Completa', icon: ClipboardCheck },
     { id: 'evaluation-admin-enero', label: 'Nueva Evaluación Admin', icon: ClipboardCheck },
     { id: 'evaluation-operative-enero', label: 'Nueva Evaluación Operativa', icon: ClipboardCheck },
     { id: 'system-users', label: 'Usuarios', icon: Shield, requiredRoles: ['superadmin', 'admin'] },
