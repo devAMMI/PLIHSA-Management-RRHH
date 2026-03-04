@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Eye, Calendar, User, Briefcase, Filter, Download, CreditCard as Edit, Building2, X } from 'lucide-react';
+import { FileText, Eye, Calendar, User, Briefcase, Filter, Download, CreditCard as Edit, Building2, X, ArrowLeft, Plus } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { EvaluationDetailModal } from './EvaluationDetailModal';
 
@@ -23,11 +23,18 @@ interface Company {
   name: string;
 }
 
-export function EvaluationsList() {
+interface EvaluationsListProps {
+  evaluationType?: 'administrative' | 'operative';
+  onBack?: () => void;
+  onNewEvaluation?: () => void;
+}
+
+export function EvaluationsList({ evaluationType, onBack, onNewEvaluation }: EvaluationsListProps = {}) {
   const [loading, setLoading] = useState(true);
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [filter, setFilter] = useState<'all' | 'administrativo' | 'operativo'>('all');
+  const initialFilter = evaluationType === 'administrative' ? 'administrativo' : evaluationType === 'operative' ? 'operativo' : 'all';
+  const [filter, setFilter] = useState<'all' | 'administrativo' | 'operativo'>(initialFilter);
   const [companyFilter, setCompanyFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [startDate, setStartDate] = useState<string>('');
@@ -249,14 +256,46 @@ export function EvaluationsList() {
     return <div className="p-8">Cargando evaluaciones...</div>;
   }
 
+  const getTitle = () => {
+    if (evaluationType === 'administrative') return 'Evaluaciones de Empleados Administrativos';
+    if (evaluationType === 'operative') return 'Evaluaciones de Empleados Operativos';
+    return 'Evaluaciones Guardadas';
+  };
+
+  const getDescription = () => {
+    if (evaluationType === 'administrative') return 'Visualiza y gestiona las evaluaciones de empleados administrativos';
+    if (evaluationType === 'operative') return 'Visualiza y gestiona las evaluaciones de empleados operativos';
+    return 'Visualiza y gestiona todas las evaluaciones del sistema';
+  };
+
   return (
     <div className="p-8">
       <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 mb-2">Evaluaciones Guardadas</h1>
-          <p className="text-slate-600">Visualiza y gestiona todas las evaluaciones del sistema</p>
+        <div className="flex items-center gap-4">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="p-2 hover:bg-slate-100 rounded-lg transition"
+              title="Volver"
+            >
+              <ArrowLeft className="w-6 h-6 text-slate-600" />
+            </button>
+          )}
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800 mb-2">{getTitle()}</h1>
+            <p className="text-slate-600">{getDescription()}</p>
+          </div>
         </div>
         <div className="flex gap-2">
+          {onNewEvaluation && (
+            <button
+              onClick={onNewEvaluation}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            >
+              <Plus className="w-4 h-4" />
+              Nueva Evaluación
+            </button>
+          )}
           <button
             onClick={() => setShowFilters(!showFilters)}
             className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition"
@@ -354,38 +393,40 @@ export function EvaluationsList() {
         </div>
       )}
 
-      <div className="mb-6 flex gap-2">
-        <button
-          onClick={() => setFilter('all')}
-          className={`px-4 py-2 rounded-lg font-medium transition ${
-            filter === 'all'
-              ? 'bg-blue-600 text-white'
-              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-          }`}
-        >
-          Todas ({evaluations.length})
-        </button>
-        <button
-          onClick={() => setFilter('administrativo')}
-          className={`px-4 py-2 rounded-lg font-medium transition ${
-            filter === 'administrativo'
-              ? 'bg-blue-600 text-white'
-              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-          }`}
-        >
-          Administrativas ({evaluations.filter(e => e.employee_type === 'administrativo').length})
-        </button>
-        <button
-          onClick={() => setFilter('operativo')}
-          className={`px-4 py-2 rounded-lg font-medium transition ${
-            filter === 'operativo'
-              ? 'bg-blue-600 text-white'
-              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-          }`}
-        >
-          Operativas ({evaluations.filter(e => e.employee_type === 'operativo').length})
-        </button>
-      </div>
+      {!evaluationType && (
+        <div className="mb-6 flex gap-2">
+          <button
+            onClick={() => setFilter('all')}
+            className={`px-4 py-2 rounded-lg font-medium transition ${
+              filter === 'all'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            Todas ({evaluations.length})
+          </button>
+          <button
+            onClick={() => setFilter('administrativo')}
+            className={`px-4 py-2 rounded-lg font-medium transition ${
+              filter === 'administrativo'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            Administrativas ({evaluations.filter(e => e.employee_type === 'administrativo').length})
+          </button>
+          <button
+            onClick={() => setFilter('operativo')}
+            className={`px-4 py-2 rounded-lg font-medium transition ${
+              filter === 'operativo'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            Operativas ({evaluations.filter(e => e.employee_type === 'operativo').length})
+          </button>
+        </div>
+      )}
 
       {filteredEvaluations.length > 0 && (
         <div className="mb-4 text-sm text-slate-600">

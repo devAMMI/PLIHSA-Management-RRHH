@@ -1,13 +1,31 @@
 import { useState } from 'react';
 import { OperativeEvaluationWelcome } from './OperativeEvaluationWelcome';
 import { OperativeEvaluationForm } from './OperativeEvaluationForm';
+import { EvaluationsList } from './EvaluationsList';
+
+type ViewMode = 'welcome' | 'form' | 'list';
 
 export function OperativeEvaluationContainer() {
-  const [showForm, setShowForm] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('welcome');
 
-  if (!showForm) {
-    return <OperativeEvaluationWelcome onStartEvaluation={() => setShowForm(true)} />;
+  if (viewMode === 'list') {
+    return (
+      <EvaluationsList
+        evaluationType="operative"
+        onBack={() => setViewMode('welcome')}
+        onNewEvaluation={() => setViewMode('form')}
+      />
+    );
   }
 
-  return <OperativeEvaluationForm />;
+  if (viewMode === 'form') {
+    return <OperativeEvaluationForm />;
+  }
+
+  return (
+    <OperativeEvaluationWelcome
+      onStartEvaluation={() => setViewMode('form')}
+      onViewEvaluations={() => setViewMode('list')}
+    />
+  );
 }

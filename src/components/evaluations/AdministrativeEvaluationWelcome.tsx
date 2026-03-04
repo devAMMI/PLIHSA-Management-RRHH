@@ -1,10 +1,11 @@
-import { FileText, Target, UserCheck, CheckCircle } from 'lucide-react';
+import { FileText, Target, UserCheck, CheckCircle, List } from 'lucide-react';
 
 interface AdministrativeEvaluationWelcomeProps {
   onStartEvaluation: () => void;
+  onViewEvaluations: () => void;
 }
 
-export function AdministrativeEvaluationWelcome({ onStartEvaluation }: AdministrativeEvaluationWelcomeProps) {
+export function AdministrativeEvaluationWelcome({ onStartEvaluation, onViewEvaluations }: AdministrativeEvaluationWelcomeProps) {
   return (
     <div className="p-8 max-w-5xl mx-auto">
       <div className="bg-white rounded-lg shadow-sm border border-slate-200">
@@ -121,7 +122,14 @@ export function AdministrativeEvaluationWelcome({ onStartEvaluation }: Administr
             </ol>
           </div>
 
-          <div className="flex justify-center pt-6 border-t border-slate-200">
+          <div className="flex justify-center gap-4 pt-6 border-t border-slate-200">
+            <button
+              onClick={onViewEvaluations}
+              className="px-8 py-4 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition text-lg font-semibold shadow-lg hover:shadow-xl flex items-center gap-3"
+            >
+              <List className="w-6 h-6" />
+              Ver Evaluaciones Empleados Administrativos
+            </button>
             <button
               onClick={onStartEvaluation}
               className="px-8 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-lg font-semibold shadow-lg hover:shadow-xl flex items-center gap-3"

@@ -1,13 +1,31 @@
 import { useState } from 'react';
 import { AdministrativeEvaluationWelcome } from './AdministrativeEvaluationWelcome';
 import { AdministrativeEvaluationForm } from './AdministrativeEvaluationForm';
+import { EvaluationsList } from './EvaluationsList';
+
+type ViewMode = 'welcome' | 'form' | 'list';
 
 export function AdministrativeEvaluationContainer() {
-  const [showForm, setShowForm] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('welcome');
 
-  if (!showForm) {
-    return <AdministrativeEvaluationWelcome onStartEvaluation={() => setShowForm(true)} />;
+  if (viewMode === 'list') {
+    return (
+      <EvaluationsList
+        evaluationType="administrative"
+        onBack={() => setViewMode('welcome')}
+        onNewEvaluation={() => setViewMode('form')}
+      />
+    );
   }
 
-  return <AdministrativeEvaluationForm />;
+  if (viewMode === 'form') {
+    return <AdministrativeEvaluationForm />;
+  }
+
+  return (
+    <AdministrativeEvaluationWelcome
+      onStartEvaluation={() => setViewMode('form')}
+      onViewEvaluations={() => setViewMode('list')}
+    />
+  );
 }
