@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Eye, Calendar, User, Briefcase, Filter, Download, Edit, Building2, X } from 'lucide-react';
+import { FileText, Eye, Calendar, User, Briefcase, Filter, Download, CreditCard as Edit, Building2, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { EvaluationDetailModal } from './EvaluationDetailModal';
 
