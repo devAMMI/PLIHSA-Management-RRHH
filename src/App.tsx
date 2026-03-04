@@ -11,6 +11,8 @@ import { UserList } from './components/users/UserList';
 import { AdministrativeEvaluationContainer } from './components/evaluations/AdministrativeEvaluationContainer';
 import { OperativeEvaluationContainer } from './components/evaluations/OperativeEvaluationContainer';
 import { EvaluationsList } from './components/evaluations/EvaluationsList';
+import { RawEvaluations } from './components/debug/RawEvaluations';
+import { SQLExecutor } from './components/debug/SQLExecutor';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -53,6 +55,10 @@ function AppContent() {
         return 'Configuración';
       case 'profile':
         return 'Mi Perfil';
+      case 'raw-evaluations':
+        return 'Evaluaciones Hechas (Raw Data)';
+      case 'sql-executor':
+        return 'SQL Evaluaciones';
       default:
         return 'Dashboard';
     }
@@ -88,6 +94,10 @@ function AppContent() {
         return <UserList />;
       case 'profile':
         return <UserProfile />;
+      case 'raw-evaluations':
+        return <RawEvaluations />;
+      case 'sql-executor':
+        return <SQLExecutor />;
       case 'companies':
         return (
           <div className="text-center py-12">
