@@ -487,24 +487,28 @@ export default function NuevaEvaluacionAdministrativa() {
         .from('system_users')
         .select(`
           id,
-          first_name,
-          last_name,
           role,
-          employees:employee_id(position)
+          employees:employee_id(
+            first_name,
+            last_name,
+            position,
+            employee_code,
+            departments:department_id(name)
+          )
         `)
         .in('role', ['admin', 'superadmin', 'manager', 'rrhh'])
-        .order('first_name');
+        .eq('is_active', true);
 
       if (usersError) throw usersError;
 
-      const mappedManagers: Manager[] = (systemUsers || []).map((u: any) => ({
-        id: u.id,
-        name: `${u.first_name} ${u.last_name}`,
-        position: u.employees?.position ||
-          (u.role === 'superadmin' ? 'Super Administrador' :
-           u.role === 'admin' ? 'Administrador' :
-           u.role === 'rrhh' ? 'Recursos Humanos' : 'Gerente'),
-      }));
+      const mappedManagers: Manager[] = (systemUsers || [])
+        .filter((u: any) => u.employees) // Solo incluir si tienen datos de empleado
+        .map((u: any) => ({
+          id: u.id,
+          name: `${u.employees.first_name} ${u.employees.last_name}`,
+          position: u.employees.position || 'Sin cargo',
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
 
       setManagers(mappedManagers);
     } catch (error) {
@@ -748,12 +752,35 @@ export default function NuevaEvaluacionAdministrativa() {
                         style={{ ...inputBase }} />
                     </div>
                   </div>
-                  <div style={{ ...rowStyle, maxWidth: "50%" }}>
+                  <div style={rowStyle}>
                     <div style={colStyle}>
-                      <Label required>Jefe Inmediato</Label>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                        <Label required>Jefe Inmediato</Label>
+                        {managers.length > 0 && (
+                          <div style={{ fontSize: 10, color: "#757575", fontWeight: 600 }}>
+                            {managers.length} jefe{managers.length !== 1 ? 's' : ''} disponible{managers.length !== 1 ? 's' : ''}
+                          </div>
+                        )}
+                      </div>
                       <Select value={form.manager_id} onChange={set("manager_id")}
                         placeholder="Seleccione el jefe inmediato"
-                        options={managers.map(m => ({ value: m.id, label: `${m.name} — ${m.position}` }))} />
+                        options={managers.map(m => ({
+                          value: m.id,
+                          label: `${m.name} — ${m.position}`
+                        }))} />
+                      {managers.length === 0 && (
+                        <div style={{ fontSize: 10, color: "#f57c00", marginTop: 4 }}>
+                          No hay jefes disponibles
+                        </div>
+                      )}
+                    </div>
+                    <div style={colStyle}>
+                      <Label>Cargo del Jefe</Label>
+                      <Input
+                        value={manager?.position || ""}
+                        onChange={() => {}}
+                        style={{ background: "#f5f5f5", color: "#757575" }}
+                      />
                     </div>
                   </div>
                 </div>
