@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FileText, Download, Eye, Calendar, User, Briefcase, Filter, Search, RefreshCw } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { generatePDF, downloadBlob } from '../../lib/pdfExport';
+import { AdministrativePDFTemplate, OperativePDFTemplate } from './EvaluationPDFTemplate';
 
 interface Employee {
   id: string;
@@ -150,16 +150,44 @@ export function NewEvaluationsPLIHSA() {
     }
   };
 
-  const handleExportPDF = async (evaluation: Evaluation) => {
-    try {
-      const isOperative = 'task_completion_rating' in evaluation;
-      const fileName = `${evaluation.evaluation_code}_${new Date().toISOString().split('T')[0]}.pdf`;
+  const handleExportPDF = (evaluation: Evaluation) => {
+    const isOperative = 'task_completion_rating' in evaluation;
+    const employeeName = evaluation.employee
+      ? `${evaluation.employee.first_name}_${evaluation.employee.last_name}`
+      : 'Empleado';
+    const fileName = `Evaluacion_${employeeName}_${evaluation.evaluation_code}.pdf`;
 
-      console.log('PDF export functionality will be implemented when detail modal is rendered');
-      alert(`Exportar PDF: ${fileName}\n\nFuncionalidad disponible al abrir el modal de detalles.`);
-    } catch (err) {
-      console.error('Error exporting PDF:', err);
+    const printContents = document.getElementById('pdf-print-area')?.innerHTML;
+    if (!printContents) {
+      console.error('PDF print area not found');
+      return;
     }
+
+    const FONT = "https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap";
+    const w = window.open('', '_blank');
+    if (!w) return;
+
+    w.document.write(`
+      <html>
+        <head>
+          <title>${fileName}</title>
+          <link href="${FONT}" rel="stylesheet">
+          <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body { font-family: 'DM Sans', sans-serif; }
+            @page { margin: 15mm; }
+            @media print {
+              body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            }
+          </style>
+        </head>
+        <body>${printContents}</body>
+      </html>
+    `);
+    w.document.close();
+    setTimeout(() => {
+      w.print();
+    }, 500);
   };
 
   const filteredEvaluations = evaluations.filter(evaluation => {
@@ -523,6 +551,16 @@ export function NewEvaluationsPLIHSA() {
       )}
 
       {renderDetailModal()}
+
+      <div style={{ display: 'none' }}>
+        {selectedEvaluation && (
+          'task_completion_rating' in selectedEvaluation ? (
+            <OperativePDFTemplate evaluation={selectedEvaluation as OperativeEvaluation} />
+          ) : (
+            <AdministrativePDFTemplate evaluation={selectedEvaluation as AdministrativeEvaluation} />
+          )
+        )}
+      </div>
     </div>
   );
 }
