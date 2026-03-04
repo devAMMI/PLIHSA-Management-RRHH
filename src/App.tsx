@@ -13,6 +13,8 @@ import { OperativeEvaluationContainer } from './components/evaluations/Operative
 import { EvaluationsList } from './components/evaluations/EvaluationsList';
 import { NewEvaluationsPLIHSA } from './components/evaluations/NewEvaluationsPLIHSA';
 import NuevaEvaluacionAdministrativa from './components/evaluations/NuevaEvaluacionAdministrativa';
+import EvaluacionAdministrativa from './components/evaluations/EvaluacionAdministrativa';
+import EvaluacionesPLIHSA from './components/evaluations/EvaluacionesPLIHSA';
 import { RawEvaluations } from './components/debug/RawEvaluations';
 import { SQLExecutor } from './components/debug/SQLExecutor';
 
@@ -43,10 +45,12 @@ function AppContent() {
         return 'Dashboard';
       case 'employees':
         return 'Gestión de Empleados';
+      case 'evaluaciones-plihsa':
+        return 'Evaluaciones Administrativas PLIHSA';
+      case 'evaluacion-administrativa-nueva':
+        return 'Nueva Evaluación Administrativa';
       case 'evaluations-list':
         return 'Evaluaciones Guardadas';
-      case 'new-evaluations-plihsa':
-        return 'Evaluaciones PLIHSA';
       case 'nueva-evaluacion-administrativa':
         return 'Nueva Evaluación Administrativa';
       case 'evaluation-admin-enero':
@@ -90,10 +94,12 @@ function AppContent() {
         return <Dashboard />;
       case 'employees':
         return <EmployeeList />;
+      case 'evaluacion-administrativa-nueva':
+        return <EvaluacionAdministrativa />;
+      case 'evaluaciones-plihsa':
+        return <EvaluacionesPLIHSA />;
       case 'evaluations-list':
         return <EvaluationsList onEditEvaluation={handleEditEvaluation} />;
-      case 'new-evaluations-plihsa':
-        return <NewEvaluationsPLIHSA />;
       case 'nueva-evaluacion-administrativa':
         return <NuevaEvaluacionAdministrativa />;
       case 'evaluation-admin-enero':

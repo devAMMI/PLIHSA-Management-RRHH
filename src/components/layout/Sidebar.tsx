@@ -12,11 +12,10 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'employees', label: 'Empleados', icon: Users },
-    { id: 'new-evaluations-plihsa', label: 'Evaluaciones PLIHSA', icon: BarChart3 },
+    { id: 'evaluacion-administrativa-nueva', label: 'Nueva Evaluación Admin', icon: ClipboardCheck, requiredRoles: ['superadmin', 'admin', 'rrhh'] },
+    { id: 'evaluaciones-plihsa', label: 'Evaluaciones PLIHSA', icon: BarChart3, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager'] },
     { id: 'evaluations-list', label: 'Ver Evaluaciones', icon: FileText },
     { id: 'nueva-evaluacion-administrativa', label: 'Nueva Evaluación Completa', icon: ClipboardCheck },
-    { id: 'evaluation-admin-enero', label: 'Nueva Evaluación Admin', icon: ClipboardCheck },
-    { id: 'evaluation-operative-enero', label: 'Nueva Evaluación Operativa', icon: ClipboardCheck },
     { id: 'system-users', label: 'Usuarios', icon: Shield, requiredRoles: ['superadmin', 'admin'] },
     { id: 'companies', label: 'Empresas', icon: Building2, requiredRoles: ['superadmin'] },
     { id: 'settings', label: 'Configuración', icon: Settings, requiredRoles: ['superadmin'] },
