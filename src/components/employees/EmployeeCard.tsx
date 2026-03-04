@@ -1,4 +1,5 @@
-import { User, Building2, MapPin } from 'lucide-react';
+import { User, Building2, MapPin, Calendar } from 'lucide-react';
+import { formatSeniorityShortFromDate } from '../../lib/seniority';
 
 interface EmployeeCardProps {
   employee: {
@@ -9,6 +10,7 @@ interface EmployeeCardProps {
     position: string;
     employee_type: 'operativo' | 'administrativo';
     photo_url: string | null;
+    hire_date: string | null;
     company: { name: string; logo_url: string | null };
     department: { name: string } | null;
     plant: { name: string } | null;
@@ -51,6 +53,13 @@ export function EmployeeCard({ employee, onClick }: EmployeeCardProps) {
             <div className="flex items-center gap-2 text-sm text-slate-600">
               <MapPin className="w-4 h-4" />
               <span>{employee.plant.name}</span>
+            </div>
+          )}
+
+          {employee.hire_date && (
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <Calendar className="w-4 h-4" />
+              <span className="font-medium">{formatSeniorityShortFromDate(employee.hire_date)}</span>
             </div>
           )}
         </div>

@@ -1,4 +1,5 @@
 import { X, User, Briefcase, Mail, Phone, MapPin, GraduationCap, Calendar, CreditCard as Edit2, Trash2, Users } from 'lucide-react';
+import { formatSeniorityFromDate } from '../../lib/seniority';
 
 interface EmployeeDetailProps {
   employee: any;
@@ -30,6 +31,7 @@ export function EmployeeDetail({ employee, onClose, onEdit, onDelete }: Employee
   };
 
   const age = employee.birth_date ? calculateAge(employee.birth_date) : employee.age;
+  const workSeniority = formatSeniorityFromDate(employee.hire_date);
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -170,6 +172,10 @@ export function EmployeeDetail({ employee, onClose, onEdit, onDelete }: Employee
               <div>
                 <p className="text-sm text-slate-500">Fecha de Contratación</p>
                 <p className="text-slate-800 font-medium">{formatDate(employee.hire_date)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-slate-500">Antigüedad Laboral</p>
+                <p className="text-slate-800 font-medium">{workSeniority}</p>
               </div>
               {employee.manager && (
                 <div className="md:col-span-2 pt-2 border-t border-slate-200">
