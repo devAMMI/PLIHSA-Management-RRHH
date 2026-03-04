@@ -33,11 +33,11 @@ export function Dashboard() {
         supabase
           .from('administrative_evaluations')
           .select('*', { count: 'exact', head: true })
-          .in('status', ['in_progress', 'pending_review']),
+          .in('status', ['draft', 'pending_employee', 'pending_manager', 'pending_rrhh']),
         supabase
           .from('operative_evaluations')
           .select('*', { count: 'exact', head: true })
-          .in('status', ['in_progress', 'pending_review'])
+          .in('status', ['draft', 'pending_employee', 'pending_manager', 'pending_rrhh'])
       ]);
 
       const [adminCompletedResult, operativeCompletedResult] = await Promise.all([
