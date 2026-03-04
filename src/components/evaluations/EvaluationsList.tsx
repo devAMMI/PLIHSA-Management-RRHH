@@ -79,7 +79,7 @@ export function EvaluationsList({ evaluationType, onBack, onNewEvaluation, onEdi
             department,
             employee_id,
             evaluation_period_id,
-            employees (
+            employees!administrative_evaluations_employee_id_fkey (
               id,
               first_name,
               last_name,
@@ -101,7 +101,7 @@ export function EvaluationsList({ evaluationType, onBack, onNewEvaluation, onEdi
             department,
             employee_id,
             evaluation_period_id,
-            employees (
+            employees!operative_evaluations_employee_id_fkey (
               id,
               first_name,
               last_name,

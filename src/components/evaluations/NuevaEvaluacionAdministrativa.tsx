@@ -546,32 +546,38 @@ export default function NuevaEvaluacionAdministrativa() {
   const handleSave = async () => {
     if (!form.employee_id) { showToast("Selecciona un colaborador", "error"); return; }
     if (!form.manager_id)  { showToast("Selecciona un jefe inmediato", "error"); return; }
+    if (!form.period_id)   { showToast("Selecciona un período", "error"); return; }
+    if (!form.definition_date) { showToast("Ingresa la fecha de definición", "error"); return; }
+    if (!form.review_date) { showToast("Ingresa la fecha de revisión", "error"); return; }
 
     try {
       const evaluationData = {
+        evaluation_period_id: form.period_id,
         employee_id: form.employee_id,
-        evaluator_name: manager?.name || '',
-        evaluator_position: manager?.position || '',
+        employee_position: employee?.position || '',
         department: employee?.department || '',
-        status: form.status,
-        general_observations: `${form.manager_comments}\n\nComentarios del empleado: ${form.employee_comments}`,
-        goals: form.goals,
-        skills: form.skills,
-        goal_reviews: form.goal_reviews,
-        skill_reviews: form.skill_reviews,
+        sub_department: employee?.sub_department || '',
+        hire_date: employee?.hire_date || null,
+        manager_id: form.manager_id,
         definition_date: form.definition_date,
         review_date: form.review_date,
-        period: period?.name || '',
+        status: form.status,
+        manager_comments: form.manager_comments || '',
+        employee_comments: form.employee_comments || '',
       };
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('administrative_evaluations')
-        .insert([evaluationData]);
+        .insert([evaluationData])
+        .select()
+        .single();
 
       if (error) throw error;
 
       setSaved(true);
       showToast("Evaluación guardada exitosamente en la base de datos");
+
+      console.log('Evaluación guardada con ID:', data.id);
     } catch (error) {
       console.error('Error saving evaluation:', error);
       showToast("Error al guardar la evaluación", "error");
