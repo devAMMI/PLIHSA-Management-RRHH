@@ -27,7 +27,12 @@ interface EvaluationPeriod {
   end_date: string;
 }
 
-export function OperativeEvaluationForm() {
+interface OperativeEvaluationFormProps {
+  editingEvaluationId?: string | null;
+  onCancel?: () => void;
+}
+
+export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: OperativeEvaluationFormProps) {
   const { employee, systemUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -36,7 +41,7 @@ export function OperativeEvaluationForm() {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  const [savedEvaluationId, setSavedEvaluationId] = useState<string | null>(null);
+  const [savedEvaluationId, setSavedEvaluationId] = useState<string | null>(editingEvaluationId || null);
   const [showPDFTemplate, setShowPDFTemplate] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState(false);
 
@@ -68,6 +73,12 @@ export function OperativeEvaluationForm() {
   }, []);
 
   useEffect(() => {
+    if (editingEvaluationId) {
+      loadExistingEvaluation(editingEvaluationId);
+    }
+  }, [editingEvaluationId]);
+
+  useEffect(() => {
     if (selectedEmployeeId) {
       const emp = employees.find(e => e.id === selectedEmployeeId);
       setSelectedEmployee(emp);
@@ -80,6 +91,59 @@ export function OperativeEvaluationForm() {
       }
     }
   }, [selectedEmployeeId, employees]);
+
+  const loadExistingEvaluation = async (evaluationId: string) => {
+    try {
+      const { data: evalData, error: evalError } = await supabase
+        .from('operative_evaluations')
+        .select('*')
+        .eq('id', evaluationId)
+        .single();
+
+      if (evalError) throw evalError;
+
+      if (evalData) {
+        setSelectedEmployeeId(evalData.employee_id);
+        setFormData({
+          department: evalData.department || '',
+          sub_department: evalData.sub_department || '',
+          definition_date: evalData.definition_date || '',
+          manager_comments: evalData.manager_comments || '',
+          employee_comments: evalData.employee_comments || ''
+        });
+
+        const { data: factorsData } = await supabase
+          .from('evaluation_functional_factors')
+          .select('*')
+          .eq('evaluation_id', evaluationId)
+          .order('factor_number');
+
+        if (factorsData && factorsData.length > 0) {
+          setFunctionalFactors(factorsData.map(f => ({
+            factor_number: f.factor_number,
+            job_function: f.job_function || '',
+            expected_results: f.expected_results || ''
+          })));
+        }
+
+        const { data: competenciesData } = await supabase
+          .from('operative_evaluation_competencies')
+          .select('*')
+          .eq('evaluation_id', evaluationId)
+          .order('competency_number');
+
+        if (competenciesData && competenciesData.length > 0) {
+          setCompetencies(competenciesData.map(c => ({
+            competency_number: c.competency_number,
+            competency_description: c.competency_description || ''
+          })));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading existing evaluation:', error);
+      setToast({ message: 'Error al cargar la evaluación', type: 'error' });
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -154,25 +218,42 @@ export function OperativeEvaluationForm() {
 
     setSaving(true);
     try {
-      const { data: evaluation, error: evalError } = await supabase
-        .from('operative_evaluations')
-        .upsert({
-          evaluation_period_id: period.id,
-          employee_id: selectedEmployeeId,
-          employee_position: selectedEmployee?.position,
-          department: formData.department,
-          sub_department: formData.sub_department,
-          hire_date: selectedEmployee?.hire_date,
-          manager_id: selectedEmployee?.manager_id,
-          definition_date: formData.definition_date || null,
-          manager_comments: formData.manager_comments,
-          employee_comments: formData.employee_comments,
-          status: 'draft'
-        }, { onConflict: 'evaluation_period_id,employee_id' })
-        .select()
-        .single();
+      const evaluationData = {
+        evaluation_period_id: period.id,
+        employee_id: selectedEmployeeId,
+        employee_position: selectedEmployee?.position,
+        department: formData.department,
+        sub_department: formData.sub_department,
+        hire_date: selectedEmployee?.hire_date,
+        manager_id: selectedEmployee?.manager_id,
+        definition_date: formData.definition_date || null,
+        manager_comments: formData.manager_comments,
+        employee_comments: formData.employee_comments,
+        status: 'draft'
+      };
 
-      if (evalError) throw evalError;
+      let evaluation;
+
+      if (savedEvaluationId) {
+        const { data, error: updateError } = await supabase
+          .from('operative_evaluations')
+          .update(evaluationData)
+          .eq('id', savedEvaluationId)
+          .select()
+          .single();
+
+        if (updateError) throw updateError;
+        evaluation = data;
+      } else {
+        const { data, error: insertError } = await supabase
+          .from('operative_evaluations')
+          .upsert(evaluationData, { onConflict: 'evaluation_period_id,employee_id' })
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+        evaluation = data;
+      }
 
       for (const factor of functionalFactors) {
         await supabase

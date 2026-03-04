@@ -1,12 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { OperativeEvaluationWelcome } from './OperativeEvaluationWelcome';
 import { OperativeEvaluationForm } from './OperativeEvaluationForm';
 import { EvaluationsList } from './EvaluationsList';
 
 type ViewMode = 'welcome' | 'form' | 'list';
 
-export function OperativeEvaluationContainer() {
+interface OperativeEvaluationContainerProps {
+  editingEvaluationId?: string | null;
+  onBack?: () => void;
+}
+
+export function OperativeEvaluationContainer({ editingEvaluationId, onBack }: OperativeEvaluationContainerProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('welcome');
+
+  useEffect(() => {
+    if (editingEvaluationId) {
+      setViewMode('form');
+    }
+  }, [editingEvaluationId]);
 
   if (viewMode === 'list') {
     return (
@@ -19,7 +30,7 @@ export function OperativeEvaluationContainer() {
   }
 
   if (viewMode === 'form') {
-    return <OperativeEvaluationForm />;
+    return <OperativeEvaluationForm editingEvaluationId={editingEvaluationId} onCancel={onBack} />;
   }
 
   return (

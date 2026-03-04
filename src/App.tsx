@@ -16,6 +16,7 @@ function AppContent() {
   const { user, loading } = useAuth();
   const [currentView, setCurrentView] = useState('dashboard');
   const [showRegister, setShowRegister] = useState(false);
+  const [editingEvaluationId, setEditingEvaluationId] = useState<string | null>(null);
 
   if (loading) {
     return (
@@ -57,6 +58,20 @@ function AppContent() {
     }
   };
 
+  const handleEditEvaluation = (evaluationId: string, employeeType: string) => {
+    setEditingEvaluationId(evaluationId);
+    if (employeeType === 'administrativo') {
+      setCurrentView('evaluation-admin-enero');
+    } else {
+      setCurrentView('evaluation-operative-enero');
+    }
+  };
+
+  const handleBackToList = () => {
+    setEditingEvaluationId(null);
+    setCurrentView('evaluations-list');
+  };
+
   const renderView = () => {
     switch (currentView) {
       case 'dashboard':
@@ -64,11 +79,11 @@ function AppContent() {
       case 'employees':
         return <EmployeeList />;
       case 'evaluations-list':
-        return <EvaluationsList />;
+        return <EvaluationsList onEditEvaluation={handleEditEvaluation} />;
       case 'evaluation-admin-enero':
-        return <AdministrativeEvaluationContainer />;
+        return <AdministrativeEvaluationContainer editingEvaluationId={editingEvaluationId} onBack={handleBackToList} />;
       case 'evaluation-operative-enero':
-        return <OperativeEvaluationContainer />;
+        return <OperativeEvaluationContainer editingEvaluationId={editingEvaluationId} onBack={handleBackToList} />;
       case 'system-users':
         return <UserList />;
       case 'profile':

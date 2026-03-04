@@ -27,9 +27,10 @@ interface EvaluationsListProps {
   evaluationType?: 'administrative' | 'operative';
   onBack?: () => void;
   onNewEvaluation?: () => void;
+  onEditEvaluation?: (evaluationId: string, employeeType: string) => void;
 }
 
-export function EvaluationsList({ evaluationType, onBack, onNewEvaluation }: EvaluationsListProps = {}) {
+export function EvaluationsList({ evaluationType, onBack, onNewEvaluation, onEditEvaluation }: EvaluationsListProps = {}) {
   const [loading, setLoading] = useState(true);
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -519,9 +520,9 @@ export function EvaluationsList({ evaluationType, onBack, onNewEvaluation }: Eva
                 </div>
 
                 <div className="flex gap-2">
-                  {evaluation.status === 'draft' && (
+                  {evaluation.status === 'draft' && onEditEvaluation && (
                     <button
-                      onClick={() => setSelectedEvaluation(evaluation)}
+                      onClick={() => onEditEvaluation(evaluation.id, evaluation.employee_type)}
                       className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition"
                     >
                       <Edit className="w-4 h-4" />

@@ -1,12 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AdministrativeEvaluationWelcome } from './AdministrativeEvaluationWelcome';
 import { AdministrativeEvaluationForm } from './AdministrativeEvaluationForm';
 import { EvaluationsList } from './EvaluationsList';
 
 type ViewMode = 'welcome' | 'form' | 'list';
 
-export function AdministrativeEvaluationContainer() {
+interface AdministrativeEvaluationContainerProps {
+  editingEvaluationId?: string | null;
+  onBack?: () => void;
+}
+
+export function AdministrativeEvaluationContainer({ editingEvaluationId, onBack }: AdministrativeEvaluationContainerProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('welcome');
+
+  useEffect(() => {
+    if (editingEvaluationId) {
+      setViewMode('form');
+    }
+  }, [editingEvaluationId]);
 
   if (viewMode === 'list') {
     return (
@@ -19,7 +30,7 @@ export function AdministrativeEvaluationContainer() {
   }
 
   if (viewMode === 'form') {
-    return <AdministrativeEvaluationForm />;
+    return <AdministrativeEvaluationForm editingEvaluationId={editingEvaluationId} onCancel={onBack} />;
   }
 
   return (
