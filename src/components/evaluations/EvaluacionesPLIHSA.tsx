@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Search, Filter, FileText, Printer, Edit, Calendar, User, Briefcase, MapPin } from 'lucide-react';
+import { Search, Filter, FileText, Printer, CreditCard as Edit, Calendar, User, Briefcase, MapPin } from 'lucide-react';
 import EvaluacionAdministrativa from './EvaluacionAdministrativa';
 
 const PLIHSA_ID = 'ef0cbe1b-06be-4587-a9a3-6233c14795f5';
