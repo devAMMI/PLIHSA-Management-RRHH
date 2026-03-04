@@ -77,6 +77,8 @@ export function EmployeeModal({ employee, onClose }: EmployeeModalProps) {
     emergency_contact_phone: employee?.emergency_contact_phone || '',
   });
 
+  const [nationalIdError, setNationalIdError] = useState<string | null>(null);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -215,8 +217,47 @@ export function EmployeeModal({ employee, onClose }: EmployeeModalProps) {
     fileInputRef.current?.click();
   };
 
+  const validateHonduranId = (id: string): boolean => {
+    const regex = /^\d{4}-\d{4}-\d{5}$/;
+    return regex.test(id);
+  };
+
+  const formatNationalId = (value: string): string => {
+    const numbers = value.replace(/\D/g, '');
+
+    if (numbers.length <= 4) {
+      return numbers;
+    } else if (numbers.length <= 8) {
+      return `${numbers.slice(0, 4)}-${numbers.slice(4)}`;
+    } else {
+      return `${numbers.slice(0, 4)}-${numbers.slice(4, 8)}-${numbers.slice(8, 13)}`;
+    }
+  };
+
+  const handleNationalIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatNationalId(e.target.value);
+    setFormData({ ...formData, national_id: formatted });
+
+    if (formatted && !validateHonduranId(formatted)) {
+      setNationalIdError('Formato inválido. Debe ser: 0000-0000-00000 (13 dígitos)');
+    } else {
+      setNationalIdError(null);
+    }
+  };
+
+  const isPlihsaCompany = () => {
+    const selectedCompany = companies.find(c => c.id === formData.company_id);
+    return selectedCompany?.name.toUpperCase().includes('PLIHSA');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isPlihsaCompany() && formData.national_id && !validateHonduranId(formData.national_id)) {
+      alert('Por favor, ingrese una cédula hondureña válida con el formato: 0000-0000-00000 (13 dígitos)');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -388,15 +429,27 @@ export function EmployeeModal({ employee, onClose }: EmployeeModalProps) {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Cédula / ID
+                  Cédula / ID {isPlihsaCompany() && <span className="text-red-500">*</span>}
                 </label>
                 <input
                   type="text"
                   value={formData.national_id}
-                  onChange={(e) => setFormData({ ...formData, national_id: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  onChange={handleNationalIdChange}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none ${
+                    nationalIdError ? 'border-red-500' : 'border-slate-300'
+                  }`}
                   placeholder="0000-0000-00000"
+                  maxLength={15}
+                  required={isPlihsaCompany()}
                 />
+                {nationalIdError && isPlihsaCompany() && (
+                  <p className="text-xs text-red-600 mt-1">{nationalIdError}</p>
+                )}
+                {isPlihsaCompany() && (
+                  <p className="text-xs text-slate-500 mt-1">
+                    Formato de cédula hondureña: 0000-0000-00000 (13 dígitos)
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
