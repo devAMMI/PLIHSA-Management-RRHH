@@ -3,6 +3,9 @@ import { Save, FileText, Calendar, Download, Printer } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Toast } from '../ui/Toast';
+import { AdministrativeEvaluationPDFTemplate } from './AdministrativeEvaluationPDFTemplate';
+import { generatePDF, downloadBlob } from '../../lib/pdfExport';
+import { getCurrentTimestamp } from '../../lib/timezone';
 
 interface Goal {
   goal_number: number;
@@ -34,6 +37,8 @@ export function AdministrativeEvaluationForm() {
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [savedEvaluationId, setSavedEvaluationId] = useState<string | null>(null);
+  const [showPDFTemplate, setShowPDFTemplate] = useState(false);
+  const [generatingPDF, setGeneratingPDF] = useState(false);
 
   const [formData, setFormData] = useState({
     department: '',
@@ -201,19 +206,49 @@ export function AdministrativeEvaluationForm() {
   };
 
   const handleSavePDF = async () => {
-    if (!savedEvaluationId) {
+    if (!savedEvaluationId || !selectedEmployee || !period) {
       setToast({ message: 'Primero debe guardar la evaluación', type: 'error' });
       return;
     }
-    setToast({ message: 'Generando PDF...', type: 'success' });
+
+    setGeneratingPDF(true);
+    setShowPDFTemplate(true);
+
+    setTimeout(async () => {
+      try {
+        const blob = await generatePDF('pdf-content', `evaluacion_${selectedEmployee.first_name}_${selectedEmployee.last_name}_${Date.now()}.pdf`);
+
+        if (blob) {
+          const fileName = `Evaluacion_Admin_${selectedEmployee.first_name}_${selectedEmployee.last_name}_${new Date().toISOString().split('T')[0]}.pdf`;
+          downloadBlob(blob, fileName);
+          setToast({ message: 'PDF generado exitosamente', type: 'success' });
+        } else {
+          setToast({ message: 'Error al generar el PDF', type: 'error' });
+        }
+      } catch (error) {
+        console.error('Error generating PDF:', error);
+        setToast({ message: 'Error al generar el PDF', type: 'error' });
+      } finally {
+        setShowPDFTemplate(false);
+        setGeneratingPDF(false);
+      }
+    }, 100);
   };
 
   const handlePrint = () => {
-    if (!savedEvaluationId) {
+    if (!savedEvaluationId || !selectedEmployee || !period) {
       setToast({ message: 'Primero debe guardar la evaluación', type: 'error' });
       return;
     }
-    window.print();
+
+    setShowPDFTemplate(true);
+
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => {
+        setShowPDFTemplate(false);
+      }, 500);
+    }, 100);
   };
 
   if (loading) {
@@ -460,6 +495,27 @@ export function AdministrativeEvaluationForm() {
           type={toast.type}
           onClose={() => setToast(null)}
         />
+      )}
+
+      {showPDFTemplate && selectedEmployee && period && (
+        <div className="fixed top-[-9999px] left-[-9999px]">
+          <AdministrativeEvaluationPDFTemplate
+            employeeName={`${selectedEmployee.first_name} ${selectedEmployee.last_name}`}
+            position={selectedEmployee.position || ''}
+            department={formData.department}
+            subDepartment={formData.sub_department}
+            hireDate={selectedEmployee.hire_date}
+            definitionDate={formData.definition_date}
+            periodName={period.name}
+            formCode={period.form_code}
+            formVersion={period.form_version}
+            goals={goals}
+            competencies={competencies}
+            managerComments={formData.manager_comments}
+            employeeComments={formData.employee_comments}
+            createdAt={getCurrentTimestamp()}
+          />
+        </div>
       )}
     </div>
   );
