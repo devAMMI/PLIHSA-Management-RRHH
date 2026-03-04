@@ -1,4 +1,4 @@
-import { Home, Users, ClipboardCheck, Building2, Settings, LogOut, User as UserIcon, Shield, FileText, Database, Terminal } from 'lucide-react';
+import { Home, Users, ClipboardCheck, Building2, Settings, LogOut, User as UserIcon, Shield, FileText, Database, Terminal, BarChart3 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface SidebarProps {
@@ -12,6 +12,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'employees', label: 'Empleados', icon: Users },
+    { id: 'new-evaluations-plihsa', label: 'Evaluaciones PLIHSA', icon: BarChart3 },
     { id: 'evaluations-list', label: 'Ver Evaluaciones', icon: FileText },
     { id: 'evaluation-admin-enero', label: 'Nueva Evaluación Admin', icon: ClipboardCheck },
     { id: 'evaluation-operative-enero', label: 'Nueva Evaluación Operativa', icon: ClipboardCheck },

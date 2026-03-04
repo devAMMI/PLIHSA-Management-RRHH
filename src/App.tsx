@@ -11,6 +11,7 @@ import { UserList } from './components/users/UserList';
 import { AdministrativeEvaluationContainer } from './components/evaluations/AdministrativeEvaluationContainer';
 import { OperativeEvaluationContainer } from './components/evaluations/OperativeEvaluationContainer';
 import { EvaluationsList } from './components/evaluations/EvaluationsList';
+import { NewEvaluationsPLIHSA } from './components/evaluations/NewEvaluationsPLIHSA';
 import { RawEvaluations } from './components/debug/RawEvaluations';
 import { SQLExecutor } from './components/debug/SQLExecutor';
 
@@ -43,6 +44,8 @@ function AppContent() {
         return 'Gestión de Empleados';
       case 'evaluations-list':
         return 'Evaluaciones Guardadas';
+      case 'new-evaluations-plihsa':
+        return 'Evaluaciones PLIHSA';
       case 'evaluation-admin-enero':
         return 'Evaluación Administrativo - Marzo 2026';
       case 'evaluation-operative-enero':
@@ -86,6 +89,8 @@ function AppContent() {
         return <EmployeeList />;
       case 'evaluations-list':
         return <EvaluationsList onEditEvaluation={handleEditEvaluation} />;
+      case 'new-evaluations-plihsa':
+        return <NewEvaluationsPLIHSA />;
       case 'evaluation-admin-enero':
         return <AdministrativeEvaluationContainer editingEvaluationId={editingEvaluationId} onBack={handleBackToList} />;
       case 'evaluation-operative-enero':
