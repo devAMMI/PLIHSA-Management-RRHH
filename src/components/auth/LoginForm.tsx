@@ -39,8 +39,8 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
         <div className="relative z-10">
           <div className="mb-12 animate-fade-in">
             <img
-              src="https://plihsa.com/wp-content/uploads/2023/02/Plihsa_Logo_Azul.svg"
-              alt="PLIHSA"
+              src="https://i.imgur.com/yaTqvUS.png"
+              alt="AMMI Group"
               className="h-16 mb-8 brightness-0 invert"
             />
           </div>
@@ -52,7 +52,7 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
             </h1>
             <p className="text-slate-300 text-lg leading-relaxed">
               Gestión integral de empleados, evaluaciones de desempeño y administración
-              de personal para todas las empresas del grupo PLIHSA.
+              de personal para todas las empresas del grupo AMMI.
             </p>
           </div>
 
@@ -90,12 +90,30 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
         </div>
 
         <div className="relative z-10">
-          <div className="flex items-center gap-6 pt-8 border-t border-slate-700">
-            <img
-              src="https://plihsa.com/wp-content/uploads/2023/02/Plihsa_Logo_Azul.svg"
-              alt="PLIHSA"
-              className="h-8 brightness-0 invert opacity-60"
-            />
+          <div className="pt-8 border-t border-slate-700">
+            <p className="text-slate-400 text-sm mb-4">Empresas del grupo:</p>
+            <div className="flex items-center justify-between gap-6 flex-wrap">
+              <img
+                src="https://i.imgur.com/yaTqvUS.png"
+                alt="AMMI"
+                className="h-10 brightness-0 invert opacity-70 hover:opacity-100 transition-opacity"
+              />
+              <img
+                src="https://i.imgur.com/HqBOuOw.png"
+                alt="PLIHSA"
+                className="h-10 brightness-0 invert opacity-70 hover:opacity-100 transition-opacity"
+              />
+              <img
+                src="https://i.imgur.com/6Q0kLnl.png"
+                alt="Millfoods"
+                className="h-10 brightness-0 invert opacity-70 hover:opacity-100 transition-opacity"
+              />
+              <img
+                src="https://i.imgur.com/QX5salf.png"
+                alt="PTM"
+                className="h-10 brightness-0 invert opacity-70 hover:opacity-100 transition-opacity"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -104,8 +122,8 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
         <div className="w-full max-w-md">
           <div className="lg:hidden mb-8 text-center">
             <img
-              src="https://plihsa.com/wp-content/uploads/2023/02/Plihsa_Logo_Azul.svg"
-              alt="PLIHSA"
+              src="https://i.imgur.com/yaTqvUS.png"
+              alt="AMMI Group"
               className="h-12 mx-auto mb-4"
             />
           </div>
@@ -219,7 +237,7 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
           </div>
 
           <p className="text-center text-slate-500 text-xs mt-6">
-            © 2025 PLIHSA. Todos los derechos reservados.
+            © 2025 AMMI Group. Todos los derechos reservados.
           </p>
         </div>
       </div>
