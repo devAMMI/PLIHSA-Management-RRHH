@@ -8,6 +8,7 @@ import { Dashboard } from './components/dashboard/Dashboard';
 import { EmployeeList } from './components/employees/EmployeeList';
 import { UserProfile } from './components/profile/UserProfile';
 import { UserList } from './components/users/UserList';
+import { AdministrativeEvaluationForm } from './components/evaluations/AdministrativeEvaluationForm';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -35,8 +36,8 @@ function AppContent() {
         return 'Dashboard';
       case 'employees':
         return 'Gestión de Empleados';
-      case 'evaluations':
-        return 'Evaluaciones';
+      case 'evaluation-admin-enero':
+        return 'Evaluación Administrativo - Enero 2025';
       case 'system-users':
         return 'Usuarios del Sistema';
       case 'companies':
@@ -56,16 +57,12 @@ function AppContent() {
         return <Dashboard />;
       case 'employees':
         return <EmployeeList />;
+      case 'evaluation-admin-enero':
+        return <AdministrativeEvaluationForm />;
       case 'system-users':
         return <UserList />;
       case 'profile':
         return <UserProfile />;
-      case 'evaluations':
-        return (
-          <div className="text-center py-12">
-            <p className="text-slate-600">Módulo de evaluaciones en desarrollo</p>
-          </div>
-        );
       case 'companies':
         return (
           <div className="text-center py-12">
