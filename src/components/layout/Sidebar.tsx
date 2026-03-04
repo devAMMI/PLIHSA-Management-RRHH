@@ -1,14 +1,15 @@
 import { Home, Users, ClipboardCheck, Building2, Settings, LogOut, User as UserIcon, Shield, FileText, Database, Terminal, BarChart3 } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
 
 interface SidebarProps {
   currentView: string;
   onViewChange: (view: string) => void;
+  systemUser?: { role: string } | null;
+  employee?: { first_name: string; last_name: string; position?: string; photo_url?: string } | null;
+  user?: { email?: string } | null;
+  onSignOut?: () => void;
 }
 
-export function Sidebar({ currentView, onViewChange }: SidebarProps) {
-  const { signOut, systemUser, employee, user } = useAuth();
-
+export function Sidebar({ currentView, onViewChange, systemUser, employee, user, onSignOut }: SidebarProps) {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'employees', label: 'Empleados', icon: Users },
@@ -35,7 +36,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
         <p className="text-sm text-slate-500 mt-1">Sistema de Gestión</p>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {filteredItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentView === item.id;
@@ -97,13 +98,15 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
             {systemUser?.role === 'viewer' && 'Visor'}
           </div>
         </button>
-        <button
-          onClick={signOut}
-          className="w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-red-50 hover:text-red-600 rounded-lg transition"
-        >
-          <LogOut className="w-5 h-5" />
-          <span className="font-medium">Cerrar Sesión</span>
-        </button>
+        {onSignOut && (
+          <button
+            onClick={onSignOut}
+            className="w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-red-50 hover:text-red-600 rounded-lg transition"
+          >
+            <LogOut className="w-5 h-5" />
+            <span className="font-medium">Cerrar Sesión</span>
+          </button>
+        )}
       </div>
     </div>
   );
