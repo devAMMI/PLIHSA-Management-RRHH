@@ -136,9 +136,15 @@ function AppContent() {
       <Sidebar currentView={currentView} onViewChange={setCurrentView} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header title={getViewTitle()} />
-        <main className="flex-1 overflow-y-auto p-8">
-          {renderView()}
-        </main>
+        {currentView === 'employees' ? (
+          <main className="flex-1 overflow-hidden">
+            {renderView()}
+          </main>
+        ) : (
+          <main className="flex-1 overflow-y-auto p-8">
+            {renderView()}
+          </main>
+        )}
       </div>
     </div>
   );

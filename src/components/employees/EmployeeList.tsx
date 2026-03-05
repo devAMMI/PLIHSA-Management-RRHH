@@ -4,6 +4,7 @@ import { Plus, Search, Filter } from 'lucide-react';
 import { EmployeeCard } from './EmployeeCard';
 import { EmployeeModal } from './EmployeeModal';
 import { EmployeeDetail } from './EmployeeDetail';
+import { EmployeeFilterSidebar } from './EmployeeFilterSidebar';
 
 interface Employee {
   id: string;
@@ -13,9 +14,12 @@ interface Employee {
   position: string;
   employee_type: 'operativo' | 'administrativo';
   photo_url: string | null;
+  department_id: string | null;
+  work_location_id: string | null;
   company: { id: string; name: string; logo_url: string | null };
-  department: { name: string } | null;
+  department: { id: string; name: string } | null;
   plant: { name: string } | null;
+  work_location: { id: string; name: string } | null;
   status: string;
 }
 
@@ -25,19 +29,35 @@ interface Company {
   code: string;
 }
 
+interface Department {
+  id: string;
+  name: string;
+}
+
+interface WorkLocation {
+  id: string;
+  name: string;
+}
+
 export function EmployeeList() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [workLocations, setWorkLocations] = useState<WorkLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'operativo' | 'administrativo'>('all');
   const [filterCompany, setFilterCompany] = useState<string>('all');
+  const [filterDepartment, setFilterDepartment] = useState<string | null>(null);
+  const [filterWorkLocation, setFilterWorkLocation] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
 
   useEffect(() => {
     loadCompanies();
+    loadDepartments();
+    loadWorkLocations();
     loadEmployees();
   }, []);
 
@@ -52,6 +72,34 @@ export function EmployeeList() {
       setCompanies(data || []);
     } catch (error) {
       console.error('Error loading companies:', error);
+    }
+  };
+
+  const loadDepartments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('departments')
+        .select('id, name')
+        .order('name');
+
+      if (error) throw error;
+      setDepartments(data || []);
+    } catch (error) {
+      console.error('Error loading departments:', error);
+    }
+  };
+
+  const loadWorkLocations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('work_locations')
+        .select('id, name')
+        .order('name');
+
+      if (error) throw error;
+      setWorkLocations(data || []);
+    } catch (error) {
+      console.error('Error loading work locations:', error);
     }
   };
 
@@ -91,7 +139,13 @@ export function EmployeeList() {
     const matchesCompany =
       filterCompany === 'all' || emp.company.id === filterCompany;
 
-    return matchesSearch && matchesFilter && matchesCompany;
+    const matchesDepartment =
+      !filterDepartment || emp.department_id === filterDepartment;
+
+    const matchesWorkLocation =
+      !filterWorkLocation || emp.work_location_id === filterWorkLocation;
+
+    return matchesSearch && matchesFilter && matchesCompany && matchesDepartment && matchesWorkLocation;
   });
 
   const handleEmployeeClick = (employee: Employee) => {
@@ -153,8 +207,21 @@ export function EmployeeList() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+    <div className="flex h-full">
+      <EmployeeFilterSidebar
+        departments={departments}
+        workLocations={workLocations}
+        selectedDepartment={filterDepartment}
+        selectedWorkLocation={filterWorkLocation}
+        onDepartmentChange={setFilterDepartment}
+        onWorkLocationChange={setFilterWorkLocation}
+        employeeCount={filteredEmployees.length}
+        totalEmployees={employees.length}
+      />
+
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-6 space-y-6">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex-1 flex items-center gap-4 flex-wrap min-w-[300px]">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -196,62 +263,61 @@ export function EmployeeList() {
           </div>
         </div>
 
-        <button
-          onClick={handleNewEmployee}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
-        >
-          <Plus className="w-5 h-5" />
-          Nuevo Empleado
-        </button>
-      </div>
+            <button
+              onClick={handleNewEmployee}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+            >
+              <Plus className="w-5 h-5" />
+              Nuevo Empleado
+            </button>
+          </div>
 
-      <div className="flex items-center gap-4 text-sm text-slate-600">
-        <span>
-          Mostrando <span className="font-semibold text-slate-900">{filteredEmployees.length}</span> de {employees.length} empleados
-        </span>
-        {filterCompany !== 'all' && (
-          <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full">
-            {companies.find(c => c.id === filterCompany)?.name}
-          </span>
-        )}
-        {filterType !== 'all' && (
-          <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full capitalize">
-            {filterType}
-          </span>
-        )}
-      </div>
+          <div className="flex items-center gap-4 text-sm text-slate-600 flex-wrap">
+            {filterCompany !== 'all' && (
+              <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full">
+                {companies.find(c => c.id === filterCompany)?.name}
+              </span>
+            )}
+            {filterType !== 'all' && (
+              <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full capitalize">
+                {filterType}
+              </span>
+            )}
+          </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredEmployees.map((employee) => (
-          <EmployeeCard
-            key={employee.id}
-            employee={employee}
-            onClick={() => handleEmployeeClick(employee)}
-          />
-        ))}
-      </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredEmployees.map((employee) => (
+              <EmployeeCard
+                key={employee.id}
+                employee={employee}
+                onClick={() => handleEmployeeClick(employee)}
+              />
+            ))}
+          </div>
 
-      {filteredEmployees.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-slate-600">No se encontraron empleados</p>
+          {filteredEmployees.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-slate-600">No se encontraron empleados</p>
+            </div>
+          )}
+
+          {showDetail && selectedEmployee && (
+            <EmployeeDetail
+              employee={selectedEmployee}
+              onClose={handleCloseDetail}
+              onEdit={handleEditEmployee}
+              onDelete={handleDeleteEmployee}
+            />
+          )}
+
+          {showModal && (
+            <EmployeeModal
+              employee={selectedEmployee}
+              onClose={handleCloseModal}
+            />
+          )}
         </div>
-      )}
-
-      {showDetail && selectedEmployee && (
-        <EmployeeDetail
-          employee={selectedEmployee}
-          onClose={handleCloseDetail}
-          onEdit={handleEditEmployee}
-          onDelete={handleDeleteEmployee}
-        />
-      )}
-
-      {showModal && (
-        <EmployeeModal
-          employee={selectedEmployee}
-          onClose={handleCloseModal}
-        />
-      )}
+      </div>
     </div>
   );
 }
