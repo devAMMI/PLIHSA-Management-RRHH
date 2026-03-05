@@ -250,6 +250,40 @@ export function EmployeeModal({ employee, onClose }: EmployeeModalProps) {
     return selectedCompany?.name.toUpperCase().includes('PLIHSA');
   };
 
+  const checkDuplicates = async (): Promise<{ isDuplicate: boolean; field: string; value: string } | null> => {
+    const { data: codeCheck } = await supabase
+      .from('employees')
+      .select('id, employee_code, first_name, last_name')
+      .eq('employee_code', formData.employee_code)
+      .maybeSingle();
+
+    if (codeCheck && (!employee || codeCheck.id !== employee.id)) {
+      return {
+        isDuplicate: true,
+        field: 'Código de Empleado',
+        value: `${formData.employee_code} (${codeCheck.first_name} ${codeCheck.last_name})`
+      };
+    }
+
+    if (formData.national_id) {
+      const { data: idCheck } = await supabase
+        .from('employees')
+        .select('id, national_id, first_name, last_name')
+        .eq('national_id', formData.national_id)
+        .maybeSingle();
+
+      if (idCheck && (!employee || idCheck.id !== employee.id)) {
+        return {
+          isDuplicate: true,
+          field: 'Cédula / Identidad',
+          value: `${formData.national_id} (${idCheck.first_name} ${idCheck.last_name})`
+        };
+      }
+    }
+
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -261,6 +295,18 @@ export function EmployeeModal({ employee, onClose }: EmployeeModalProps) {
     setLoading(true);
 
     try {
+      const duplicateCheck = await checkDuplicates();
+      if (duplicateCheck) {
+        alert(
+          `⚠️ ERROR: Ya existe un empleado con este ${duplicateCheck.field}\n\n` +
+          `Campo duplicado: ${duplicateCheck.field}\n` +
+          `Valor: ${duplicateCheck.value}\n\n` +
+          `Por favor, verifique los datos e intente nuevamente.`
+        );
+        setLoading(false);
+        return;
+      }
+
       const employeeData = {
         employee_code: formData.employee_code,
         company_id: formData.company_id,
@@ -300,7 +346,12 @@ export function EmployeeModal({ employee, onClose }: EmployeeModalProps) {
 
         if (error) {
           console.error('Error updating employee:', error);
-          throw error;
+          if (error.code === '23505') {
+            alert('⚠️ ERROR: Ya existe un empleado con este Código de Empleado o Identidad. Por favor verifique los datos.');
+          } else {
+            throw error;
+          }
+          return;
         }
       } else {
         const { error } = await supabase
@@ -309,7 +360,12 @@ export function EmployeeModal({ employee, onClose }: EmployeeModalProps) {
 
         if (error) {
           console.error('Error inserting employee:', error);
-          throw error;
+          if (error.code === '23505') {
+            alert('⚠️ ERROR: Ya existe un empleado con este Código de Empleado o Identidad. Por favor verifique los datos.');
+          } else {
+            throw error;
+          }
+          return;
         }
       }
 
