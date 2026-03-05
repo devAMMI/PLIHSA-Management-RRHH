@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { Plus, Search, Filter } from 'lucide-react';
 import { EmployeeCard } from './EmployeeCard';
 import { EmployeeModal } from './EmployeeModal';
-import { EmployeeDetail } from './EmployeeDetail';
+import { EmployeeProfilePage } from './EmployeeProfilePage';
 import { EmployeeFilterSidebar } from './EmployeeFilterSidebar';
 
 interface Employee {
@@ -206,6 +206,17 @@ export function EmployeeList() {
     );
   }
 
+  if (showDetail && selectedEmployee) {
+    return (
+      <EmployeeProfilePage
+        employee={selectedEmployee}
+        onBack={handleCloseDetail}
+        onEdit={handleEditEmployee}
+        onDelete={handleDeleteEmployee}
+      />
+    );
+  }
+
   return (
     <div className="flex h-full">
       <EmployeeFilterSidebar
@@ -299,15 +310,6 @@ export function EmployeeList() {
             <div className="text-center py-12">
               <p className="text-slate-600">No se encontraron empleados</p>
             </div>
-          )}
-
-          {showDetail && selectedEmployee && (
-            <EmployeeDetail
-              employee={selectedEmployee}
-              onClose={handleCloseDetail}
-              onEdit={handleEditEmployee}
-              onDelete={handleDeleteEmployee}
-            />
           )}
 
           {showModal && (
