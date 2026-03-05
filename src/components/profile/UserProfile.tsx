@@ -141,10 +141,15 @@ export function UserProfile() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 h-32"></div>
+        <div
+          className="h-48 bg-cover bg-center relative"
+          style={{ backgroundImage: 'url(/Banner-PLIHSA_4.jpeg)' }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/10"></div>
+        </div>
 
         <div className="px-8 pb-8">
-          <div className="flex items-start gap-6 -mt-16 mb-6">
+          <div className="flex items-start gap-6 -mt-20 mb-6">
             <div className="relative">
               {formData.photoUrl ? (
                 <img
