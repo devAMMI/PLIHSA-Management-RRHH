@@ -142,24 +142,24 @@ export function UserProfile() {
     <div className="max-w-4xl mx-auto">
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div
-          className="h-48 bg-cover bg-center relative"
+          className="h-56 bg-cover bg-center relative"
           style={{ backgroundImage: 'url(/Banner-PLIHSA_4.jpeg)' }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/10"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-white"></div>
         </div>
 
         <div className="px-8 pb-8">
-          <div className="flex items-start gap-6 -mt-20 mb-6">
-            <div className="relative">
+          <div className="flex items-end gap-6 -mt-24 mb-6 relative">
+            <div className="relative z-10">
               {formData.photoUrl ? (
                 <img
                   src={formData.photoUrl}
                   alt="Profile"
-                  className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                  className="w-40 h-40 rounded-full object-cover border-6 border-white shadow-xl ring-4 ring-slate-100"
                 />
               ) : (
-                <div className="w-32 h-32 rounded-full bg-slate-200 border-4 border-white shadow-lg flex items-center justify-center">
-                  <User className="w-16 h-16 text-slate-400" />
+                <div className="w-40 h-40 rounded-full bg-slate-200 border-6 border-white shadow-xl ring-4 ring-slate-100 flex items-center justify-center">
+                  <User className="w-20 h-20 text-slate-400" />
                 </div>
               )}
               {isEditing && (
@@ -169,21 +169,21 @@ export function UserProfile() {
               )}
             </div>
 
-            <div className="flex-1 pt-16">
+            <div className="flex-1 pb-4 bg-white">
               <div className="flex items-start justify-between">
                 <div>
-                  <h1 className="text-2xl font-bold text-slate-800">
+                  <h1 className="text-3xl font-bold text-slate-900">
                     {employee ? `${employee.first_name} ${employee.last_name}` : user?.email?.split('@')[0] || 'Usuario'}
                   </h1>
-                  <p className="text-slate-600 mt-1">{formData.position || 'Sin cargo asignado'}</p>
-                  <div className="mt-2 inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                  <p className="text-slate-600 mt-1 text-lg">{formData.position || 'Sin cargo asignado'}</p>
+                  <div className="mt-3 inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
                     {systemUser?.role && getRoleName(systemUser.role)}
                   </div>
                 </div>
                 {!isEditing && (
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                    className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium shadow-sm"
                   >
                     Editar Perfil
                   </button>
@@ -191,6 +191,8 @@ export function UserProfile() {
               </div>
             </div>
           </div>
+
+          <div className="border-t border-slate-200 pt-6"></div>
 
           {message && (
             <div
