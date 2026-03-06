@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ClipboardList, Users, Building2 } from 'lucide-react';
 import { GoalDefinitionForm } from './GoalDefinitionForm';
+import { OperativeGoalDefinitionForm } from './OperativeGoalDefinitionForm';
 
 type EvaluationType = 'administrative' | 'operative' | null;
 
@@ -12,30 +13,7 @@ export function GoalDefinitionsHome() {
   }
 
   if (selectedType === 'operative') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white rounded-lg shadow-sm p-8">
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-slate-800 mb-4">
-                Definición de Metas - Operativo
-              </h1>
-              <p className="text-slate-600">
-                Esta funcionalidad estará disponible próximamente.
-              </p>
-            </div>
-            <div className="flex justify-center">
-              <button
-                onClick={() => setSelectedType(null)}
-                className="px-6 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
-              >
-                Volver
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <OperativeGoalDefinitionForm onBack={() => setSelectedType(null)} />;
   }
 
   return (
