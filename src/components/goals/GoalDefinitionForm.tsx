@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Save, FileText, Users, Calendar, Building2, MapPin, User } from 'lucide-react';
+import { Save, FileText, Users, Calendar, Building2, MapPin, User, Download, Printer } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface Employee {
   id: string;
@@ -15,6 +17,7 @@ interface Employee {
 }
 
 export function GoalDefinitionForm() {
+  const formRef = useRef<HTMLDivElement>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
@@ -91,6 +94,47 @@ export function GoalDefinitionForm() {
     const newBehaviors = [...behaviors];
     newBehaviors[index].description = value;
     setBehaviors(newBehaviors);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!formRef.current || !selectedEmployee) return;
+
+    try {
+      const canvas = await html2canvas(formRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+
+      const imgWidth = 210;
+      const pageHeight = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      let position = 0;
+
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      const fileName = `Definicion_Metas_${selectedEmployee.first_name}_${selectedEmployee.last_name}_${definitionDate}.pdf`;
+      pdf.save(fileName);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      setMessage({ type: 'error', text: 'Error al generar el PDF' });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -187,7 +231,7 @@ export function GoalDefinitionForm() {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" ref={formRef}>
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -404,7 +448,40 @@ export function GoalDefinitionForm() {
             </div>
           </div>
 
-          <div className="flex justify-end gap-4 pt-6 border-t-2 border-slate-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 mb-8">
+            <div className="text-center">
+              <div className="border-t-2 border-slate-800 pt-3 mt-24">
+                <p className="text-sm font-bold text-slate-700">Firma Colaborador</p>
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="border-t-2 border-slate-800 pt-3 mt-24">
+                <p className="text-sm font-bold text-slate-700">Firma Jefe Inmediato</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center gap-4 pt-6 border-t-2 border-slate-200">
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={handleDownloadPDF}
+                disabled={!selectedEmployee}
+                className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-bold disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              >
+                <Download className="w-5 h-5" />
+                Guardar PDF
+              </button>
+              <button
+                type="button"
+                onClick={handlePrint}
+                disabled={!selectedEmployee}
+                className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-bold disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              >
+                <Printer className="w-5 h-5" />
+                Imprimir
+              </button>
+            </div>
             <button
               type="submit"
               disabled={loading}
