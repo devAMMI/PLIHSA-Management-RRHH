@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Save, FileText, Users, Calendar, Building2, MapPin, User, Download, Printer, X } from 'lucide-react';
+import { Save, FileText, Users, Calendar, Building2, MapPin, User, Download, Printer, X, ArrowLeft } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -16,7 +16,11 @@ interface Employee {
   manager: { first_name: string; last_name: string; position: string } | null;
 }
 
-export function GoalDefinitionForm() {
+interface GoalDefinitionFormProps {
+  onBack?: () => void;
+}
+
+export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
   const formRef = useRef<HTMLDivElement>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
@@ -234,6 +238,17 @@ export function GoalDefinitionForm() {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
+      {onBack && (
+        <div className="mb-4">
+          <button
+            onClick={onBack}
+            className="flex items-center text-slate-600 hover:text-slate-800 transition-colors print:hidden"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            <span className="font-medium">Volver a selección de tipo</span>
+          </button>
+        </div>
+      )}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" ref={formRef}>
         <div className="bg-white border-b-2 border-slate-300">
           <div className="grid grid-cols-12">

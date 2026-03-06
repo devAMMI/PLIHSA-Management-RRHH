@@ -17,7 +17,7 @@ import EvaluacionAdministrativa from './components/evaluations/EvaluacionAdminis
 import EvaluacionesPLIHSA from './components/evaluations/EvaluacionesPLIHSA';
 import { RawEvaluations } from './components/debug/RawEvaluations';
 import { SQLExecutor } from './components/debug/SQLExecutor';
-import { GoalDefinitionForm } from './components/goals/GoalDefinitionForm';
+import { GoalDefinitionsHome } from './components/goals/GoalDefinitionsHome';
 import { GoalDefinitionsList } from './components/goals/GoalDefinitionsList';
 
 function AppContent() {
@@ -72,9 +72,9 @@ function AppContent() {
       case 'sql-executor':
         return 'SQL Evaluaciones';
       case 'goal-definition-enero':
-        return 'Definición Metas ENERO';
+        return 'Definición de Metas';
       case 'goal-definitions-list':
-        return 'Evaluaciones Guardadas - ENERO';
+        return 'Definiciones de Metas Guardadas';
       default:
         return 'Dashboard';
     }
@@ -133,7 +133,7 @@ function AppContent() {
           </div>
         );
       case 'goal-definition-enero':
-        return <GoalDefinitionForm />;
+        return <GoalDefinitionsHome />;
       case 'goal-definitions-list':
         return <GoalDefinitionsList />;
       default:
