@@ -17,6 +17,7 @@ import EvaluacionAdministrativa from './components/evaluations/EvaluacionAdminis
 import EvaluacionesPLIHSA from './components/evaluations/EvaluacionesPLIHSA';
 import { RawEvaluations } from './components/debug/RawEvaluations';
 import { SQLExecutor } from './components/debug/SQLExecutor';
+import { GoalDefinitionForm } from './components/goals/GoalDefinitionForm';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -69,6 +70,8 @@ function AppContent() {
         return 'Evaluaciones Hechas (Raw Data)';
       case 'sql-executor':
         return 'SQL Evaluaciones';
+      case 'goal-definition-enero':
+        return 'Definición Metas ENERO';
       default:
         return 'Dashboard';
     }
@@ -126,6 +129,8 @@ function AppContent() {
             <p className="text-slate-600">Configuración en desarrollo</p>
           </div>
         );
+      case 'goal-definition-enero':
+        return <GoalDefinitionForm />;
       default:
         return <Dashboard />;
     }
