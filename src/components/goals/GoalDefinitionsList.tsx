@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { FileText, Eye, Trash2, Calendar, User, Building2, CheckCircle, Clock, AlertCircle, ArrowLeft } from 'lucide-react';
+import { GoalDefinitionViewer } from './GoalDefinitionViewer';
 
 interface Employee {
   first_name: string;
   last_name: string;
   position: string;
   employee_code: string;
+  hire_date: string;
   department: { name: string } | null;
+  sub_department: { name: string } | null;
+  manager: { first_name: string; last_name: string; position: string } | null;
 }
 
 interface AdministrativeGoalDefinition {
@@ -21,11 +25,13 @@ interface AdministrativeGoalDefinition {
   created_at: string;
   employee: Employee;
   individual_goals: Array<{
+    id: string;
     goal_number: number;
     goal_description: string;
     measurement_and_expected_results: string;
   }>;
   competency_behaviors: Array<{
+    id: string;
     behavior_number: number;
     behavior_description: string;
   }>;
@@ -84,14 +90,19 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
               last_name,
               position,
               employee_code,
-              department:departments!employees_department_id_fkey (name)
+              hire_date,
+              department:departments!employees_department_id_fkey (name),
+              sub_department:sub_departments!employees_sub_department_id_fkey (name),
+              manager:manager_id (first_name, last_name, position)
             ),
             individual_goals (
+              id,
               goal_number,
               goal_description,
               measurement_and_expected_results
             ),
             competency_behaviors (
+              id,
               behavior_number,
               behavior_description
             )
@@ -202,7 +213,7 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className={`${type === 'administrative' ? 'bg-gradient-to-r from-blue-600 to-blue-700' : 'bg-gradient-to-r from-green-600 to-green-700'} px-8 py-6`}>
+          <div className={`${type === 'administrative' ? 'bg-gradient-to-r from-blue-600 to-blue-700' : 'bg-gradient-to-r from-orange-600 to-orange-700'} px-8 py-6`}>
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-white flex items-center gap-3">
@@ -299,7 +310,7 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
                             setSelectedDefinition(definition);
                             setShowModal(true);
                           }}
-                          className={`p-2 ${type === 'administrative' ? 'text-blue-600 hover:bg-blue-50' : 'text-green-600 hover:bg-green-50'} rounded-lg transition`}
+                          className={`p-2 ${type === 'administrative' ? 'text-blue-600 hover:bg-blue-50' : 'text-orange-600 hover:bg-orange-50'} rounded-lg transition`}
                           title="Ver detalles"
                         >
                           <Eye className="w-5 h-5" />
@@ -321,144 +332,13 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
         </div>
       </div>
 
-      {showModal && selectedDefinition && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className={`${type === 'administrative' ? 'bg-blue-900' : 'bg-green-900'} text-white px-6 py-4 flex items-center justify-between`}>
-              <h2 className="text-xl font-bold">
-                Definición de Metas - {selectedDefinition.employee.first_name} {selectedDefinition.employee.last_name}
-              </h2>
-              <button
-                onClick={() => setShowModal(false)}
-                className={`p-2 ${type === 'administrative' ? 'hover:bg-blue-800' : 'hover:bg-green-800'} rounded-lg transition`}
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-6">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-semibold text-slate-700">Posición:</span>
-                  <p className="text-slate-600">{selectedDefinition.employee.position}</p>
-                </div>
-                <div>
-                  <span className="font-semibold text-slate-700">Departamento:</span>
-                  <p className="text-slate-600">{selectedDefinition.employee.department?.name || 'N/A'}</p>
-                </div>
-                <div>
-                  <span className="font-semibold text-slate-700">Periodo:</span>
-                  <p className="text-slate-600">{selectedDefinition.evaluation_period}</p>
-                </div>
-                <div>
-                  <span className="font-semibold text-slate-700">Fecha de Definición:</span>
-                  <p className="text-slate-600">{new Date(selectedDefinition.definition_date).toLocaleDateString('es-HN')}</p>
-                </div>
-              </div>
-
-              {isAdministrative(selectedDefinition) && (
-                <>
-                  <div>
-                    <h3 className="font-bold text-slate-800 mb-3 text-lg">Metas Individuales</h3>
-                    <div className="space-y-3">
-                      {selectedDefinition.individual_goals.map((goal) => (
-                        <div key={goal.goal_number} className="border border-slate-200 rounded-lg p-4">
-                          <div className="font-semibold text-blue-900 mb-2">Meta #{goal.goal_number}</div>
-                          <div className="text-sm space-y-2">
-                            <div>
-                              <span className="font-medium text-slate-700">Descripción:</span>
-                              <p className="text-slate-600 mt-1">{goal.goal_description}</p>
-                            </div>
-                            <div>
-                              <span className="font-medium text-slate-700">Medición:</span>
-                              <p className="text-slate-600 mt-1">{goal.measurement_and_expected_results}</p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-bold text-slate-800 mb-3 text-lg">Competencias Conductuales/Habilidades</h3>
-                    <div className="space-y-2">
-                      {selectedDefinition.competency_behaviors.map((behavior) => (
-                        <div key={behavior.behavior_number} className="border border-slate-200 rounded-lg p-3">
-                          <span className="font-semibold text-blue-900">#{behavior.behavior_number}:</span>
-                          <span className="text-slate-600 ml-2">{behavior.behavior_description}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {isOperative(selectedDefinition) && (
-                <>
-                  <div>
-                    <h3 className="font-bold text-slate-800 mb-3 text-lg">Funciones del Puesto y Resultados Esperados</h3>
-                    <div className="space-y-3">
-                      {selectedDefinition.operative_individual_goals.map((goal) => (
-                        <div key={goal.goal_number} className="border border-slate-200 rounded-lg p-4">
-                          <div className="font-semibold text-green-900 mb-2">#{goal.goal_number}</div>
-                          <div className="text-sm space-y-2">
-                            <div>
-                              <span className="font-medium text-slate-700">Función:</span>
-                              <p className="text-slate-600 mt-1">{goal.goal_description}</p>
-                            </div>
-                            <div>
-                              <span className="font-medium text-slate-700">Resultados Esperados:</span>
-                              <p className="text-slate-600 mt-1">{goal.measurement_and_expected_results}</p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-bold text-slate-800 mb-3 text-lg">Competencias Conductuales y Habilidades Técnicas</h3>
-                    <div className="space-y-2">
-                      {selectedDefinition.operative_safety_standards.map((standard) => (
-                        <div key={standard.standard_number} className="border border-slate-200 rounded-lg p-3">
-                          <span className="font-semibold text-green-900">#{standard.standard_number}:</span>
-                          <span className="text-slate-600 ml-2">{standard.standard_description}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {selectedDefinition.manager_comments && (
-                <div>
-                  <h3 className="font-bold text-slate-800 mb-2">Comentarios del Jefe Inmediato</h3>
-                  <p className="text-slate-600 bg-slate-50 p-4 rounded-lg whitespace-pre-wrap">
-                    {selectedDefinition.manager_comments}
-                  </p>
-                </div>
-              )}
-
-              {selectedDefinition.employee_comments && (
-                <div>
-                  <h3 className="font-bold text-slate-800 mb-2">Comentarios del Colaborador</h3>
-                  <p className="text-slate-600 bg-slate-50 p-4 rounded-lg whitespace-pre-wrap">
-                    {selectedDefinition.employee_comments}
-                  </p>
-                </div>
-              )}
-
-              <div className="flex justify-end pt-4 border-t border-slate-200">
-                <button
-                  onClick={() => setShowModal(false)}
-                  className={`px-6 py-2 ${type === 'administrative' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} text-white rounded-lg transition font-medium`}
-                >
-                  Cerrar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {showModal && selectedDefinition && type === 'administrative' && isAdministrative(selectedDefinition) && (
+        <GoalDefinitionViewer
+          definition={selectedDefinition}
+          onClose={() => setShowModal(false)}
+          onUpdate={fetchDefinitions}
+          mode="view"
+        />
       )}
     </div>
   );
