@@ -44,6 +44,7 @@ export function GoalDefinitionForm() {
 
   const [managerComments, setManagerComments] = useState('');
   const [employeeComments, setEmployeeComments] = useState('');
+  const [subDepartment, setSubDepartment] = useState('');
 
   useEffect(() => {
     loadEmployees();
@@ -53,8 +54,10 @@ export function GoalDefinitionForm() {
     if (selectedEmployeeId) {
       const employee = employees.find(e => e.id === selectedEmployeeId);
       setSelectedEmployee(employee || null);
+      setSubDepartment(employee?.sub_department?.name || '');
     } else {
       setSelectedEmployee(null);
+      setSubDepartment('');
     }
   }, [selectedEmployeeId, employees]);
 
@@ -323,8 +326,14 @@ export function GoalDefinitionForm() {
                   <div className="bg-blue-900 text-white px-4 py-2 font-bold text-sm border-r border-white border-l border-slate-300">
                     Sub-departamento:
                   </div>
-                  <div className="px-4 py-2 bg-slate-100 border border-slate-300 text-sm">
-                    {selectedEmployee.sub_department?.name || 'N/A'}
+                  <div className="bg-slate-100 border border-slate-300">
+                    <input
+                      type="text"
+                      value={subDepartment}
+                      onChange={(e) => setSubDepartment(e.target.value)}
+                      className="w-full h-full px-4 py-2 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                      placeholder="Sub-departamento (opcional)"
+                    />
                   </div>
                 </div>
 
