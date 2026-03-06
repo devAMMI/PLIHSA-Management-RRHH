@@ -18,6 +18,7 @@ import EvaluacionesPLIHSA from './components/evaluations/EvaluacionesPLIHSA';
 import { RawEvaluations } from './components/debug/RawEvaluations';
 import { SQLExecutor } from './components/debug/SQLExecutor';
 import { GoalDefinitionForm } from './components/goals/GoalDefinitionForm';
+import { GoalDefinitionsList } from './components/goals/GoalDefinitionsList';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -72,6 +73,8 @@ function AppContent() {
         return 'SQL Evaluaciones';
       case 'goal-definition-enero':
         return 'Definición Metas ENERO';
+      case 'goal-definitions-list':
+        return 'Evaluaciones Guardadas - ENERO';
       default:
         return 'Dashboard';
     }
@@ -131,6 +134,8 @@ function AppContent() {
         );
       case 'goal-definition-enero':
         return <GoalDefinitionForm />;
+      case 'goal-definitions-list':
+        return <GoalDefinitionsList />;
       default:
         return <Dashboard />;
     }

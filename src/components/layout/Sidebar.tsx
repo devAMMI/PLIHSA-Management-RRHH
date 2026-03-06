@@ -1,4 +1,4 @@
-import { Home, Users, ClipboardCheck, Building2, Settings, LogOut, User as UserIcon, Shield, FileText, Database, Terminal, BarChart3, Target } from 'lucide-react';
+import { Home, Users, ClipboardCheck, Building2, Settings, LogOut, User as UserIcon, Shield, FileText, Database, Terminal, BarChart3, Target, Archive } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface SidebarProps {
@@ -13,6 +13,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'employees', label: 'Empleados', icon: Users },
     { id: 'goal-definition-enero', label: 'Definición Metas ENERO', icon: Target, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager'] },
+    { id: 'goal-definitions-list', label: 'Ver Evaluaciones ENERO', icon: Archive, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager'] },
     { id: 'evaluacion-administrativa-nueva', label: 'Nueva Evaluación Admin', icon: ClipboardCheck, requiredRoles: ['superadmin', 'admin', 'rrhh'] },
     { id: 'evaluaciones-plihsa', label: 'Evaluaciones PLIHSA', icon: BarChart3, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager'] },
     { id: 'evaluations-list', label: 'Ver Evaluaciones', icon: FileText },

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Save, FileText, Users, Calendar, Building2, MapPin, User, Download, Printer } from 'lucide-react';
+import { Save, FileText, Users, Calendar, Building2, MapPin, User, Download, Printer, X } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -473,6 +473,14 @@ export function GoalDefinitionForm() {
 
           <div className="flex justify-between items-center gap-4 pt-6 border-t-2 border-slate-200">
             <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => window.history.back()}
+                className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-bold shadow-lg"
+              >
+                <X className="w-5 h-5" />
+                Cancelar
+              </button>
               <button
                 type="button"
                 onClick={handleDownloadPDF}
