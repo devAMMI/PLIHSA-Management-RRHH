@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Save, Printer, Edit2, X, ArrowLeft } from 'lucide-react';
+import { Save, Printer, CreditCard as Edit2, X, ArrowLeft } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
