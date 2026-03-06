@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ClipboardList, Users, Building2, List, FileEdit, FileCheck } from 'lucide-react';
+import { ClipboardList, Users, Building2, List, File as FileEdit, FileCheck } from 'lucide-react';
 import { GoalDefinitionForm } from './GoalDefinitionForm';
 import { OperativeGoalDefinitionForm } from './OperativeGoalDefinitionForm';
 import { GoalDefinitionsList } from './GoalDefinitionsList';
