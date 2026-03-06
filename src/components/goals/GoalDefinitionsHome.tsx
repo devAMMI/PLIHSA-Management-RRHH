@@ -72,104 +72,124 @@ export function GoalDefinitionsHome() {
           </div>
         </div>
 
-        {/* Actions Grid - App Style */}
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* Administrative Form */}
-            <button
-              onClick={() => setCurrentView('administrative-form')}
-              className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-blue-500 flex flex-col items-center text-center"
-            >
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-md">
-                <Building2 className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-sm font-bold text-slate-800 mb-1">Nueva Definición</h3>
-              <p className="text-xs text-blue-600 font-semibold">Administrativo</p>
-            </button>
+        {/* Actions Grid - Organized by Type */}
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row gap-8 justify-center">
+            {/* Administrative Section - Left Side */}
+            <div className="flex-1 max-w-md">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-3xl p-6 shadow-lg border border-blue-200">
+                <div className="flex items-center mb-6">
+                  <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mr-3">
+                    <Building2 className="w-6 h-6 text-white" />
+                  </div>
+                  <h2 className="text-xl font-bold text-slate-800">Administrativo</h2>
+                </div>
 
-            {/* Operative Form */}
-            <button
-              onClick={() => setCurrentView('operative-form')}
-              className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-green-500 flex flex-col items-center text-center"
-            >
-              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-md">
-                <Users className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-sm font-bold text-slate-800 mb-1">Nueva Definición</h3>
-              <p className="text-xs text-green-600 font-semibold">Operativo</p>
-            </button>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Administrative Form */}
+                  <button
+                    onClick={() => setCurrentView('administrative-form')}
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-blue-500 flex flex-col items-center text-center"
+                  >
+                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <Building2 className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">Nueva Definición</h3>
+                  </button>
 
-            {/* Administrative List */}
-            <button
-              onClick={() => setCurrentView('administrative-list')}
-              className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-blue-500 flex flex-col items-center text-center"
-            >
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-500 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-md">
-                <List className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-sm font-bold text-slate-800 mb-1">Ver Definiciones</h3>
-              <p className="text-xs text-blue-600 font-semibold">Administrativo</p>
-            </button>
+                  {/* Administrative List */}
+                  <button
+                    onClick={() => setCurrentView('administrative-list')}
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-blue-500 flex flex-col items-center text-center"
+                  >
+                    <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <List className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">Ver Definiciones</h3>
+                  </button>
 
-            {/* Operative List */}
-            <button
-              onClick={() => setCurrentView('operative-list')}
-              className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-green-500 flex flex-col items-center text-center"
-            >
-              <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-500 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-md">
-                <List className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-sm font-bold text-slate-800 mb-1">Ver Definiciones</h3>
-              <p className="text-xs text-green-600 font-semibold">Operativo</p>
-            </button>
+                  {/* Administrative Drafts */}
+                  <button
+                    onClick={() => setCurrentView('administrative-drafts')}
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-amber-500 flex flex-col items-center text-center"
+                  >
+                    <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-amber-500 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <FileEdit className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">Borradores</h3>
+                  </button>
 
-            {/* Administrative Drafts */}
-            <button
-              onClick={() => setCurrentView('administrative-drafts')}
-              className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-amber-500 flex flex-col items-center text-center"
-            >
-              <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-500 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-md">
-                <FileEdit className="w-8 h-8 text-white" />
+                  {/* Administrative Finalized */}
+                  <button
+                    onClick={() => setCurrentView('administrative-finalized')}
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-emerald-500 flex flex-col items-center text-center"
+                  >
+                    <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <FileCheck className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">Finalizados</h3>
+                  </button>
+                </div>
               </div>
-              <h3 className="text-sm font-bold text-slate-800 mb-1">Borradores</h3>
-              <p className="text-xs text-amber-600 font-semibold">Administrativo</p>
-            </button>
+            </div>
 
-            {/* Operative Drafts */}
-            <button
-              onClick={() => setCurrentView('operative-drafts')}
-              className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-amber-500 flex flex-col items-center text-center"
-            >
-              <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-500 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-md">
-                <FileEdit className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-sm font-bold text-slate-800 mb-1">Borradores</h3>
-              <p className="text-xs text-amber-600 font-semibold">Operativo</p>
-            </button>
+            {/* Operative Section - Right Side */}
+            <div className="flex-1 max-w-md">
+              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-3xl p-6 shadow-lg border border-green-200">
+                <div className="flex items-center mb-6">
+                  <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center mr-3">
+                    <Users className="w-6 h-6 text-white" />
+                  </div>
+                  <h2 className="text-xl font-bold text-slate-800">Operativo</h2>
+                </div>
 
-            {/* Administrative Finalized */}
-            <button
-              onClick={() => setCurrentView('administrative-finalized')}
-              className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-emerald-500 flex flex-col items-center text-center"
-            >
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-md">
-                <FileCheck className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-sm font-bold text-slate-800 mb-1">Finalizados</h3>
-              <p className="text-xs text-emerald-600 font-semibold">Administrativo</p>
-            </button>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Operative Form */}
+                  <button
+                    onClick={() => setCurrentView('operative-form')}
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-green-500 flex flex-col items-center text-center"
+                  >
+                    <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <Users className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">Nueva Definición</h3>
+                  </button>
 
-            {/* Operative Finalized */}
-            <button
-              onClick={() => setCurrentView('operative-finalized')}
-              className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-emerald-500 flex flex-col items-center text-center"
-            >
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-md">
-                <FileCheck className="w-8 h-8 text-white" />
+                  {/* Operative List */}
+                  <button
+                    onClick={() => setCurrentView('operative-list')}
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-green-500 flex flex-col items-center text-center"
+                  >
+                    <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-green-500 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <List className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">Ver Definiciones</h3>
+                  </button>
+
+                  {/* Operative Drafts */}
+                  <button
+                    onClick={() => setCurrentView('operative-drafts')}
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-amber-500 flex flex-col items-center text-center"
+                  >
+                    <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-amber-500 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <FileEdit className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">Borradores</h3>
+                  </button>
+
+                  {/* Operative Finalized */}
+                  <button
+                    onClick={() => setCurrentView('operative-finalized')}
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-emerald-500 flex flex-col items-center text-center"
+                  >
+                    <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <FileCheck className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">Finalizados</h3>
+                  </button>
+                </div>
               </div>
-              <h3 className="text-sm font-bold text-slate-800 mb-1">Finalizados</h3>
-              <p className="text-xs text-emerald-600 font-semibold">Operativo</p>
-            </button>
+            </div>
           </div>
         </div>
 
