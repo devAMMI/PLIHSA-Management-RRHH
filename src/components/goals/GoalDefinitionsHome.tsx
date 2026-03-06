@@ -57,7 +57,7 @@ export function GoalDefinitionsHome() {
         <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
           <div className="flex items-center justify-center mb-6">
             <img
-              src="/Profile-pic-plihsa-logo-foto.jpg"
+              src="/Logo_PLIHSA_BLUE.png"
               alt="PLIHSA Logo"
               className="w-16 h-16 object-contain mr-4"
             />

@@ -293,7 +293,7 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
               <div className="grid grid-cols-12">
                 <div className="col-span-3 border-r-2 border-slate-300 p-4 flex items-center justify-center">
                   <img
-                    src="/Profile-pic-plihsa-logo-foto.jpg"
+                    src="/Logo_PLIHSA_BLUE.png"
                     alt="PLIHSA Logo"
                     className="w-full h-auto max-w-[180px]"
                   />

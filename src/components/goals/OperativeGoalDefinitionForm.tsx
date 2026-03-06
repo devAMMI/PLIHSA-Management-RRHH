@@ -232,9 +232,11 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
       <div className="bg-white rounded-lg shadow-lg border-2 border-slate-300 overflow-hidden" ref={formRef}>
         <div className="grid grid-cols-12 border-b-2 border-slate-300">
           <div className="col-span-3 border-r-2 border-slate-300 p-4 flex items-center justify-center bg-white">
-            <div className="w-full max-w-[160px] bg-[#1e5a96] rounded-full px-6 py-3 flex items-center justify-center">
-              <span className="text-white font-bold text-2xl tracking-wider">PLIHSA</span>
-            </div>
+            <img
+              src="/Logo_PLIHSA_BLUE.png"
+              alt="PLIHSA Logo"
+              className="w-full h-auto max-w-[180px]"
+            />
           </div>
           <div className="col-span-6 border-r-2 border-slate-300 p-4 flex items-center justify-center bg-white">
             <h1 className="text-base font-bold text-center text-slate-800">
