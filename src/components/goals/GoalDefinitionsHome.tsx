@@ -1,10 +1,19 @@
 import { useState } from 'react';
-import { ClipboardList, Users, Building2, List } from 'lucide-react';
+import { ClipboardList, Users, Building2, List, FileEdit, FileCheck } from 'lucide-react';
 import { GoalDefinitionForm } from './GoalDefinitionForm';
 import { OperativeGoalDefinitionForm } from './OperativeGoalDefinitionForm';
 import { GoalDefinitionsList } from './GoalDefinitionsList';
 
-type ViewType = 'home' | 'administrative-form' | 'operative-form' | 'administrative-list' | 'operative-list';
+type ViewType =
+  | 'home'
+  | 'administrative-form'
+  | 'operative-form'
+  | 'administrative-list'
+  | 'operative-list'
+  | 'administrative-drafts'
+  | 'operative-drafts'
+  | 'administrative-finalized'
+  | 'operative-finalized';
 
 export function GoalDefinitionsHome() {
   const [currentView, setCurrentView] = useState<ViewType>('home');
@@ -23,6 +32,22 @@ export function GoalDefinitionsHome() {
 
   if (currentView === 'operative-list') {
     return <GoalDefinitionsList type="operative" onBack={() => setCurrentView('home')} />;
+  }
+
+  if (currentView === 'administrative-drafts') {
+    return <GoalDefinitionsList type="administrative" filterStatus="draft" onBack={() => setCurrentView('home')} />;
+  }
+
+  if (currentView === 'operative-drafts') {
+    return <GoalDefinitionsList type="operative" filterStatus="draft" onBack={() => setCurrentView('home')} />;
+  }
+
+  if (currentView === 'administrative-finalized') {
+    return <GoalDefinitionsList type="administrative" filterStatus="approved" onBack={() => setCurrentView('home')} />;
+  }
+
+  if (currentView === 'operative-finalized') {
+    return <GoalDefinitionsList type="operative" filterStatus="approved" onBack={() => setCurrentView('home')} />;
   }
 
   return (
@@ -173,6 +198,94 @@ export function GoalDefinitionsHome() {
               </div>
               <p className="text-sm text-slate-600">
                 Consultar y revisar las definiciones de metas operativas ya realizadas
+              </p>
+            </button>
+          </div>
+        </div>
+
+        {/* Draft Formats Buttons */}
+        <div className="mt-12 max-w-5xl mx-auto">
+          <h2 className="text-2xl font-bold text-slate-800 mb-6 text-center">
+            Formatos en Borrador Guardados
+          </h2>
+          <div className="grid md:grid-cols-2 gap-6">
+            <button
+              onClick={() => setCurrentView('administrative-drafts')}
+              className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 p-6 border-2 border-transparent hover:border-yellow-500 group"
+            >
+              <div className="flex items-center mb-4">
+                <div className="flex items-center justify-center w-12 h-12 bg-yellow-100 rounded-full mr-4 group-hover:bg-yellow-200 transition-colors">
+                  <FileEdit className="w-6 h-6 text-yellow-600" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-lg font-bold text-slate-800">Borradores</h3>
+                  <p className="text-yellow-600 font-semibold">Administrativo</p>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600">
+                Ver y continuar editando formatos administrativos guardados en borrador
+              </p>
+            </button>
+
+            <button
+              onClick={() => setCurrentView('operative-drafts')}
+              className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 p-6 border-2 border-transparent hover:border-yellow-500 group"
+            >
+              <div className="flex items-center mb-4">
+                <div className="flex items-center justify-center w-12 h-12 bg-yellow-100 rounded-full mr-4 group-hover:bg-yellow-200 transition-colors">
+                  <FileEdit className="w-6 h-6 text-yellow-600" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-lg font-bold text-slate-800">Borradores</h3>
+                  <p className="text-yellow-600 font-semibold">Operativo</p>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600">
+                Ver y continuar editando formatos operativos guardados en borrador
+              </p>
+            </button>
+          </div>
+        </div>
+
+        {/* Finalized Formats Buttons */}
+        <div className="mt-12 max-w-5xl mx-auto">
+          <h2 className="text-2xl font-bold text-slate-800 mb-6 text-center">
+            Formatos Finalizados
+          </h2>
+          <div className="grid md:grid-cols-2 gap-6">
+            <button
+              onClick={() => setCurrentView('administrative-finalized')}
+              className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 p-6 border-2 border-transparent hover:border-green-500 group"
+            >
+              <div className="flex items-center mb-4">
+                <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mr-4 group-hover:bg-green-200 transition-colors">
+                  <FileCheck className="w-6 h-6 text-green-600" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-lg font-bold text-slate-800">Finalizados</h3>
+                  <p className="text-green-600 font-semibold">Administrativo</p>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600">
+                Ver formatos administrativos aprobados y firmados
+              </p>
+            </button>
+
+            <button
+              onClick={() => setCurrentView('operative-finalized')}
+              className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 p-6 border-2 border-transparent hover:border-green-500 group"
+            >
+              <div className="flex items-center mb-4">
+                <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mr-4 group-hover:bg-green-200 transition-colors">
+                  <FileCheck className="w-6 h-6 text-green-600" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-lg font-bold text-slate-800">Finalizados</h3>
+                  <p className="text-green-600 font-semibold">Operativo</p>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600">
+                Ver formatos operativos aprobados y firmados
               </p>
             </button>
           </div>

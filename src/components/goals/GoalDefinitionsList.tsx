@@ -56,15 +56,16 @@ interface OperativeGoalDefinition {
 interface GoalDefinitionsListProps {
   type: 'administrative' | 'operative';
   onBack: () => void;
+  filterStatus?: string;
 }
 
-export function GoalDefinitionsList({ type, onBack }: GoalDefinitionsListProps) {
+export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterStatus }: GoalDefinitionsListProps) {
   const [definitions, setDefinitions] = useState<(AdministrativeGoalDefinition | OperativeGoalDefinition)[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDefinition, setSelectedDefinition] = useState<AdministrativeGoalDefinition | OperativeGoalDefinition | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [filterPeriod, setFilterPeriod] = useState('Q1-2026');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>(initialFilterStatus || 'all');
 
   useEffect(() => {
     fetchDefinitions();
@@ -216,23 +217,25 @@ export function GoalDefinitionsList({ type, onBack }: GoalDefinitionsListProps) 
           </div>
 
           <div className="p-6">
-            <div className="flex gap-4 mb-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Estado
-                </label>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                >
-                  <option value="all">Todos</option>
-                  <option value="draft">Borrador</option>
-                  <option value="submitted">Enviado</option>
-                  <option value="approved">Aprobado</option>
-                </select>
+            {!initialFilterStatus && (
+              <div className="flex gap-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Estado
+                  </label>
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  >
+                    <option value="all">Todos</option>
+                    <option value="draft">Borrador</option>
+                    <option value="submitted">Enviado</option>
+                    <option value="approved">Aprobado</option>
+                  </select>
+                </div>
               </div>
-            </div>
+            )}
 
             {loading ? (
               <div className="text-center py-12">
