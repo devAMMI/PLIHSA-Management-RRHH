@@ -1,19 +1,28 @@
 import { useState } from 'react';
-import { ClipboardList, Users, Building2 } from 'lucide-react';
+import { ClipboardList, Users, Building2, List } from 'lucide-react';
 import { GoalDefinitionForm } from './GoalDefinitionForm';
 import { OperativeGoalDefinitionForm } from './OperativeGoalDefinitionForm';
+import { GoalDefinitionsList } from './GoalDefinitionsList';
 
-type EvaluationType = 'administrative' | 'operative' | null;
+type ViewType = 'home' | 'administrative-form' | 'operative-form' | 'administrative-list' | 'operative-list';
 
 export function GoalDefinitionsHome() {
-  const [selectedType, setSelectedType] = useState<EvaluationType>(null);
+  const [currentView, setCurrentView] = useState<ViewType>('home');
 
-  if (selectedType === 'administrative') {
-    return <GoalDefinitionForm onBack={() => setSelectedType(null)} />;
+  if (currentView === 'administrative-form') {
+    return <GoalDefinitionForm onBack={() => setCurrentView('home')} />;
   }
 
-  if (selectedType === 'operative') {
-    return <OperativeGoalDefinitionForm onBack={() => setSelectedType(null)} />;
+  if (currentView === 'operative-form') {
+    return <OperativeGoalDefinitionForm onBack={() => setCurrentView('home')} />;
+  }
+
+  if (currentView === 'administrative-list') {
+    return <GoalDefinitionsList type="administrative" onBack={() => setCurrentView('home')} />;
+  }
+
+  if (currentView === 'operative-list') {
+    return <GoalDefinitionsList type="operative" onBack={() => setCurrentView('home')} />;
   }
 
   return (
@@ -42,7 +51,7 @@ export function GoalDefinitionsHome() {
         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {/* Administrative Card */}
           <button
-            onClick={() => setSelectedType('administrative')}
+            onClick={() => setCurrentView('administrative-form')}
             className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-8 text-left border-2 border-transparent hover:border-blue-500 group"
           >
             <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-6 group-hover:bg-blue-200 transition-colors">
@@ -84,7 +93,7 @@ export function GoalDefinitionsHome() {
 
           {/* Operative Card */}
           <button
-            onClick={() => setSelectedType('operative')}
+            onClick={() => setCurrentView('operative-form')}
             className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-8 text-left border-2 border-transparent hover:border-green-500 group"
           >
             <div className="flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-6 group-hover:bg-green-200 transition-colors">
@@ -123,6 +132,50 @@ export function GoalDefinitionsHome() {
               </svg>
             </div>
           </button>
+        </div>
+
+        {/* View Definitions Buttons */}
+        <div className="mt-12 max-w-5xl mx-auto">
+          <h2 className="text-2xl font-bold text-slate-800 mb-6 text-center">
+            Ver Definiciones de Metas Realizadas
+          </h2>
+          <div className="grid md:grid-cols-2 gap-6">
+            <button
+              onClick={() => setCurrentView('administrative-list')}
+              className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 p-6 border-2 border-transparent hover:border-blue-500 group"
+            >
+              <div className="flex items-center mb-4">
+                <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mr-4 group-hover:bg-blue-200 transition-colors">
+                  <List className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-lg font-bold text-slate-800">Ver Definiciones</h3>
+                  <p className="text-blue-600 font-semibold">Administrativo</p>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600">
+                Consultar y revisar las definiciones de metas administrativas ya realizadas
+              </p>
+            </button>
+
+            <button
+              onClick={() => setCurrentView('operative-list')}
+              className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 p-6 border-2 border-transparent hover:border-green-500 group"
+            >
+              <div className="flex items-center mb-4">
+                <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mr-4 group-hover:bg-green-200 transition-colors">
+                  <List className="w-6 h-6 text-green-600" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-lg font-bold text-slate-800">Ver Definiciones</h3>
+                  <p className="text-green-600 font-semibold">Operativo</p>
+                </div>
+              </div>
+              <p className="text-sm text-slate-600">
+                Consultar y revisar las definiciones de metas operativas ya realizadas
+              </p>
+            </button>
+          </div>
         </div>
 
         {/* Info Footer */}
