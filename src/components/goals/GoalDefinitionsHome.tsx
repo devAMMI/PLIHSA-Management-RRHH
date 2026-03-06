@@ -72,221 +72,103 @@ export function GoalDefinitionsHome() {
           </div>
         </div>
 
-        {/* Cards Section */}
-        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          {/* Administrative Card */}
-          <button
-            onClick={() => setCurrentView('administrative-form')}
-            className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-8 text-left border-2 border-transparent hover:border-blue-500 group"
-          >
-            <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-6 group-hover:bg-blue-200 transition-colors">
-              <Building2 className="w-8 h-8 text-blue-600" />
-            </div>
-
-            <h2 className="text-2xl font-bold text-slate-800 mb-4">
-              Definición de Metas
-              <span className="block text-blue-600 mt-1">Administrativo</span>
-            </h2>
-
-            <p className="text-slate-600 mb-6">
-              Dirigido a personal administrativo, gerencial y de oficina. Este formato evalúa
-              competencias estratégicas, gestión de proyectos, liderazgo y resultados de negocio.
-            </p>
-
-            <div className="space-y-2 text-sm text-slate-500">
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
-                <span>Metas individuales y objetivos estratégicos</span>
+        {/* Actions Grid - App Style */}
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Administrative Form */}
+            <button
+              onClick={() => setCurrentView('administrative-form')}
+              className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-blue-500 flex flex-col items-center text-center"
+            >
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-md">
+                <Building2 className="w-8 h-8 text-white" />
               </div>
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
-                <span>Factores de comportamiento organizacional</span>
+              <h3 className="text-sm font-bold text-slate-800 mb-1">Nueva Definición</h3>
+              <p className="text-xs text-blue-600 font-semibold">Administrativo</p>
+            </button>
+
+            {/* Operative Form */}
+            <button
+              onClick={() => setCurrentView('operative-form')}
+              className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-green-500 flex flex-col items-center text-center"
+            >
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-md">
+                <Users className="w-8 h-8 text-white" />
               </div>
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
-                <span>Evaluación de competencias de liderazgo</span>
-              </div>
-            </div>
+              <h3 className="text-sm font-bold text-slate-800 mb-1">Nueva Definición</h3>
+              <p className="text-xs text-green-600 font-semibold">Operativo</p>
+            </button>
 
-            <div className="mt-8 flex items-center text-blue-600 font-semibold group-hover:translate-x-2 transition-transform">
-              <span>Seleccionar</span>
-              <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-          </button>
-
-          {/* Operative Card */}
-          <button
-            onClick={() => setCurrentView('operative-form')}
-            className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-8 text-left border-2 border-transparent hover:border-green-500 group"
-          >
-            <div className="flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-6 group-hover:bg-green-200 transition-colors">
-              <Users className="w-8 h-8 text-green-600" />
-            </div>
-
-            <h2 className="text-2xl font-bold text-slate-800 mb-4">
-              Definición de Metas
-              <span className="block text-green-600 mt-1">Operativo</span>
-            </h2>
-
-            <p className="text-slate-600 mb-6">
-              Dirigido a personal operativo y técnico. Este formato evalúa el desempeño en tareas
-              específicas, cumplimiento de procedimientos, seguridad y calidad del trabajo.
-            </p>
-
-            <div className="space-y-2 text-sm text-slate-500">
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                <span>Objetivos operativos y de producción</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                <span>Cumplimiento de normas de seguridad</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                <span>Indicadores de calidad y eficiencia</span>
-              </div>
-            </div>
-
-            <div className="mt-8 flex items-center text-green-600 font-semibold group-hover:translate-x-2 transition-transform">
-              <span>Seleccionar</span>
-              <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-          </button>
-        </div>
-
-        {/* View Definitions Buttons */}
-        <div className="mt-12 max-w-5xl mx-auto">
-          <h2 className="text-2xl font-bold text-slate-800 mb-6 text-center">
-            Ver Definiciones de Metas Realizadas
-          </h2>
-          <div className="grid md:grid-cols-2 gap-6">
+            {/* Administrative List */}
             <button
               onClick={() => setCurrentView('administrative-list')}
-              className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 p-6 border-2 border-transparent hover:border-blue-500 group"
+              className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-blue-500 flex flex-col items-center text-center"
             >
-              <div className="flex items-center mb-4">
-                <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mr-4 group-hover:bg-blue-200 transition-colors">
-                  <List className="w-6 h-6 text-blue-600" />
-                </div>
-                <div className="text-left">
-                  <h3 className="text-lg font-bold text-slate-800">Ver Definiciones</h3>
-                  <p className="text-blue-600 font-semibold">Administrativo</p>
-                </div>
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-500 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-md">
+                <List className="w-8 h-8 text-white" />
               </div>
-              <p className="text-sm text-slate-600">
-                Consultar y revisar las definiciones de metas administrativas ya realizadas
-              </p>
+              <h3 className="text-sm font-bold text-slate-800 mb-1">Ver Definiciones</h3>
+              <p className="text-xs text-blue-600 font-semibold">Administrativo</p>
             </button>
 
+            {/* Operative List */}
             <button
               onClick={() => setCurrentView('operative-list')}
-              className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 p-6 border-2 border-transparent hover:border-green-500 group"
+              className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-green-500 flex flex-col items-center text-center"
             >
-              <div className="flex items-center mb-4">
-                <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mr-4 group-hover:bg-green-200 transition-colors">
-                  <List className="w-6 h-6 text-green-600" />
-                </div>
-                <div className="text-left">
-                  <h3 className="text-lg font-bold text-slate-800">Ver Definiciones</h3>
-                  <p className="text-green-600 font-semibold">Operativo</p>
-                </div>
+              <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-500 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-md">
+                <List className="w-8 h-8 text-white" />
               </div>
-              <p className="text-sm text-slate-600">
-                Consultar y revisar las definiciones de metas operativas ya realizadas
-              </p>
+              <h3 className="text-sm font-bold text-slate-800 mb-1">Ver Definiciones</h3>
+              <p className="text-xs text-green-600 font-semibold">Operativo</p>
             </button>
-          </div>
-        </div>
 
-        {/* Draft Formats Buttons */}
-        <div className="mt-12 max-w-5xl mx-auto">
-          <h2 className="text-2xl font-bold text-slate-800 mb-6 text-center">
-            Formatos en Borrador Guardados
-          </h2>
-          <div className="grid md:grid-cols-2 gap-6">
+            {/* Administrative Drafts */}
             <button
               onClick={() => setCurrentView('administrative-drafts')}
-              className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 p-6 border-2 border-transparent hover:border-yellow-500 group"
+              className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-amber-500 flex flex-col items-center text-center"
             >
-              <div className="flex items-center mb-4">
-                <div className="flex items-center justify-center w-12 h-12 bg-yellow-100 rounded-full mr-4 group-hover:bg-yellow-200 transition-colors">
-                  <FileEdit className="w-6 h-6 text-yellow-600" />
-                </div>
-                <div className="text-left">
-                  <h3 className="text-lg font-bold text-slate-800">Borradores</h3>
-                  <p className="text-yellow-600 font-semibold">Administrativo</p>
-                </div>
+              <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-500 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-md">
+                <FileEdit className="w-8 h-8 text-white" />
               </div>
-              <p className="text-sm text-slate-600">
-                Ver y continuar editando formatos administrativos guardados en borrador
-              </p>
+              <h3 className="text-sm font-bold text-slate-800 mb-1">Borradores</h3>
+              <p className="text-xs text-amber-600 font-semibold">Administrativo</p>
             </button>
 
+            {/* Operative Drafts */}
             <button
               onClick={() => setCurrentView('operative-drafts')}
-              className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 p-6 border-2 border-transparent hover:border-yellow-500 group"
+              className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-amber-500 flex flex-col items-center text-center"
             >
-              <div className="flex items-center mb-4">
-                <div className="flex items-center justify-center w-12 h-12 bg-yellow-100 rounded-full mr-4 group-hover:bg-yellow-200 transition-colors">
-                  <FileEdit className="w-6 h-6 text-yellow-600" />
-                </div>
-                <div className="text-left">
-                  <h3 className="text-lg font-bold text-slate-800">Borradores</h3>
-                  <p className="text-yellow-600 font-semibold">Operativo</p>
-                </div>
+              <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-500 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-md">
+                <FileEdit className="w-8 h-8 text-white" />
               </div>
-              <p className="text-sm text-slate-600">
-                Ver y continuar editando formatos operativos guardados en borrador
-              </p>
+              <h3 className="text-sm font-bold text-slate-800 mb-1">Borradores</h3>
+              <p className="text-xs text-amber-600 font-semibold">Operativo</p>
             </button>
-          </div>
-        </div>
 
-        {/* Finalized Formats Buttons */}
-        <div className="mt-12 max-w-5xl mx-auto">
-          <h2 className="text-2xl font-bold text-slate-800 mb-6 text-center">
-            Formatos Finalizados
-          </h2>
-          <div className="grid md:grid-cols-2 gap-6">
+            {/* Administrative Finalized */}
             <button
               onClick={() => setCurrentView('administrative-finalized')}
-              className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 p-6 border-2 border-transparent hover:border-green-500 group"
+              className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-emerald-500 flex flex-col items-center text-center"
             >
-              <div className="flex items-center mb-4">
-                <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mr-4 group-hover:bg-green-200 transition-colors">
-                  <FileCheck className="w-6 h-6 text-green-600" />
-                </div>
-                <div className="text-left">
-                  <h3 className="text-lg font-bold text-slate-800">Finalizados</h3>
-                  <p className="text-green-600 font-semibold">Administrativo</p>
-                </div>
+              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-md">
+                <FileCheck className="w-8 h-8 text-white" />
               </div>
-              <p className="text-sm text-slate-600">
-                Ver formatos administrativos aprobados y firmados
-              </p>
+              <h3 className="text-sm font-bold text-slate-800 mb-1">Finalizados</h3>
+              <p className="text-xs text-emerald-600 font-semibold">Administrativo</p>
             </button>
 
+            {/* Operative Finalized */}
             <button
               onClick={() => setCurrentView('operative-finalized')}
-              className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 p-6 border-2 border-transparent hover:border-green-500 group"
+              className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-emerald-500 flex flex-col items-center text-center"
             >
-              <div className="flex items-center mb-4">
-                <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mr-4 group-hover:bg-green-200 transition-colors">
-                  <FileCheck className="w-6 h-6 text-green-600" />
-                </div>
-                <div className="text-left">
-                  <h3 className="text-lg font-bold text-slate-800">Finalizados</h3>
-                  <p className="text-green-600 font-semibold">Operativo</p>
-                </div>
+              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-md">
+                <FileCheck className="w-8 h-8 text-white" />
               </div>
-              <p className="text-sm text-slate-600">
-                Ver formatos operativos aprobados y firmados
-              </p>
+              <h3 className="text-sm font-bold text-slate-800 mb-1">Finalizados</h3>
+              <p className="text-xs text-emerald-600 font-semibold">Operativo</p>
             </button>
           </div>
         </div>
