@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ClipboardList, Users, Building2, List, File as FileEdit, FileCheck } from 'lucide-react';
+import { Users, Building2, List, File as FileEdit, FileCheck } from 'lucide-react';
 import { GoalDefinitionForm } from './GoalDefinitionForm';
 import { OperativeGoalDefinitionForm } from './OperativeGoalDefinitionForm';
 import { GoalDefinitionsList } from './GoalDefinitionsList';
@@ -56,7 +56,11 @@ export function GoalDefinitionsHome() {
         {/* Header */}
         <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
           <div className="flex items-center justify-center mb-6">
-            <ClipboardList className="w-12 h-12 text-blue-600 mr-4" />
+            <img
+              src="/Profile-pic-plihsa-logo-foto.jpg"
+              alt="PLIHSA Logo"
+              className="w-16 h-16 object-contain mr-4"
+            />
             <h1 className="text-4xl font-bold text-slate-800">Definición de Metas</h1>
           </div>
 
