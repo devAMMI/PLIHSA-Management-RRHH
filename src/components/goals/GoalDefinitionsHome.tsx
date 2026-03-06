@@ -115,9 +115,9 @@ export function GoalDefinitionsHome() {
                   {/* Administrative Drafts */}
                   <button
                     onClick={() => setCurrentView('administrative-drafts')}
-                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-amber-500 flex flex-col items-center text-center"
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-blue-500 flex flex-col items-center text-center"
                   >
-                    <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-amber-500 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                       <FileEdit className="w-7 h-7 text-white" />
                     </div>
                     <h3 className="text-xs font-bold text-slate-800">Borradores</h3>
@@ -126,9 +126,9 @@ export function GoalDefinitionsHome() {
                   {/* Administrative Finalized */}
                   <button
                     onClick={() => setCurrentView('administrative-finalized')}
-                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-emerald-500 flex flex-col items-center text-center"
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-blue-500 flex flex-col items-center text-center"
                   >
-                    <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                       <FileCheck className="w-7 h-7 text-white" />
                     </div>
                     <h3 className="text-xs font-bold text-slate-800">Finalizados</h3>
@@ -139,9 +139,9 @@ export function GoalDefinitionsHome() {
 
             {/* Operative Section - Right Side */}
             <div className="flex-1 max-w-md">
-              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-3xl p-6 shadow-lg border border-green-200">
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-3xl p-6 shadow-lg border border-orange-200">
                 <div className="flex items-center mb-6">
-                  <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center mr-3">
+                  <div className="w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center mr-3">
                     <Users className="w-6 h-6 text-white" />
                   </div>
                   <h2 className="text-xl font-bold text-slate-800">Operativo</h2>
@@ -151,9 +151,9 @@ export function GoalDefinitionsHome() {
                   {/* Operative Form */}
                   <button
                     onClick={() => setCurrentView('operative-form')}
-                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-green-500 flex flex-col items-center text-center"
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-orange-500 flex flex-col items-center text-center"
                   >
-                    <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                       <Users className="w-7 h-7 text-white" />
                     </div>
                     <h3 className="text-xs font-bold text-slate-800">Nueva Definición</h3>
@@ -162,9 +162,9 @@ export function GoalDefinitionsHome() {
                   {/* Operative List */}
                   <button
                     onClick={() => setCurrentView('operative-list')}
-                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-green-500 flex flex-col items-center text-center"
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-orange-500 flex flex-col items-center text-center"
                   >
-                    <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-green-500 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <div className="w-14 h-14 bg-gradient-to-br from-orange-400 to-orange-500 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                       <List className="w-7 h-7 text-white" />
                     </div>
                     <h3 className="text-xs font-bold text-slate-800">Ver Definiciones</h3>
@@ -173,9 +173,9 @@ export function GoalDefinitionsHome() {
                   {/* Operative Drafts */}
                   <button
                     onClick={() => setCurrentView('operative-drafts')}
-                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-amber-500 flex flex-col items-center text-center"
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-orange-500 flex flex-col items-center text-center"
                   >
-                    <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-amber-500 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <div className="w-14 h-14 bg-gradient-to-br from-orange-400 to-orange-500 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                       <FileEdit className="w-7 h-7 text-white" />
                     </div>
                     <h3 className="text-xs font-bold text-slate-800">Borradores</h3>
@@ -184,9 +184,9 @@ export function GoalDefinitionsHome() {
                   {/* Operative Finalized */}
                   <button
                     onClick={() => setCurrentView('operative-finalized')}
-                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-emerald-500 flex flex-col items-center text-center"
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-orange-500 flex flex-col items-center text-center"
                   >
-                    <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                       <FileCheck className="w-7 h-7 text-white" />
                     </div>
                     <h3 className="text-xs font-bold text-slate-800">Finalizados</h3>
