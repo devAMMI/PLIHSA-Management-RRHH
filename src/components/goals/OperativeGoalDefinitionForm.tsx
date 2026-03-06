@@ -229,294 +229,298 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
         </div>
       )}
 
-      <div className="mb-6 print:hidden">
-        <label className="block text-sm font-semibold text-slate-700 mb-2">
-          Seleccionar Empleado
-        </label>
-        <select
-          value={selectedEmployeeId}
-          onChange={(e) => setSelectedEmployeeId(e.target.value)}
-          className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        >
-          <option value="">-- Seleccione un empleado --</option>
-          {employees.map(employee => (
-            <option key={employee.id} value={employee.id}>
-              {employee.employee_code} - {employee.first_name} {employee.last_name} - {employee.position}
-            </option>
-          ))}
-        </select>
+      <div className="bg-white rounded-lg shadow-lg border-2 border-slate-300 overflow-hidden" ref={formRef}>
+        <div className="grid grid-cols-12 border-b-2 border-slate-300">
+          <div className="col-span-3 border-r-2 border-slate-300 p-4 flex items-center justify-center bg-white">
+            <div className="w-full max-w-[160px] bg-[#1e5a96] rounded-full px-6 py-3 flex items-center justify-center">
+              <span className="text-white font-bold text-2xl tracking-wider">PLIHSA</span>
+            </div>
+          </div>
+          <div className="col-span-6 border-r-2 border-slate-300 p-4 flex items-center justify-center bg-white">
+            <h1 className="text-base font-bold text-center text-slate-800">
+              Definición de Factores y Revisión del Desempeño Operativo
+            </h1>
+          </div>
+          <div className="col-span-3 bg-white">
+            <div className="text-xs border-b border-slate-300 px-3 py-1.5">
+              <span className="font-normal">Código: PL-RH-P-002-F04</span>
+            </div>
+            <div className="text-xs border-b border-slate-300 px-3 py-1.5">
+              <span className="font-normal">Versión: 01</span>
+            </div>
+            <div className="text-xs px-3 py-1.5">
+              <span className="font-normal">Fecha de Revisión: 09/07/2025</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-0">
+          <div className="md:col-span-2 mb-0">
+            <label className="block bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm">
+              Seleccionar Colaborador
+            </label>
+            <select
+              value={selectedEmployeeId}
+              onChange={(e) => setSelectedEmployeeId(e.target.value)}
+              className="w-full px-4 py-2 border-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-slate-100 print:hidden"
+              required
+            >
+              <option value="">-- Seleccionar empleado --</option>
+              {employees.map((emp) => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.first_name} {emp.last_name} - {emp.position}
+                </option>
+              ))}
+            </select>
+            {selectedEmployee && (
+              <div className="hidden print:block px-4 py-2 bg-slate-100 border-2 border-slate-300 text-sm">
+                {selectedEmployee.first_name} {selectedEmployee.last_name} - {selectedEmployee.position}
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-12">
+            <div className="col-span-12 bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">
+              Nombre del Colaborador:
+            </div>
+            <div className="col-span-12 bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
+              <input
+                type="text"
+                value={selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : ''}
+                readOnly
+                className="w-full bg-transparent border-0 outline-none print:p-0"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-12">
+            <div className="col-span-12 bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">
+              Posición del Colaborador:
+            </div>
+            <div className="col-span-12 bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
+              <input
+                type="text"
+                value={selectedEmployee?.position || ''}
+                readOnly
+                className="w-full bg-transparent border-0 outline-none print:p-0"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2">
+            <div className="col-span-1 border-r-2 border-slate-300">
+              <div className="bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">
+                Departamento:
+              </div>
+              <div className="bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
+                <input
+                  type="text"
+                  value={selectedEmployee?.department?.name || ''}
+                  readOnly
+                  className="w-full bg-transparent border-0 outline-none print:p-0"
+                />
+              </div>
+            </div>
+            <div className="col-span-1">
+              <div className="bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">
+                Sub-departamento:
+              </div>
+              <div className="bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
+                <input
+                  type="text"
+                  value={selectedEmployee?.sub_department?.name || ''}
+                  readOnly
+                  className="w-full bg-transparent border-0 outline-none print:p-0"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2">
+            <div className="col-span-1 border-r-2 border-slate-300">
+              <div className="bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">
+                Fecha de Ingreso:
+              </div>
+              <div className="bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
+                <input
+                  type="text"
+                  value={selectedEmployee ? new Date(selectedEmployee.hire_date).toLocaleDateString('es-HN') : ''}
+                  readOnly
+                  className="w-full bg-transparent border-0 outline-none print:p-0"
+                />
+              </div>
+            </div>
+            <div className="col-span-1">
+              <div className="bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">
+                Fecha de definición de factores a evaluar:
+              </div>
+              <div className="bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
+                <input
+                  type="date"
+                  value={definitionDate}
+                  onChange={(e) => setDefinitionDate(e.target.value)}
+                  className="w-full bg-transparent border-0 outline-none print:p-0"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-12">
+            <div className="col-span-12 bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">
+              Jefe Inmediato:
+            </div>
+            <div className="col-span-12 bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
+              <input
+                type="text"
+                value={selectedEmployee?.manager ? `${selectedEmployee.manager.first_name} ${selectedEmployee.manager.last_name}` : ''}
+                readOnly
+                className="w-full bg-transparent border-0 outline-none print:p-0"
+              />
+            </div>
+          </div>
+
+          <div className="bg-[#1e5a96] text-white px-4 py-2.5 font-bold text-sm text-center border-b-2 border-t-2 border-slate-300">
+            DEFINICIÓN DE FACTORES FUNCIONALES
+          </div>
+
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-[#1e5a96] text-white">
+                <th className="border-2 border-slate-300 px-3 py-2 text-sm font-bold text-center w-16">No.</th>
+                <th className="border-2 border-slate-300 px-3 py-2 text-sm font-bold text-center">Funciones del Puesto</th>
+                <th className="border-2 border-slate-300 px-3 py-2 text-sm font-bold text-center">Resultados Esperados</th>
+              </tr>
+            </thead>
+            <tbody>
+              {functionalFactors.map((factor, index) => (
+                <tr key={factor.number}>
+                  <td className="border-2 border-slate-300 px-3 py-3 text-center font-semibold text-sm bg-white">
+                    {factor.number}
+                  </td>
+                  <td className="border-2 border-slate-300 px-3 py-2 bg-white">
+                    <textarea
+                      value={factor.jobFunction}
+                      onChange={(e) => handleFunctionalFactorChange(index, 'jobFunction', e.target.value)}
+                      className="w-full bg-transparent border-0 outline-none resize-none text-sm print:p-0 min-h-[60px]"
+                      placeholder=""
+                    />
+                  </td>
+                  <td className="border-2 border-slate-300 px-3 py-2 bg-white">
+                    <textarea
+                      value={factor.expectedResults}
+                      onChange={(e) => handleFunctionalFactorChange(index, 'expectedResults', e.target.value)}
+                      className="w-full bg-transparent border-0 outline-none resize-none text-sm print:p-0 min-h-[60px]"
+                      placeholder=""
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div className="bg-[#1e5a96] text-white px-4 py-2.5 font-bold text-sm text-center border-b-2 border-t-2 border-slate-300">
+            DEFINICIÓN DE COMPETENCIAS CONDUCTUALES Y HABILIDADES TÉCNICAS
+          </div>
+
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-[#1e5a96] text-white">
+                <th className="border-2 border-slate-300 px-3 py-2 text-sm font-bold text-center w-16">No.</th>
+                <th className="border-2 border-slate-300 px-3 py-2 text-sm font-bold text-center">
+                  Conductas y Habilidades Técnicas (Definir las 5 Principales)
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {behavioralCompetencies.map((competency, index) => (
+                <tr key={competency.number}>
+                  <td className="border-2 border-slate-300 px-3 py-3 text-center font-semibold text-sm bg-white">
+                    {competency.number}
+                  </td>
+                  <td className="border-2 border-slate-300 px-3 py-2 bg-white">
+                    <textarea
+                      value={competency.description}
+                      onChange={(e) => handleBehavioralCompetencyChange(index, e.target.value)}
+                      className="w-full bg-transparent border-0 outline-none resize-none text-sm print:p-0 min-h-[60px]"
+                      placeholder=""
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div className="border-t-2 border-slate-300">
+            <div className="bg-[#2c4d6f] text-white px-4 py-3 font-bold text-sm">
+              Comentarios Jefe Inmediato
+            </div>
+            <div className="bg-white px-4 py-3 border-b-2 border-slate-300">
+              <textarea
+                value={managerComments}
+                onChange={(e) => setManagerComments(e.target.value)}
+                className="w-full bg-transparent border-0 outline-none resize-none text-sm print:p-0 min-h-[80px]"
+                placeholder=""
+              />
+            </div>
+          </div>
+
+          <div className="border-t-0 border-slate-300">
+            <div className="bg-[#2c4d6f] text-white px-4 py-3 font-bold text-sm">
+              Comentarios del Colaborador
+            </div>
+            <div className="bg-white px-4 py-3 border-b-2 border-slate-300">
+              <textarea
+                value={employeeComments}
+                onChange={(e) => setEmployeeComments(e.target.value)}
+                className="w-full bg-transparent border-0 outline-none resize-none text-sm print:p-0 min-h-[80px]"
+                placeholder=""
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-8 px-8 py-8">
+            <div className="text-center">
+              <div className="border-t-2 border-slate-800 pt-2 mb-1 mt-12">
+                <p className="text-sm font-semibold text-slate-800">Firma Colaborador</p>
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="border-t-2 border-slate-800 pt-2 mb-1 mt-12">
+                <p className="text-sm font-semibold text-slate-800">Firma Jefe Inmediato</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {selectedEmployee && (
-        <>
-          <div className="bg-white rounded-lg shadow-lg border-2 border-slate-300 overflow-hidden" ref={formRef}>
-            <div className="grid grid-cols-12 border-b-2 border-slate-300">
-              <div className="col-span-3 border-r-2 border-slate-300 p-4 flex items-center justify-center bg-white">
-                <div className="w-full max-w-[160px] bg-[#1e5a96] rounded-full px-6 py-3 flex items-center justify-center">
-                  <span className="text-white font-bold text-2xl tracking-wider">PLIHSA</span>
-                </div>
-              </div>
-              <div className="col-span-6 border-r-2 border-slate-300 p-4 flex items-center justify-center bg-white">
-                <h1 className="text-base font-bold text-center text-slate-800">
-                  Definición de Factores y Revisión del Desempeño Operativo
-                </h1>
-              </div>
-              <div className="col-span-3 bg-white">
-                <div className="text-xs border-b border-slate-300 px-3 py-1.5">
-                  <span className="font-normal">Código: PL-RH-P-002-F04</span>
-                </div>
-                <div className="text-xs border-b border-slate-300 px-3 py-1.5">
-                  <span className="font-normal">Versión: 01</span>
-                </div>
-                <div className="text-xs px-3 py-1.5">
-                  <span className="font-normal">Fecha de Revisión: 09/07/2025</span>
-                </div>
-              </div>
-            </div>
+      <div className="mt-6 flex flex-wrap gap-4 print:hidden">
+        <button
+          onClick={handleSaveGoals}
+          disabled={loading || !selectedEmployeeId}
+          className="flex items-center gap-2 px-6 py-3 bg-[#1e5a96] text-white rounded-lg hover:bg-[#164575] transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed font-medium"
+        >
+          <Save className="w-5 h-5" />
+          {loading ? 'Guardando...' : 'Guardar Definición'}
+        </button>
 
-            <div className="p-0">
-              <div className="grid grid-cols-12">
-                <div className="col-span-12 bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">
-                  Nombre del Colaborador:
-                </div>
-                <div className="col-span-12 bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
-                  <input
-                    type="text"
-                    value={`${selectedEmployee.first_name} ${selectedEmployee.last_name}`}
-                    readOnly
-                    className="w-full bg-transparent border-0 outline-none print:p-0"
-                  />
-                </div>
-              </div>
+        <button
+          onClick={handleExportPDF}
+          disabled={!selectedEmployeeId}
+          className="flex items-center gap-2 px-6 py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed font-medium"
+        >
+          <Download className="w-5 h-5" />
+          Exportar PDF
+        </button>
 
-              <div className="grid grid-cols-12">
-                <div className="col-span-12 bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">
-                  Posición del Colaborador:
-                </div>
-                <div className="col-span-12 bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
-                  <input
-                    type="text"
-                    value={selectedEmployee.position}
-                    readOnly
-                    className="w-full bg-transparent border-0 outline-none print:p-0"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2">
-                <div className="col-span-1 border-r-2 border-slate-300">
-                  <div className="bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">
-                    Departamento:
-                  </div>
-                  <div className="bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
-                    <input
-                      type="text"
-                      value={selectedEmployee.department?.name || ''}
-                      readOnly
-                      className="w-full bg-transparent border-0 outline-none print:p-0"
-                    />
-                  </div>
-                </div>
-                <div className="col-span-1">
-                  <div className="bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">
-                    Sub-departamento:
-                  </div>
-                  <div className="bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
-                    <input
-                      type="text"
-                      value={selectedEmployee.sub_department?.name || ''}
-                      readOnly
-                      className="w-full bg-transparent border-0 outline-none print:p-0"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2">
-                <div className="col-span-1 border-r-2 border-slate-300">
-                  <div className="bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">
-                    Fecha de Ingreso:
-                  </div>
-                  <div className="bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
-                    <input
-                      type="text"
-                      value={new Date(selectedEmployee.hire_date).toLocaleDateString('es-HN')}
-                      readOnly
-                      className="w-full bg-transparent border-0 outline-none print:p-0"
-                    />
-                  </div>
-                </div>
-                <div className="col-span-1">
-                  <div className="bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">
-                    Fecha de definición de factores a evaluar:
-                  </div>
-                  <div className="bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
-                    <input
-                      type="date"
-                      value={definitionDate}
-                      onChange={(e) => setDefinitionDate(e.target.value)}
-                      className="w-full bg-transparent border-0 outline-none print:p-0"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-12">
-                <div className="col-span-12 bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">
-                  Jefe Inmediato:
-                </div>
-                <div className="col-span-12 bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
-                  <input
-                    type="text"
-                    value={selectedEmployee.manager ? `${selectedEmployee.manager.first_name} ${selectedEmployee.manager.last_name}` : 'N/A'}
-                    readOnly
-                    className="w-full bg-transparent border-0 outline-none print:p-0"
-                  />
-                </div>
-              </div>
-
-              <div className="bg-[#1e5a96] text-white px-4 py-2.5 font-bold text-sm text-center border-b-2 border-slate-300">
-                DEFINICIÓN DE FACTORES FUNCIONALES
-              </div>
-
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-[#1e5a96] text-white">
-                    <th className="border-2 border-slate-300 px-3 py-2 text-sm font-bold text-center w-16">No.</th>
-                    <th className="border-2 border-slate-300 px-3 py-2 text-sm font-bold text-center">Funciones del Puesto</th>
-                    <th className="border-2 border-slate-300 px-3 py-2 text-sm font-bold text-center">Resultados Esperados</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {functionalFactors.map((factor, index) => (
-                    <tr key={factor.number}>
-                      <td className="border-2 border-slate-300 px-3 py-3 text-center font-semibold text-sm bg-white">
-                        {factor.number}
-                      </td>
-                      <td className="border-2 border-slate-300 px-3 py-2 bg-white">
-                        <textarea
-                          value={factor.jobFunction}
-                          onChange={(e) => handleFunctionalFactorChange(index, 'jobFunction', e.target.value)}
-                          className="w-full bg-transparent border-0 outline-none resize-none text-sm print:p-0 min-h-[60px]"
-                          placeholder=""
-                        />
-                      </td>
-                      <td className="border-2 border-slate-300 px-3 py-2 bg-white">
-                        <textarea
-                          value={factor.expectedResults}
-                          onChange={(e) => handleFunctionalFactorChange(index, 'expectedResults', e.target.value)}
-                          className="w-full bg-transparent border-0 outline-none resize-none text-sm print:p-0 min-h-[60px]"
-                          placeholder=""
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              <div className="bg-[#1e5a96] text-white px-4 py-2.5 font-bold text-sm text-center border-b-2 border-t-2 border-slate-300">
-                DEFINICIÓN DE COMPETENCIAS CONDUCTUALES Y HABILIDADES TÉCNICAS
-              </div>
-
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-[#1e5a96] text-white">
-                    <th className="border-2 border-slate-300 px-3 py-2 text-sm font-bold text-center w-16">No.</th>
-                    <th className="border-2 border-slate-300 px-3 py-2 text-sm font-bold text-center">
-                      Conductas y Habilidades Técnicas (Definir las 5 Principales)
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {behavioralCompetencies.map((competency, index) => (
-                    <tr key={competency.number}>
-                      <td className="border-2 border-slate-300 px-3 py-3 text-center font-semibold text-sm bg-white">
-                        {competency.number}
-                      </td>
-                      <td className="border-2 border-slate-300 px-3 py-2 bg-white">
-                        <textarea
-                          value={competency.description}
-                          onChange={(e) => handleBehavioralCompetencyChange(index, e.target.value)}
-                          className="w-full bg-transparent border-0 outline-none resize-none text-sm print:p-0 min-h-[60px]"
-                          placeholder=""
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              <div className="border-2 border-t-2 border-slate-300">
-                <div className="bg-[#2c4d6f] text-white px-4 py-3 font-bold text-sm">
-                  Comentarios Jefe Inmediato
-                </div>
-                <div className="bg-white px-4 py-3 border-b-2 border-slate-300">
-                  <textarea
-                    value={managerComments}
-                    onChange={(e) => setManagerComments(e.target.value)}
-                    className="w-full bg-transparent border-0 outline-none resize-none text-sm print:p-0 min-h-[80px]"
-                    placeholder=""
-                  />
-                </div>
-              </div>
-
-              <div className="border-2 border-t-0 border-slate-300">
-                <div className="bg-[#2c4d6f] text-white px-4 py-3 font-bold text-sm">
-                  Comentarios del Colaborador
-                </div>
-                <div className="bg-white px-4 py-3">
-                  <textarea
-                    value={employeeComments}
-                    onChange={(e) => setEmployeeComments(e.target.value)}
-                    className="w-full bg-transparent border-0 outline-none resize-none text-sm print:p-0 min-h-[80px]"
-                    placeholder=""
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-8 px-8 py-8 border-2 border-t-0 border-slate-300">
-                <div className="text-center">
-                  <div className="border-t-2 border-slate-800 pt-2 mb-1">
-                    <p className="text-sm font-semibold text-slate-800">Firma Colaborador</p>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="border-t-2 border-slate-800 pt-2 mb-1">
-                    <p className="text-sm font-semibold text-slate-800">Firma Jefe Inmediato</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 flex flex-wrap gap-4 print:hidden">
-            <button
-              onClick={handleSaveGoals}
-              disabled={loading}
-              className="flex items-center gap-2 px-6 py-3 bg-[#1e5a96] text-white rounded-lg hover:bg-[#164575] transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed font-medium"
-            >
-              <Save className="w-5 h-5" />
-              {loading ? 'Guardando...' : 'Guardar Definición'}
-            </button>
-
-            <button
-              onClick={handleExportPDF}
-              className="flex items-center gap-2 px-6 py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors font-medium"
-            >
-              <Download className="w-5 h-5" />
-              Exportar PDF
-            </button>
-
-            <button
-              onClick={() => window.print()}
-              className="flex items-center gap-2 px-6 py-3 bg-slate-500 text-white rounded-lg hover:bg-slate-600 transition-colors font-medium"
-            >
-              <Printer className="w-5 h-5" />
-              Imprimir
-            </button>
-          </div>
-        </>
-      )}
+        <button
+          onClick={() => window.print()}
+          disabled={!selectedEmployeeId}
+          className="flex items-center gap-2 px-6 py-3 bg-slate-500 text-white rounded-lg hover:bg-slate-600 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed font-medium"
+        >
+          <Printer className="w-5 h-5" />
+          Imprimir
+        </button>
+      </div>
 
       {message && (
         <div className={`fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg ${
