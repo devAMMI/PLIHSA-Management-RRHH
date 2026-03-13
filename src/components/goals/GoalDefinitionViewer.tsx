@@ -499,14 +499,14 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-12 text-[10px] mt-6 pt-4">
+              <div className="grid grid-cols-2 gap-12 text-[10px] mt-12 pt-8">
                 <div className="text-center">
-                  <div className="border-t-2 border-slate-800 pt-2 mt-16">
+                  <div className="border-t-2 border-slate-800 pt-2 mt-24">
                     <p className="font-bold text-slate-800">Firma Colaborador</p>
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="border-t-2 border-slate-800 pt-2 mt-16">
+                  <div className="border-t-2 border-slate-800 pt-2 mt-24">
                     <p className="font-bold text-slate-800">Firma Jefe Inmediato</p>
                   </div>
                 </div>
