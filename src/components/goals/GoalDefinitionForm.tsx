@@ -58,7 +58,7 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
     if (selectedEmployeeId) {
       const employee = employees.find(e => e.id === selectedEmployeeId);
       setSelectedEmployee(employee || null);
-      setSubDepartment(employee?.sub_department?.name || '');
+      setSubDepartment('');
     } else {
       setSelectedEmployee(null);
       setSubDepartment('');
@@ -438,9 +438,10 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
               <div className="bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
                 <input
                   type="text"
-                  value={selectedEmployee?.sub_department?.name || ''}
-                  readOnly
+                  value={subDepartment}
+                  onChange={(e) => setSubDepartment(e.target.value)}
                   className="w-full bg-transparent border-0 outline-none print:p-0"
+                  placeholder=""
                 />
               </div>
             </div>
