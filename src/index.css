@@ -16,3 +16,30 @@
 .animate-slide-up {
   animation: slide-up 0.3s ease-out;
 }
+
+/* Print styles for goal definition viewer */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .print-content, .print-content * {
+    visibility: visible !important;
+  }
+
+  .print-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  .print:hidden {
+    display: none !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+}

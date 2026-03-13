@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Save, Printer, CreditCard as Edit2, X, ArrowLeft } from 'lucide-react';
+import { Save, Printer, CreditCard as Edit2, X, ArrowLeft, Download } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -177,16 +177,20 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
     }
   };
 
-  const handlePrint = async () => {
+  const handleDownloadPDF = async () => {
     if (!formRef.current) return;
 
     setLoading(true);
     try {
       const canvas = await html2canvas(formRef.current, {
-        scale: 2,
+        scale: 3,
         useCORS: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        windowWidth: formRef.current.scrollWidth,
+        windowHeight: formRef.current.scrollHeight,
+        scrollX: 0,
+        scrollY: 0
       });
 
       const imgWidth = 210;
@@ -217,6 +221,10 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   const calculateSeniority = (hireDate: string): string => {
     const hire = new Date(hireDate);
     const now = new Date();
@@ -245,6 +253,14 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                   title="Editar"
                 >
                   <Edit2 className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={loading}
+                  className="p-2 hover:bg-blue-800 rounded-lg transition disabled:opacity-50"
+                  title="Descargar PDF"
+                >
+                  <Download className="w-5 h-5" />
                 </button>
                 <button
                   onClick={handlePrint}
@@ -288,7 +304,7 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
             </div>
           )}
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" ref={formRef}>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden print-content" ref={formRef}>
             <div className="bg-white border-b-2 border-slate-300">
               <div className="grid grid-cols-12">
                 <div className="col-span-3 border-r-2 border-slate-300 p-4 flex items-center justify-center">
