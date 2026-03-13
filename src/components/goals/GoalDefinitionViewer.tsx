@@ -346,7 +346,7 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                   </div>
                   <div className="flex gap-2">
                     <span className="font-bold text-slate-700 min-w-[100px]">Sub Depto:</span>
-                    <span className="text-slate-600">{definition.employee.sub_department?.name || 'N/A'}</span>
+                    <span className="text-slate-600">{definition.employee.sub_department?.name || ''}</span>
                   </div>
                 </div>
                 <div className="space-y-1.5">
