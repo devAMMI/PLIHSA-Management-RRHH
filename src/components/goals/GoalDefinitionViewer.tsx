@@ -185,6 +185,7 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
       const canvas = await html2canvas(formRef.current, {
         scale: 3,
         useCORS: true,
+        allowTaint: true,
         logging: false,
         backgroundColor: '#ffffff',
         windowWidth: formRef.current.scrollWidth,
@@ -309,9 +310,10 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
               <div className="grid grid-cols-12">
                 <div className="col-span-3 border-r-2 border-slate-300 p-4 flex items-center justify-center">
                   <img
-                    src="/Logo_PLIHSA_BLUE.png"
+                    src="/LOGO_PLIHSA_AZUL_2.png"
                     alt="PLIHSA Logo"
                     className="w-full h-auto max-w-[180px]"
+                    crossOrigin="anonymous"
                   />
                 </div>
                 <div className="col-span-6 border-r-2 border-slate-300 p-4 flex items-center justify-center">
