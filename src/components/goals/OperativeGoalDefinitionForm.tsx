@@ -538,11 +538,11 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
             </tbody>
           </table>
 
-          <div className="border-t-2 border-slate-300">
-            <div className="bg-[#2c4d6f] text-white px-4 py-3 font-bold text-sm">
+          <div className="border-2 border-slate-300 mt-4">
+            <div className="bg-[#2c5282] text-white px-4 py-3 font-bold text-sm">
               Comentarios Jefe Inmediato
             </div>
-            <div className="bg-white px-4 py-3 border-b-2 border-slate-300">
+            <div className="bg-white px-4 py-3">
               <textarea
                 value={managerComments}
                 onChange={(e) => setManagerComments(e.target.value)}
@@ -552,11 +552,11 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
             </div>
           </div>
 
-          <div className="border-t-0 border-slate-300">
-            <div className="bg-[#2c4d6f] text-white px-4 py-3 font-bold text-sm">
+          <div className="border-2 border-slate-300 mt-4">
+            <div className="bg-[#2c5282] text-white px-4 py-3 font-bold text-sm">
               Comentarios del Colaborador
             </div>
-            <div className="bg-white px-4 py-3 border-b-2 border-slate-300">
+            <div className="bg-white px-4 py-3">
               <textarea
                 value={employeeComments}
                 onChange={(e) => setEmployeeComments(e.target.value)}
@@ -566,14 +566,14 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-8 px-8 py-8">
+          <div className="grid grid-cols-2 gap-32 px-12 py-8 mt-8">
             <div className="text-center">
-              <div className="border-t-2 border-slate-800 pt-2 mb-1 mt-12">
+              <div className="border-t-2 border-slate-800 pt-2 mt-16">
                 <p className="text-sm font-semibold text-slate-800">Firma Colaborador</p>
               </div>
             </div>
             <div className="text-center">
-              <div className="border-t-2 border-slate-800 pt-2 mb-1 mt-12">
+              <div className="border-t-2 border-slate-800 pt-2 mt-16">
                 <p className="text-sm font-semibold text-slate-800">Firma Jefe Inmediato</p>
               </div>
             </div>
