@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Save, FileText, Users, Calendar, Building2, MapPin, User, Download, Printer, X, ArrowLeft } from 'lucide-react';
+import { Save, FileText, Users, Calendar, Building2, MapPin, User, Download, Printer, X, ArrowLeft, FilePlus } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -209,30 +209,35 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
 
       setMessage({ type: 'success', text: 'Definición de metas guardada exitosamente' });
 
-      setGoals([
-        { number: 1, description: '', measurement: '' },
-        { number: 2, description: '', measurement: '' },
-        { number: 3, description: '', measurement: '' },
-        { number: 4, description: '', measurement: '' },
-        { number: 5, description: '', measurement: '' },
-      ]);
-      setBehaviors([
-        { number: 1, description: '' },
-        { number: 2, description: '' },
-        { number: 3, description: '' },
-        { number: 4, description: '' },
-        { number: 5, description: '' },
-      ]);
-      setManagerComments('');
-      setEmployeeComments('');
-      setSelectedEmployeeId('');
-
     } catch (error: any) {
       console.error('Error saving goal definition:', error);
       setMessage({ type: 'error', text: error.message || 'Error al guardar la definición de metas' });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleNewDefinition = () => {
+    setGoals([
+      { number: 1, description: '', measurement: '' },
+      { number: 2, description: '', measurement: '' },
+      { number: 3, description: '', measurement: '' },
+      { number: 4, description: '', measurement: '' },
+      { number: 5, description: '', measurement: '' },
+    ]);
+    setBehaviors([
+      { number: 1, description: '' },
+      { number: 2, description: '' },
+      { number: 3, description: '' },
+      { number: 4, description: '' },
+      { number: 5, description: '' },
+    ]);
+    setManagerComments('');
+    setEmployeeComments('');
+    setSelectedEmployeeId('');
+    setSubDepartment('');
+    setDefinitionDate(new Date().toISOString().split('T')[0]);
+    setMessage(null);
   };
 
   return (
@@ -330,6 +335,13 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
             </div>
 
             <div className="flex flex-col gap-2 mt-6">
+              <button
+                onClick={handleNewDefinition}
+                className="flex items-center justify-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors font-medium"
+              >
+                <FilePlus className="w-4 h-4" />
+                Nueva
+              </button>
               <button
                 onClick={handleSave}
                 disabled={loading || !selectedEmployeeId}

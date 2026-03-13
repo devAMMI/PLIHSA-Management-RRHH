@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Save, Download, Printer, ArrowLeft, X, FileText } from 'lucide-react';
+import { Save, Download, Printer, ArrowLeft, X, FileText, FilePlus } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -159,32 +159,34 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
 
       setMessage({ type: 'success', text: 'Definición de factores guardada exitosamente' });
 
-      setTimeout(() => {
-        setSelectedEmployeeId('');
-        setFunctionalFactors([
-          { number: 1, jobFunction: '', expectedResults: '' },
-          { number: 2, jobFunction: '', expectedResults: '' },
-          { number: 3, jobFunction: '', expectedResults: '' },
-          { number: 4, jobFunction: '', expectedResults: '' },
-          { number: 5, jobFunction: '', expectedResults: '' },
-        ]);
-        setBehavioralCompetencies([
-          { number: 1, description: '' },
-          { number: 2, description: '' },
-          { number: 3, description: '' },
-          { number: 4, description: '' },
-          { number: 5, description: '' },
-        ]);
-        setManagerComments('');
-        setEmployeeComments('');
-        setMessage(null);
-      }, 2000);
     } catch (error) {
       console.error('Error saving goals:', error);
       setMessage({ type: 'error', text: 'Error al guardar la definición de factores' });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleNewDefinition = () => {
+    setSelectedEmployeeId('');
+    setFunctionalFactors([
+      { number: 1, jobFunction: '', expectedResults: '' },
+      { number: 2, jobFunction: '', expectedResults: '' },
+      { number: 3, jobFunction: '', expectedResults: '' },
+      { number: 4, jobFunction: '', expectedResults: '' },
+      { number: 5, jobFunction: '', expectedResults: '' },
+    ]);
+    setBehavioralCompetencies([
+      { number: 1, description: '' },
+      { number: 2, description: '' },
+      { number: 3, description: '' },
+      { number: 4, description: '' },
+      { number: 5, description: '' },
+    ]);
+    setManagerComments('');
+    setEmployeeComments('');
+    setDefinitionDate(new Date().toISOString().split('T')[0]);
+    setMessage(null);
   };
 
   const handleDownloadPDF = async () => {
@@ -310,6 +312,13 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
             </div>
 
             <div className="flex flex-col gap-2 mt-6">
+              <button
+                onClick={handleNewDefinition}
+                className="flex items-center justify-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors font-medium"
+              >
+                <FilePlus className="w-4 h-4" />
+                Nueva
+              </button>
               <button
                 onClick={handleSave}
                 disabled={loading || !selectedEmployeeId}
