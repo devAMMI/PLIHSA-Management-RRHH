@@ -352,7 +352,7 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
         <div className="grid grid-cols-12 border-b-2 border-slate-300">
           <div className="col-span-3 border-r-2 border-slate-300 p-4 flex items-center justify-center bg-white">
             <img
-              src="/LOGO_PLIHSA_AZUL_2.png"
+              src="https://i.imgur.com/hii0TM1.png"
               alt="PLIHSA Logo"
               className="w-full h-auto max-w-[180px]"
               crossOrigin="anonymous"
