@@ -100,7 +100,7 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
     setBehavioralCompetencies(newCompetencies);
   };
 
-  const handleSaveGoals = async () => {
+  const handleSave = async () => {
     if (!selectedEmployeeId) {
       setMessage({ type: 'error', text: 'Por favor seleccione un empleado' });
       return;
@@ -187,7 +187,7 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
     }
   };
 
-  const handleExportPDF = async () => {
+  const handleDownloadPDF = async () => {
     if (!formRef.current) return;
 
     try {
@@ -216,7 +216,7 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-[1800px] mx-auto p-6">
       {onBack && (
         <div className="mb-4">
           <button
@@ -229,7 +229,117 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-lg border-2 border-slate-300 overflow-hidden" ref={formRef}>
+      {message && (
+        <div className={`mb-4 p-4 rounded-lg ${message.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'} print:hidden`}>
+          <div className="flex items-center justify-between">
+            <span>{message.text}</span>
+            <button onClick={() => setMessage(null)} className="text-xl">×</button>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-12 gap-6 print:grid-cols-1 print:gap-0">
+        <div className="col-span-3 print:hidden">
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 sticky top-6">
+            <h2 className="text-lg font-bold text-slate-800 mb-4">Seleccione Empleado</h2>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Buscar Colaborador
+              </label>
+              <select
+                value={selectedEmployeeId}
+                onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                required
+              >
+                <option value="">-- Seleccionar empleado --</option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.first_name} {emp.last_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedEmployee && (
+              <div className="border-t pt-4 mt-4">
+                <h3 className="text-sm font-semibold text-slate-700 mb-2">Información del Colaborador</h3>
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <span className="font-medium">Nombre:</span>
+                    <p className="text-slate-600">{selectedEmployee.first_name} {selectedEmployee.last_name}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Posición:</span>
+                    <p className="text-slate-600">{selectedEmployee.position}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Departamento:</span>
+                    <p className="text-slate-600">{selectedEmployee.department?.name || 'N/A'}</p>
+                  </div>
+                  {selectedEmployee.sub_department && (
+                    <div>
+                      <span className="font-medium">Sub-departamento:</span>
+                      <p className="text-slate-600">{selectedEmployee.sub_department.name}</p>
+                    </div>
+                  )}
+                  <div>
+                    <span className="font-medium">Jefe Inmediato:</span>
+                    <p className="text-slate-600">
+                      {selectedEmployee.manager
+                        ? `${selectedEmployee.manager.first_name} ${selectedEmployee.manager.last_name}`
+                        : 'N/A'
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="border-t pt-4 mt-4">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Fecha de Definición
+              </label>
+              <input
+                type="date"
+                value={definitionDate}
+                onChange={(e) => setDefinitionDate(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2 mt-6">
+              <button
+                onClick={handleSave}
+                disabled={loading || !selectedEmployeeId}
+                className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
+              >
+                <Save className="w-4 h-4" />
+                {loading ? 'Guardando...' : 'Guardar'}
+              </button>
+              <button
+                onClick={handleDownloadPDF}
+                disabled={!selectedEmployeeId}
+                className="flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Descargar PDF
+              </button>
+              <button
+                onClick={() => window.print()}
+                disabled={!selectedEmployeeId}
+                className="flex items-center justify-center gap-2 bg-slate-600 text-white px-4 py-2 rounded-md hover:bg-slate-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
+              >
+                <Printer className="w-4 h-4" />
+                Imprimir
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-span-9 print:col-span-12">
+          <div className="bg-white rounded-lg shadow-lg border-2 border-slate-300 overflow-hidden" ref={formRef}>
         <div className="grid grid-cols-12 border-b-2 border-slate-300">
           <div className="col-span-3 border-r-2 border-slate-300 p-4 flex items-center justify-center bg-white">
             <img
@@ -257,30 +367,6 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
         </div>
 
         <div className="p-0">
-          <div className="md:col-span-2 mb-0">
-            <label className="block bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm">
-              Seleccionar Colaborador
-            </label>
-            <select
-              value={selectedEmployeeId}
-              onChange={(e) => setSelectedEmployeeId(e.target.value)}
-              className="w-full px-4 py-2 border-2 border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-slate-100 print:hidden"
-              required
-            >
-              <option value="">-- Seleccionar empleado --</option>
-              {employees.map((emp) => (
-                <option key={emp.id} value={emp.id}>
-                  {emp.first_name} {emp.last_name} - {emp.position}
-                </option>
-              ))}
-            </select>
-            {selectedEmployee && (
-              <div className="hidden print:block px-4 py-2 bg-slate-100 border-2 border-slate-300 text-sm">
-                {selectedEmployee.first_name} {selectedEmployee.last_name} - {selectedEmployee.position}
-              </div>
-            )}
-          </div>
-
           <div className="grid grid-cols-12">
             <div className="col-span-12 bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">
               Nombre del Colaborador:
@@ -493,49 +579,9 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="mt-6 flex flex-wrap gap-4 print:hidden">
-        <button
-          onClick={handleSaveGoals}
-          disabled={loading || !selectedEmployeeId}
-          className="flex items-center gap-2 px-6 py-3 bg-[#1e5a96] text-white rounded-lg hover:bg-[#164575] transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed font-medium"
-        >
-          <Save className="w-5 h-5" />
-          {loading ? 'Guardando...' : 'Guardar Definición'}
-        </button>
-
-        <button
-          onClick={handleExportPDF}
-          disabled={!selectedEmployeeId}
-          className="flex items-center gap-2 px-6 py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed font-medium"
-        >
-          <Download className="w-5 h-5" />
-          Exportar PDF
-        </button>
-
-        <button
-          onClick={() => window.print()}
-          disabled={!selectedEmployeeId}
-          className="flex items-center gap-2 px-6 py-3 bg-slate-500 text-white rounded-lg hover:bg-slate-600 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed font-medium"
-        >
-          <Printer className="w-5 h-5" />
-          Imprimir
-        </button>
-      </div>
-
-      {message && (
-        <div className={`fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg ${
-          message.type === 'success' ? 'bg-green-600' : 'bg-red-600'
-        } text-white flex items-center gap-2 print:hidden z-50`}>
-          {message.type === 'success' ? (
-            <FileText className="w-5 h-5" />
-          ) : (
-            <X className="w-5 h-5" />
-          )}
-          <span>{message.text}</span>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
