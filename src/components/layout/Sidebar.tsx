@@ -39,6 +39,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
       return {
         logo: '/LOGO_PLIHSA_AZUL_(1).png',
         name: 'PLIHSA',
+        fullName: 'Plásticos Industriales Hondureños SA',
         subtitle: 'Sistema de Gestión de RRHH',
         primaryColor: 'blue',
       };
@@ -47,7 +48,8 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
     return {
       logo: null,
       name: 'AMMI RRHH',
-      subtitle: 'Sistema de Gestión',
+      fullName: null,
+      subtitle: 'Sistema de Gestión de RRHH',
       primaryColor: 'blue',
     };
   };
@@ -64,6 +66,11 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
               alt={branding.name}
               className="h-16 w-auto object-contain mb-2"
             />
+            {branding.fullName && (
+              <p className="text-xs font-semibold text-slate-700 text-center mb-1">
+                {branding.fullName}
+              </p>
+            )}
             <p className="text-xs text-slate-500 text-center">{branding.subtitle}</p>
           </div>
         ) : (
