@@ -35,19 +35,19 @@ export function GoalDefinitionsHome() {
   }
 
   if (currentView === 'administrative-drafts') {
-    return <GoalDefinitionsList type="administrative" filterStatus="draft" onBack={() => setCurrentView('home')} />;
+    return <GoalDefinitionsList type="administrative" workflowFilter="draft-pending" onBack={() => setCurrentView('home')} />;
   }
 
   if (currentView === 'operative-drafts') {
-    return <GoalDefinitionsList type="operative" filterStatus="draft" onBack={() => setCurrentView('home')} />;
+    return <GoalDefinitionsList type="operative" workflowFilter="draft-pending" onBack={() => setCurrentView('home')} />;
   }
 
   if (currentView === 'administrative-finalized') {
-    return <GoalDefinitionsList type="administrative" filterStatus="approved" onBack={() => setCurrentView('home')} />;
+    return <GoalDefinitionsList type="administrative" workflowFilter="completed" onBack={() => setCurrentView('home')} />;
   }
 
   if (currentView === 'operative-finalized') {
-    return <GoalDefinitionsList type="operative" filterStatus="approved" onBack={() => setCurrentView('home')} />;
+    return <GoalDefinitionsList type="operative" workflowFilter="completed" onBack={() => setCurrentView('home')} />;
   }
 
   return (

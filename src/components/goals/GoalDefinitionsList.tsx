@@ -22,6 +22,10 @@ interface AdministrativeGoalDefinition {
   employee_comments: string;
   manager_comments: string;
   status: string;
+  workflow_status?: string;
+  signed_document_url?: string;
+  signed_document_uploaded_at?: string;
+  completed_at?: string;
   created_at: string;
   employee: Employee;
   individual_goals: Array<{
@@ -44,6 +48,10 @@ interface OperativeGoalDefinition {
   definition_date: string;
   work_area: string;
   status: string;
+  workflow_status?: string;
+  signed_document_url?: string;
+  signed_document_uploaded_at?: string;
+  completed_at?: string;
   created_at: string;
   employee: Employee;
   manager_comments: string;
@@ -63,9 +71,10 @@ interface GoalDefinitionsListProps {
   type: 'administrative' | 'operative';
   onBack: () => void;
   filterStatus?: string;
+  workflowFilter?: 'draft-pending' | 'completed' | 'all';
 }
 
-export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterStatus }: GoalDefinitionsListProps) {
+export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterStatus, workflowFilter }: GoalDefinitionsListProps) {
   const [definitions, setDefinitions] = useState<(AdministrativeGoalDefinition | OperativeGoalDefinition)[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDefinition, setSelectedDefinition] = useState<AdministrativeGoalDefinition | OperativeGoalDefinition | null>(null);
@@ -113,6 +122,12 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
           query = query.eq('status', filterStatus);
         }
 
+        if (workflowFilter === 'draft-pending') {
+          query = query.in('workflow_status', ['draft', 'pending_signature']);
+        } else if (workflowFilter === 'completed') {
+          query = query.eq('workflow_status', 'completed');
+        }
+
         const { data, error } = await query;
         if (error) throw error;
         setDefinitions(data || []);
@@ -142,6 +157,12 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
 
         if (filterStatus !== 'all') {
           query = query.eq('status', filterStatus);
+        }
+
+        if (workflowFilter === 'draft-pending') {
+          query = query.in('workflow_status', ['draft', 'pending_signature']);
+        } else if (workflowFilter === 'completed') {
+          query = query.eq('workflow_status', 'completed');
         }
 
         const { data, error } = await query;
