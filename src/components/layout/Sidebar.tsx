@@ -67,8 +67,8 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
               className="h-16 w-auto object-contain mb-2"
             />
             {branding.fullName && (
-              <p className="text-xs font-semibold text-slate-700 text-center mb-1">
-                {branding.fullName}
+              <p className="text-xs font-semibold text-slate-700 text-center mb-1 leading-tight">
+                Plásticos Industriales<br />Hondureños SA
               </p>
             )}
             <p className="text-xs text-slate-500 text-center">{branding.subtitle}</p>
