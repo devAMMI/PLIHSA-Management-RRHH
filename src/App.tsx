@@ -143,16 +143,16 @@ function AppContent() {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50">
+    <div className="flex h-screen bg-slate-100">
       <Sidebar currentView={currentView} onViewChange={setCurrentView} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header title={getViewTitle()} />
         {currentView === 'employees' ? (
-          <main className="flex-1 overflow-hidden">
+          <main className="flex-1 overflow-hidden bg-slate-50">
             {renderView()}
           </main>
         ) : (
-          <main className="flex-1 overflow-y-auto p-8">
+          <main className="flex-1 overflow-y-auto p-8 bg-slate-50">
             {renderView()}
           </main>
         )}

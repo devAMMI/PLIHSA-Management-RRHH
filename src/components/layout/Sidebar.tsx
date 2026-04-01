@@ -57,31 +57,31 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
   const branding = getBrandingConfig();
 
   return (
-    <div className="w-64 bg-white border-r border-slate-200 flex flex-col h-screen">
-      <div className="p-6 border-b border-slate-200">
+    <div className="w-64 bg-gradient-to-b from-slate-800 to-slate-900 flex flex-col h-screen shadow-xl">
+      <div className="px-6 py-6 h-[104px] flex items-center justify-center border-b border-slate-700/50">
         {branding.logo ? (
           <div className="flex flex-col items-center">
             <img
               src={branding.logo}
               alt={branding.name}
-              className="h-16 w-auto object-contain mb-2"
+              className="h-12 w-auto object-contain mb-2 brightness-0 invert"
             />
             {branding.fullName && (
-              <p className="text-xs font-semibold text-slate-700 text-center mb-1 leading-tight">
+              <p className="text-[10px] font-semibold text-white text-center mb-0.5 leading-tight">
                 Plásticos Industriales<br />Hondureños SA
               </p>
             )}
-            <p className="text-xs text-slate-500 text-center">{branding.subtitle}</p>
+            <p className="text-[9px] text-slate-400 text-center">{branding.subtitle}</p>
           </div>
         ) : (
           <>
-            <h1 className="text-xl font-bold text-slate-800">{branding.name}</h1>
-            <p className="text-sm text-slate-500 mt-1">{branding.subtitle}</p>
+            <h1 className="text-xl font-bold text-white">{branding.name}</h1>
+            <p className="text-sm text-slate-400 mt-1">{branding.subtitle}</p>
           </>
         )}
       </div>
 
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {filteredItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentView === item.id;
@@ -90,24 +90,26 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
             <button
               key={item.id}
               onClick={() => onViewChange(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                 isActive
-                  ? 'bg-blue-50 text-blue-600'
-                  : 'text-slate-600 hover:bg-slate-50'
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                  : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
               }`}
             >
-              <Icon className="w-5 h-5" />
-              <span className="font-medium">{item.label}</span>
+              <Icon className="w-5 h-5 flex-shrink-0" />
+              <span className="font-medium text-sm">{item.label}</span>
             </button>
           );
         })}
       </nav>
 
-      <div className="p-4 border-t border-slate-200">
+      <div className="p-4 border-t border-slate-700/50">
         <button
           onClick={() => onViewChange('profile')}
-          className={`w-full mb-3 px-3 py-3 rounded-lg transition hover:bg-slate-100 ${
-            currentView === 'profile' ? 'bg-blue-50' : 'bg-slate-50'
+          className={`w-full mb-3 px-3 py-3 rounded-lg transition-all duration-200 ${
+            currentView === 'profile'
+              ? 'bg-slate-700 shadow-lg'
+              : 'bg-slate-800/50 hover:bg-slate-700/50'
           }`}
         >
           <div className="flex items-center gap-3 mb-3">
@@ -116,25 +118,25 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
                 <img
                   src={employee.photo_url}
                   alt={`${employee.first_name} ${employee.last_name}`}
-                  className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-slate-600 shadow-sm"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center border-2 border-white shadow-sm">
-                  <UserIcon className="w-5 h-5 text-blue-600" />
+                <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center border-2 border-slate-600 shadow-sm">
+                  <UserIcon className="w-5 h-5 text-slate-300" />
                 </div>
               )}
-              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
+              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-slate-800"></div>
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm font-semibold text-slate-800 truncate">
+              <p className="text-sm font-semibold text-white truncate">
                 {employee ? `${employee.first_name} ${employee.last_name}` : user?.email?.split('@')[0] || 'Usuario'}
               </p>
-              <p className="text-xs text-slate-500 truncate">
+              <p className="text-xs text-slate-400 truncate">
                 {employee?.position || 'Sin cargo asignado'}
               </p>
             </div>
           </div>
-          <div className="px-2 py-1 bg-blue-100 rounded text-xs font-medium text-blue-700 text-center">
+          <div className="px-2 py-1 bg-blue-600/20 border border-blue-500/30 rounded text-xs font-medium text-blue-300 text-center">
             {systemUser?.role === 'superadmin' && 'Superadministrador'}
             {systemUser?.role === 'admin' && 'Administrador'}
             {systemUser?.role === 'rrhh' && 'Recursos Humanos'}
@@ -145,10 +147,10 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
         </button>
         <button
           onClick={signOut}
-          className="w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-red-50 hover:text-red-600 rounded-lg transition"
+          className="w-full flex items-center gap-3 px-4 py-3 text-slate-300 hover:bg-red-600/20 hover:text-red-400 rounded-lg transition-all duration-200"
         >
           <LogOut className="w-5 h-5" />
-          <span className="font-medium">Cerrar Sesión</span>
+          <span className="font-medium text-sm">Cerrar Sesión</span>
         </button>
       </div>
     </div>

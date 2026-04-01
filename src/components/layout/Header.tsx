@@ -12,8 +12,8 @@ export function Header({ title, subtitle }: HeaderProps) {
   const [showCompanyMenu, setShowCompanyMenu] = useState(false);
 
   return (
-    <header className="bg-white border-b border-slate-200 px-8 py-6">
-      <div className="flex items-center justify-between">
+    <header className="bg-white border-b border-slate-200 px-8 h-[104px] flex items-center">
+      <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-4">
           <div>
             <h2 className="text-2xl font-bold text-slate-800">{title}</h2>
