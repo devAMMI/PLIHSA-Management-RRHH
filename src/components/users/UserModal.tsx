@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Save, User, Mail, Shield, Building2, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { UserRole, ROLE_LABELS, ROLE_DESCRIPTIONS } from '../../types/roles';
+import { UserRole, ROLE_LABELS, ROLE_DESCRIPTIONS, ROLE_HIERARCHY } from '../../types/roles';
 import { permissionService } from '../../services/permissionService';
 
 interface SystemUser {
@@ -269,23 +269,38 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             >
-              {(userRole === 'superadmin') && (
-                <option value="superadmin">{ROLE_LABELS.superadmin}</option>
-              )}
-              <option value="admin">{ROLE_LABELS.admin}</option>
-              <option value="rrhh">{ROLE_LABELS.rrhh}</option>
-              <option value="manager">{ROLE_LABELS.manager}</option>
-              <option value="employee">{ROLE_LABELS.employee}</option>
-              <option value="viewer">{ROLE_LABELS.viewer}</option>
+              {Object.entries(ROLE_LABELS).map(([roleKey, roleLabel]) => {
+                const role = roleKey as UserRole;
+                const currentUserLevel = userRole ? ROLE_HIERARCHY[userRole] : 0;
+                const roleLevel = ROLE_HIERARCHY[role];
+
+                // Only show roles that are lower than the current user's role
+                if (roleLevel < currentUserLevel) {
+                  return (
+                    <option key={role} value={role}>
+                      {roleLabel}
+                    </option>
+                  );
+                }
+                return null;
+              })}
             </select>
             <div className="mt-2 text-xs text-slate-600 space-y-1">
-              {Object.entries(ROLE_DESCRIPTIONS).map(([role, desc]) => (
-                (role !== 'superadmin' || userRole === 'superadmin') && (
-                  <div key={role}>
-                    <strong>{ROLE_LABELS[role as UserRole]}:</strong> {desc}
-                  </div>
-                )
-              ))}
+              {Object.entries(ROLE_DESCRIPTIONS).map(([roleKey, desc]) => {
+                const role = roleKey as UserRole;
+                const currentUserLevel = userRole ? ROLE_HIERARCHY[userRole] : 0;
+                const roleLevel = ROLE_HIERARCHY[role];
+
+                // Only show descriptions for roles the user can assign
+                if (roleLevel < currentUserLevel) {
+                  return (
+                    <div key={role}>
+                      <strong>{ROLE_LABELS[role]}:</strong> {desc}
+                    </div>
+                  );
+                }
+                return null;
+              })}
             </div>
           </div>
 

@@ -61,3 +61,18 @@ export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   employee: 'Empleado. Acceso de solo lectura.',
   viewer: 'Visitante. Acceso muy limitado.'
 };
+
+export const ROLE_HIERARCHY: Record<UserRole, number> = {
+  superadmin: 6,
+  admin: 5,
+  rrhh: 4,
+  manager: 3,
+  employee: 2,
+  viewer: 1
+};
+
+export function canManageUser(currentUserRole: UserRole, targetUserRole: UserRole): boolean {
+  const currentLevel = ROLE_HIERARCHY[currentUserRole];
+  const targetLevel = ROLE_HIERARCHY[targetUserRole];
+  return currentLevel > targetLevel;
+}

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Users, Plus, Search, Shield, Trash2, Edit2, Eye, EyeOff, Lock, Key } from 'lucide-react';
+import { Users, Plus, Search, Shield, Trash2, CreditCard as Edit2, Eye, EyeOff, Lock, Key } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { UserModal } from './UserModal';
 import { ChangePasswordModal } from './ChangePasswordModal';
-import { SystemUser, ROLE_LABELS } from '../../types/roles';
+import { SystemUser, ROLE_LABELS, canManageUser } from '../../types/roles';
 import { userService } from '../../services/userService';
 import { permissionService } from '../../services/permissionService';
 
@@ -40,7 +40,7 @@ export function UserList() {
   };
 
   const handleToggleActive = async (user: SystemUser) => {
-    if (!canManageUsers) return;
+    if (!canManageUsers || !systemUser || !canManageUser(systemUser.role, user.role)) return;
 
     try {
       const result = await userService.toggleUserStatus(user.user_id, !user.is_active);
@@ -101,6 +101,11 @@ export function UserList() {
   };
 
   const filteredUsers = users.filter((user) => {
+    // Filter out users that the current user cannot manage (hide higher-level users)
+    if (systemUser && !canManageUser(systemUser.role, user.role) && user.role !== systemUser.role) {
+      return false;
+    }
+
     const searchLower = searchTerm.toLowerCase();
     const email = user.email?.toLowerCase() || '';
     const employeeName = user.employee
@@ -241,12 +246,12 @@ export function UserList() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <button
                       onClick={() => handleToggleActive(user)}
-                      disabled={!canManageUsers}
+                      disabled={!canManageUsers || !systemUser || !canManageUser(systemUser.role, user.role)}
                       className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition ${
                         user.is_active
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
-                      } ${canManageUsers ? 'hover:opacity-80 cursor-pointer' : 'cursor-not-allowed'}`}
+                      } ${canManageUsers && systemUser && canManageUser(systemUser.role, user.role) ? 'hover:opacity-80 cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
                     >
                       {user.is_active ? (
                         <>
@@ -263,7 +268,7 @@ export function UserList() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2">
-                      {canManageUsers && (
+                      {canManageUsers && systemUser && canManageUser(systemUser.role, user.role) && (
                         <>
                           <button
                             onClick={() => handleResetPassword(user)}
@@ -287,6 +292,11 @@ export function UserList() {
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </>
+                      )}
+                      {canManageUsers && systemUser && !canManageUser(systemUser.role, user.role) && user.role !== systemUser.role && (
+                        <span className="text-xs text-slate-400 px-3 py-1 bg-slate-50 rounded-lg">
+                          Sin permisos
+                        </span>
                       )}
                     </div>
                   </td>
