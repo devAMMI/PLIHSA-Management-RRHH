@@ -64,7 +64,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
             <img
               src={branding.logo}
               alt={branding.name}
-              className="h-12 w-auto object-contain mb-2 brightness-0 invert"
+              className="h-14 w-auto object-contain mb-2"
             />
             {branding.fullName && (
               <p className="text-[10px] font-semibold text-white text-center mb-0.5 leading-tight">
