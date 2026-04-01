@@ -1,5 +1,6 @@
 import { Home, Users, ClipboardCheck, Building2, Settings, LogOut, User as UserIcon, Shield, FileText, Database, Terminal, BarChart3, Target, Archive } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCompany } from '../../contexts/CompanyContext';
 
 interface SidebarProps {
   currentView: string;
@@ -8,6 +9,7 @@ interface SidebarProps {
 
 export function Sidebar({ currentView, onViewChange }: SidebarProps) {
   const { signOut, systemUser, employee, user } = useAuth();
+  const { activeCompany } = useCompany();
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -30,11 +32,46 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
     return item.requiredRoles.includes(systemUser?.role || '');
   });
 
+  const getBrandingConfig = () => {
+    const companyCode = activeCompany?.code?.toLowerCase();
+
+    if (companyCode === 'plihsa') {
+      return {
+        logo: '/LOGO_PLIHSA_AZUL_(1).png',
+        name: 'PLIHSA',
+        subtitle: 'Sistema de Gestión de RRHH',
+        primaryColor: 'blue',
+      };
+    }
+
+    return {
+      logo: null,
+      name: 'AMMI RRHH',
+      subtitle: 'Sistema de Gestión',
+      primaryColor: 'blue',
+    };
+  };
+
+  const branding = getBrandingConfig();
+
   return (
     <div className="w-64 bg-white border-r border-slate-200 flex flex-col h-screen">
       <div className="p-6 border-b border-slate-200">
-        <h1 className="text-xl font-bold text-slate-800">AMMI RRHH</h1>
-        <p className="text-sm text-slate-500 mt-1">Sistema de Gestión</p>
+        {branding.logo ? (
+          <div className="flex flex-col items-center">
+            <img
+              src={branding.logo}
+              alt={branding.name}
+              className="h-16 w-auto object-contain mb-2"
+            />
+            <p className="text-xs text-slate-500 text-center">{branding.subtitle}</p>
+          </div>
+        ) : (
+          <>
+            <h1 className="text-xl font-bold text-slate-800">{branding.name}</h1>
+            <p className="text-sm text-slate-500 mt-1">{branding.subtitle}</p>
+          </>
+        )}
       </div>
 
       <nav className="flex-1 p-4 space-y-1">
