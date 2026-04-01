@@ -118,31 +118,35 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
           throw new Error('La contraseña debe tener al menos 6 caracteres');
         }
 
-        // Crear usuario en auth
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-          email: formData.email,
-          password: formData.password,
-          email_confirm: true,
+        // Obtener la sesión actual para autenticación
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          throw new Error('No hay sesión activa');
+        }
+
+        // Llamar a la Edge Function para crear el usuario
+        const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-admin-user`;
+
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+            companyId: formData.company_id,
+            employeeId: formData.employee_id || null,
+            role: formData.role,
+            isActive: formData.is_active,
+          }),
         });
 
-        if (authError) throw authError;
-        if (!authData.user) throw new Error('No se pudo crear el usuario');
+        const result = await response.json();
 
-        // Crear registro en system_users
-        const { error: insertError } = await supabase
-          .from('system_users')
-          .insert({
-            user_id: authData.user.id,
-            employee_id: formData.employee_id || null,
-            company_id: formData.company_id,
-            role: formData.role,
-            is_active: formData.is_active,
-          });
-
-        if (insertError) {
-          // Si falla la creación en system_users, intentar eliminar el usuario de auth
-          await supabase.auth.admin.deleteUser(authData.user.id);
-          throw insertError;
+        if (!response.ok) {
+          throw new Error(result.error || 'Error al crear el usuario');
         }
       }
 
