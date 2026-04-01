@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { CompanyProvider } from './contexts/CompanyContext';
 import { LoginForm } from './components/auth/LoginForm';
 import { RegisterForm } from './components/auth/RegisterForm';
 import { Sidebar } from './components/layout/Sidebar';
@@ -163,7 +164,9 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <CompanyProvider>
+        <AppContent />
+      </CompanyProvider>
     </AuthProvider>
   );
 }

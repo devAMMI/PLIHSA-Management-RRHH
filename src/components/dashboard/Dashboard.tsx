@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Users, ClipboardCheck, Building2, TrendingUp } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useCompany } from '../../contexts/CompanyContext';
 
 interface Stats {
   totalEmployees: number;
@@ -10,6 +11,7 @@ interface Stats {
 }
 
 export function Dashboard() {
+  const { activeCompany } = useCompany();
   const [stats, setStats] = useState<Stats>({
     totalEmployees: 0,
     activeEvaluations: 0,
@@ -19,45 +21,56 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadStats();
-  }, []);
+    if (activeCompany) {
+      loadStats();
+    }
+  }, [activeCompany]);
 
   const loadStats = async () => {
     try {
+      if (!activeCompany) return;
+
       const { count: employeeCount } = await supabase
         .from('employees')
         .select('*', { count: 'exact', head: true })
+        .eq('company_id', activeCompany.id)
         .eq('status', 'active');
 
       const [adminEvalResult, operativeEvalResult] = await Promise.all([
         supabase
           .from('administrative_evaluations')
-          .select('*', { count: 'exact', head: true })
+          .select('employee:employees!inner(company_id)', { count: 'exact', head: true })
+          .eq('employees.company_id', activeCompany.id)
           .in('status', ['draft', 'pending_employee', 'pending_manager', 'pending_rrhh']),
         supabase
           .from('operative_evaluations')
-          .select('*', { count: 'exact', head: true })
+          .select('employee:employees!inner(company_id)', { count: 'exact', head: true })
+          .eq('employees.company_id', activeCompany.id)
           .in('status', ['draft', 'pending_employee', 'pending_manager', 'pending_rrhh'])
       ]);
 
       const [adminCompletedResult, operativeCompletedResult] = await Promise.all([
         supabase
           .from('administrative_evaluations')
-          .select('*', { count: 'exact', head: true })
+          .select('employee:employees!inner(company_id)', { count: 'exact', head: true })
+          .eq('employees.company_id', activeCompany.id)
           .eq('status', 'completed'),
         supabase
           .from('operative_evaluations')
-          .select('*', { count: 'exact', head: true })
+          .select('employee:employees!inner(company_id)', { count: 'exact', head: true })
+          .eq('employees.company_id', activeCompany.id)
           .eq('status', 'completed')
       ]);
 
       const [adminTotalResult, operativeTotalResult] = await Promise.all([
         supabase
           .from('administrative_evaluations')
-          .select('*', { count: 'exact', head: true }),
+          .select('employee:employees!inner(company_id)', { count: 'exact', head: true })
+          .eq('employees.company_id', activeCompany.id),
         supabase
           .from('operative_evaluations')
-          .select('*', { count: 'exact', head: true })
+          .select('employee:employees!inner(company_id)', { count: 'exact', head: true })
+          .eq('employees.company_id', activeCompany.id)
       ]);
 
       const activeEvaluations = (adminEvalResult.count || 0) + (operativeEvalResult.count || 0);

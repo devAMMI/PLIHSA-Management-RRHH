@@ -5,6 +5,7 @@ import { EmployeeCard } from './EmployeeCard';
 import { EmployeeModal } from './EmployeeModal';
 import { EmployeeProfilePage } from './EmployeeProfilePage';
 import { EmployeeFilterSidebar } from './EmployeeFilterSidebar';
+import { useCompany } from '../../contexts/CompanyContext';
 
 interface Employee {
   id: string;
@@ -40,6 +41,7 @@ interface WorkLocation {
 }
 
 export function EmployeeList() {
+  const { activeCompany } = useCompany();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -55,11 +57,13 @@ export function EmployeeList() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
 
   useEffect(() => {
-    loadCompanies();
-    loadDepartments();
-    loadWorkLocations();
-    loadEmployees();
-  }, []);
+    if (activeCompany) {
+      loadCompanies();
+      loadDepartments();
+      loadWorkLocations();
+      loadEmployees();
+    }
+  }, [activeCompany]);
 
   const loadCompanies = async () => {
     try {
@@ -105,6 +109,8 @@ export function EmployeeList() {
 
   const loadEmployees = async () => {
     try {
+      if (!activeCompany) return;
+
       const { data, error } = await supabase
         .from('employees')
         .select(`
@@ -115,6 +121,7 @@ export function EmployeeList() {
           work_location:work_locations(id, name, city, code),
           manager:manager_id(id, first_name, last_name, position)
         `)
+        .eq('company_id', activeCompany.id)
         .eq('status', 'active')
         .order('first_name');
 

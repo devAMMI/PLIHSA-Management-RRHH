@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { FileText, Eye, Calendar, User, Briefcase, Filter, Download, CreditCard as Edit, Building2, X, ArrowLeft, Plus } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { EvaluationDetailModal } from './EvaluationDetailModal';
+import { useCompany } from '../../contexts/CompanyContext';
 
 interface Evaluation {
   id: string;
@@ -32,6 +33,7 @@ interface EvaluationsListProps {
 }
 
 export function EvaluationsList({ evaluationType, onBack, onNewEvaluation, onEditEvaluation }: EvaluationsListProps = {}) {
+  const { activeCompany } = useCompany();
   const [loading, setLoading] = useState(true);
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -45,9 +47,11 @@ export function EvaluationsList({ evaluationType, onBack, onNewEvaluation, onEdi
   const [selectedEvaluation, setSelectedEvaluation] = useState<Evaluation | null>(null);
 
   useEffect(() => {
-    loadCompanies();
-    loadEvaluations();
-  }, []);
+    if (activeCompany) {
+      loadCompanies();
+      loadEvaluations();
+    }
+  }, [activeCompany]);
 
   const loadCompanies = async () => {
     try {
@@ -66,7 +70,9 @@ export function EvaluationsList({ evaluationType, onBack, onNewEvaluation, onEdi
   const loadEvaluations = async () => {
     console.log('=== Starting loadEvaluations ===');
     try {
-      console.log('Fetching admin and operative evaluations...');
+      if (!activeCompany) return;
+
+      console.log('Fetching admin and operative evaluations for company:', activeCompany.name);
 
       const [adminResult, operativeResult] = await Promise.all([
         supabase
@@ -90,6 +96,7 @@ export function EvaluationsList({ evaluationType, onBack, onNewEvaluation, onEdi
               plant_id
             )
           `)
+          .eq('employees.company_id', activeCompany.id)
           .order('created_at', { ascending: false }),
         supabase
           .from('operative_evaluations')
@@ -112,6 +119,7 @@ export function EvaluationsList({ evaluationType, onBack, onNewEvaluation, onEdi
               plant_id
             )
           `)
+          .eq('employees.company_id', activeCompany.id)
           .order('created_at', { ascending: false })
       ]);
 
