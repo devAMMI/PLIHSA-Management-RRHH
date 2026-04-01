@@ -45,6 +45,7 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
     password: '',
     employee_id: '',
     company_id: '',
+    accessible_company_ids: [] as string[],
     role: 'employee' as UserRole,
     is_active: true,
   });
@@ -55,20 +56,31 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
     loadUserRole();
 
     if (user) {
-      setFormData({
-        email: '',
-        password: '',
-        employee_id: user.employee_id || '',
-        company_id: user.company_id,
-        role: user.role as UserRole,
-        is_active: user.is_active,
-      });
+      loadUserData(user);
     }
   }, [user]);
 
   const loadUserRole = async () => {
     const role = await permissionService.getUserRole();
     setUserRole(role);
+  };
+
+  const loadUserData = async (userData: SystemUser) => {
+    const { data } = await supabase
+      .from('system_users')
+      .select('accessible_company_ids')
+      .eq('id', userData.id)
+      .single();
+
+    setFormData({
+      email: '',
+      password: '',
+      employee_id: userData.employee_id || '',
+      company_id: userData.company_id,
+      accessible_company_ids: data?.accessible_company_ids || [],
+      role: userData.role as UserRole,
+      is_active: userData.is_active,
+    });
   };
 
   const loadEmployees = async () => {
@@ -102,6 +114,7 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
           .update({
             employee_id: formData.employee_id || null,
             company_id: formData.company_id,
+            accessible_company_ids: formData.accessible_company_ids.length > 0 ? formData.accessible_company_ids : null,
             role: formData.role,
             is_active: formData.is_active,
           })
@@ -138,6 +151,7 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
             password: formData.password,
             companyId: formData.company_id,
             employeeId: formData.employee_id || null,
+            accessibleCompanyIds: formData.accessible_company_ids.length > 0 ? formData.accessible_company_ids : null,
             role: formData.role,
             isActive: formData.is_active,
           }),
@@ -219,7 +233,7 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
               <Building2 className="w-4 h-4 inline mr-2" />
-              Empresa *
+              Empresa Principal *
             </label>
             <select
               value={formData.company_id}
@@ -234,6 +248,49 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
                 </option>
               ))}
             </select>
+            <p className="mt-1 text-xs text-slate-500">
+              Esta es la empresa a la que pertenece el usuario
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              <Building2 className="w-4 h-4 inline mr-2" />
+              Empresas Adicionales Accesibles
+            </label>
+            <div className="space-y-2 max-h-40 overflow-y-auto border border-slate-300 rounded-lg p-3">
+              {companies
+                .filter(company => company.id !== formData.company_id)
+                .map((company) => (
+                  <label key={company.id} className="flex items-center gap-2 hover:bg-slate-50 p-2 rounded cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.accessible_company_ids.includes(company.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData({
+                            ...formData,
+                            accessible_company_ids: [...formData.accessible_company_ids, company.id]
+                          });
+                        } else {
+                          setFormData({
+                            ...formData,
+                            accessible_company_ids: formData.accessible_company_ids.filter(id => id !== company.id)
+                          });
+                        }
+                      }}
+                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-slate-700">
+                      {company.name} ({company.code})
+                    </span>
+                  </label>
+                ))}
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              Selecciona las empresas adicionales a las que el usuario tendrá acceso (PLIHSA, PTM, AMMI, Millfoods).
+              Los usuarios pueden ver y gestionar empleados de estas empresas.
+            </p>
           </div>
 
           <div>
@@ -243,7 +300,14 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
             </label>
             <select
               value={formData.employee_id}
-              onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })}
+              onChange={(e) => {
+                const selectedEmployee = employees.find(emp => emp.id === e.target.value);
+                setFormData({
+                  ...formData,
+                  employee_id: e.target.value,
+                  email: !user && selectedEmployee ? selectedEmployee.email : formData.email
+                });
+              }}
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Sin empleado vinculado</option>
@@ -254,7 +318,7 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
               ))}
             </select>
             <p className="mt-1 text-xs text-slate-500">
-              Vincular con un empleado existente para heredar datos personales
+              Vincular con un empleado existente para mostrar su nombre y heredar datos personales
             </p>
           </div>
 

@@ -12,6 +12,7 @@ interface CreateUserRequest {
   password: string;
   companyId: string;
   employeeId?: string | null;
+  accessibleCompanyIds?: string[] | null;
   role: string;
   isActive: boolean;
 }
@@ -103,7 +104,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Obtener datos de la petición
-    const { email, password, companyId, employeeId, role, isActive }: CreateUserRequest = await req.json();
+    const { email, password, companyId, employeeId, accessibleCompanyIds, role, isActive }: CreateUserRequest = await req.json();
 
     // Validaciones
     if (!email || !password || !companyId || !role) {
@@ -154,6 +155,7 @@ Deno.serve(async (req: Request) => {
         user_id: authData.user.id,
         employee_id: employeeId || null,
         company_id: companyId,
+        accessible_company_ids: accessibleCompanyIds || null,
         role: role,
         is_active: isActive,
       });
