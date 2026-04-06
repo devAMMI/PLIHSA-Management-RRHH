@@ -62,6 +62,7 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showDocumentViewer, setShowDocumentViewer] = useState(false);
   const [currentDefinition, setCurrentDefinition] = useState(definition);
+  const [originalPdfUrl, setOriginalPdfUrl] = useState<string | null>(null);
 
   const [goals, setGoals] = useState(
     Array.from({ length: 5 }, (_, i) => {
@@ -189,10 +190,9 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
     }
   };
 
-  const handleDownloadPDF = async () => {
-    if (!formRef.current) return;
+  const generatePdfUrl = async (): Promise<string | null> => {
+    if (!formRef.current) return null;
 
-    setLoading(true);
     try {
       const canvas = await html2canvas(formRef.current, {
         scale: 2.5,
@@ -211,11 +211,37 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
       const pdf = new jsPDF('p', 'mm', 'letter');
-
       pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
 
+      const pdfBlob = pdf.output('blob');
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+
+      return pdfUrl;
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      return null;
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!formRef.current) return;
+
+    setLoading(true);
+    try {
+      const pdfUrl = await generatePdfUrl();
+      if (!pdfUrl) {
+        throw new Error('No se pudo generar el PDF');
+      }
+
+      window.open(pdfUrl, '_blank');
+
       const fileName = `Definicion_Metas_${definition.employee.first_name}_${definition.employee.last_name}_${new Date().toISOString().split('T')[0]}.pdf`;
-      pdf.save(fileName);
+      const link = document.createElement('a');
+      link.href = pdfUrl;
+      link.download = fileName;
+      link.click();
+
+      setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
     } catch (error) {
       console.error('Error generating PDF:', error);
       setMessage({ type: 'error', text: 'Error al generar el PDF' });
@@ -225,7 +251,42 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
   };
 
   const handlePrint = () => {
-    window.print();
+    const printWindow = window.open('', '_blank');
+    if (printWindow && formRef.current) {
+      const styles = Array.from(document.styleSheets)
+        .map(styleSheet => {
+          try {
+            return Array.from(styleSheet.cssRules)
+              .map(rule => rule.cssText)
+              .join('\n');
+          } catch (e) {
+            return '';
+          }
+        })
+        .join('\n');
+
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Imprimir Definición de Metas</title>
+            <style>
+              ${styles}
+              body { margin: 0; padding: 20px; }
+              @media print {
+                body { margin: 0; padding: 0; }
+              }
+            </style>
+          </head>
+          <body>
+            ${formRef.current.innerHTML}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+    }
   };
 
   const handleUploadSuccess = async () => {
@@ -392,7 +453,13 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                     </div>
 
                     <button
-                      onClick={() => setShowDocumentViewer(true)}
+                      onClick={async () => {
+                        const pdfUrl = await generatePdfUrl();
+                        if (pdfUrl) {
+                          setOriginalPdfUrl(pdfUrl);
+                        }
+                        setShowDocumentViewer(true);
+                      }}
                       className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium whitespace-nowrap"
                     >
                       <Eye className="w-4 h-4" />
@@ -641,7 +708,15 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
           filename={currentDefinition.signed_document_filename || 'documento_firmado'}
           mimeType={currentDefinition.signed_document_mime_type || 'application/pdf'}
           uploadedAt={currentDefinition.signed_document_uploaded_at}
-          onClose={() => setShowDocumentViewer(false)}
+          originalDocumentUrl={originalPdfUrl || undefined}
+          employeeName={`${definition.employee.first_name}_${definition.employee.last_name}`}
+          onClose={() => {
+            setShowDocumentViewer(false);
+            if (originalPdfUrl) {
+              URL.revokeObjectURL(originalPdfUrl);
+              setOriginalPdfUrl(null);
+            }
+          }}
         />
       )}
     </div>
