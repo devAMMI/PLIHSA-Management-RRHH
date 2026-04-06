@@ -3,6 +3,8 @@ import { supabase } from '../../lib/supabase';
 import { Save, Printer, CreditCard as Edit2, X, ArrowLeft, Download } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { GoalWorkflowStatus } from './GoalWorkflowStatus';
+import { SignedDocumentUpload } from './SignedDocumentUpload';
 
 interface Employee {
   employee_code: string;
@@ -23,6 +25,10 @@ interface AdministrativeGoalDefinition {
   employee_comments: string;
   manager_comments: string;
   status: string;
+  workflow_status?: string;
+  signed_document_url?: string;
+  signed_document_uploaded_at?: string;
+  completed_at?: string;
   created_at: string;
   employee: Employee;
   individual_goals: Array<{
@@ -50,6 +56,8 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
   const [mode, setMode] = useState<'view' | 'edit'>(initialMode);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [currentDefinition, setCurrentDefinition] = useState(definition);
 
   const [goals, setGoals] = useState(
     Array.from({ length: 5 }, (_, i) => {
@@ -216,6 +224,49 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
     window.print();
   };
 
+  const handleUploadSuccess = async () => {
+    setShowUploadModal(false);
+
+    const { data } = await supabase
+      .from('goal_definitions')
+      .select('*, workflow_status, signed_document_url, signed_document_uploaded_at, completed_at')
+      .eq('id', definition.id)
+      .single();
+
+    if (data) {
+      setCurrentDefinition({ ...currentDefinition, ...data });
+    }
+
+    if (onUpdate) onUpdate();
+    setMessage({ type: 'success', text: 'Documento firmado subido exitosamente' });
+  };
+
+  const handleMarkAsCompleted = async () => {
+    try {
+      const { error } = await supabase
+        .from('goal_definitions')
+        .update({
+          workflow_status: 'completed',
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', definition.id);
+
+      if (error) throw error;
+
+      setCurrentDefinition({
+        ...currentDefinition,
+        workflow_status: 'completed',
+        completed_at: new Date().toISOString()
+      });
+
+      if (onUpdate) onUpdate();
+      setMessage({ type: 'success', text: 'Definición marcada como completada' });
+    } catch (error) {
+      console.error('Error marking as completed:', error);
+      setMessage({ type: 'error', text: 'Error al marcar como completada' });
+    }
+  };
+
   const calculateSeniority = (hireDate: string): string => {
     const hire = new Date(hireDate);
     const now = new Date();
@@ -294,6 +345,17 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
               {message.text}
             </div>
           )}
+
+          <div className="mb-6 print:hidden">
+            <GoalWorkflowStatus
+              status={(currentDefinition.workflow_status || 'draft') as 'draft' | 'pending_signature' | 'completed'}
+              signedDocumentUrl={currentDefinition.signed_document_url}
+              onPrint={handlePrint}
+              onDownloadPDF={handleDownloadPDF}
+              onUploadSigned={() => setShowUploadModal(true)}
+              onMarkAsCompleted={handleMarkAsCompleted}
+            />
+          </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden print-content" ref={formRef}>
             <div className="bg-white border-b-2 border-slate-300">
@@ -515,6 +577,16 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
           </div>
         </div>
       </div>
+
+      {showUploadModal && (
+        <SignedDocumentUpload
+          goalDefinitionId={definition.id}
+          definitionType="administrative"
+          currentDocumentUrl={currentDefinition.signed_document_url}
+          onSuccess={handleUploadSuccess}
+          onCancel={() => setShowUploadModal(false)}
+        />
+      )}
     </div>
   );
 }
