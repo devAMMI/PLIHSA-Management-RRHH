@@ -1,4 +1,4 @@
-import { X, Download, FileText, Image as ImageIcon } from 'lucide-react';
+import { X, Download, FileText, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
 
 interface SignedDocumentViewerProps {
@@ -17,6 +17,7 @@ export function SignedDocumentViewer({
   onClose
 }: SignedDocumentViewerProps) {
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const isPDF = mimeType === 'application/pdf';
   const isImage = mimeType.includes('image');
@@ -76,7 +77,24 @@ export function SignedDocumentViewer({
         )}
 
         <div className="flex-1 overflow-auto bg-slate-100 p-4">
-          {isLoading && (
+          {loadError && (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center bg-white rounded-lg p-8 shadow-md max-w-md">
+                <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                <p className="text-slate-700 font-medium mb-2">Error al cargar el documento</p>
+                <p className="text-slate-500 text-sm mb-4">{loadError}</p>
+                <button
+                  onClick={handleDownload}
+                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium mx-auto"
+                >
+                  <Download className="w-5 h-5" />
+                  Intentar Descargar
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!loadError && isLoading && (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-green-600 border-t-transparent"></div>
@@ -85,22 +103,30 @@ export function SignedDocumentViewer({
             </div>
           )}
 
-          {isPDF && (
+          {!loadError && isPDF && (
             <iframe
               src={documentUrl}
               className="w-full h-full rounded-lg border-2 border-slate-300 bg-white"
               title="Documento firmado PDF"
               onLoad={() => setIsLoading(false)}
+              onError={() => {
+                setIsLoading(false);
+                setLoadError('No se pudo cargar el archivo PDF. Verifica que el archivo existe y es accesible.');
+              }}
             />
           )}
 
-          {isImage && (
+          {!loadError && isImage && (
             <div className="flex items-center justify-center h-full">
               <img
                 src={documentUrl}
                 alt="Documento firmado"
                 className="max-w-full max-h-full rounded-lg shadow-lg border-2 border-slate-300"
                 onLoad={() => setIsLoading(false)}
+                onError={() => {
+                  setIsLoading(false);
+                  setLoadError('No se pudo cargar la imagen. Verifica que el archivo existe y es accesible.');
+                }}
               />
             </div>
           )}
