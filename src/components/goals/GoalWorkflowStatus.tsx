@@ -66,9 +66,9 @@ export function GoalWorkflowStatus({
       {status === 'draft' && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-sm text-blue-800 mb-3">
-            <strong>Siguiente paso:</strong> Guarda y envía a revisión, luego imprime el documento para firma manual.
+            <strong>Siguiente paso:</strong> Imprime el documento, fírmalo a puño y letra, escanéalo y súbelo aquí.
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {onDownloadPDF && (
               <button
                 onClick={onDownloadPDF}
@@ -85,6 +85,15 @@ export function GoalWorkflowStatus({
               >
                 <Printer className="w-4 h-4" />
                 Imprimir
+              </button>
+            )}
+            {onUploadSigned && (
+              <button
+                onClick={onUploadSigned}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium"
+              >
+                <Upload className="w-4 h-4" />
+                Subir Documento Firmado
               </button>
             )}
           </div>
