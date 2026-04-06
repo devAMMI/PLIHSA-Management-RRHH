@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Save, Printer, CreditCard as Edit2, X, ArrowLeft, Download } from 'lucide-react';
+import { Save, Printer, CreditCard as Edit2, X, ArrowLeft, Download, FileText, ExternalLink } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { GoalWorkflowStatus } from './GoalWorkflowStatus';
@@ -27,6 +27,8 @@ interface AdministrativeGoalDefinition {
   status: string;
   workflow_status?: string;
   signed_document_url?: string;
+  signed_document_filename?: string;
+  signed_document_mime_type?: string;
   signed_document_uploaded_at?: string;
   completed_at?: string;
   created_at: string;
@@ -229,7 +231,7 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
 
     const { data } = await supabase
       .from('goal_definitions')
-      .select('*, workflow_status, signed_document_url, signed_document_uploaded_at, completed_at')
+      .select('*, workflow_status, signed_document_url, signed_document_filename, signed_document_mime_type, signed_document_uploaded_at, completed_at')
       .eq('id', definition.id)
       .single();
 
@@ -346,7 +348,7 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
             </div>
           )}
 
-          <div className="mb-6 print:hidden">
+          <div className="mb-6 print:hidden space-y-4">
             <GoalWorkflowStatus
               status={(currentDefinition.workflow_status || 'draft') as 'draft' | 'pending_signature' | 'completed'}
               signedDocumentUrl={currentDefinition.signed_document_url}
@@ -355,6 +357,72 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
               onUploadSigned={() => setShowUploadModal(true)}
               onMarkAsCompleted={handleMarkAsCompleted}
             />
+
+            {currentDefinition.signed_document_url && (
+              <div className="bg-white border border-slate-200 rounded-lg p-6">
+                <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-green-600" />
+                  Documento Firmado
+                </h3>
+
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-2 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-slate-700">Nombre del archivo:</span>
+                        <span className="text-sm text-slate-600">{currentDefinition.signed_document_filename || 'documento_firmado'}</span>
+                      </div>
+
+                      {currentDefinition.signed_document_mime_type && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-slate-700">Tipo:</span>
+                          <span className="text-sm text-slate-600">
+                            {currentDefinition.signed_document_mime_type === 'application/pdf' ? 'PDF' :
+                             currentDefinition.signed_document_mime_type.includes('image') ? 'Imagen' :
+                             currentDefinition.signed_document_mime_type}
+                          </span>
+                        </div>
+                      )}
+
+                      {currentDefinition.signed_document_uploaded_at && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-slate-700">Fecha de subida:</span>
+                          <span className="text-sm text-slate-600">
+                            {new Date(currentDefinition.signed_document_uploaded_at).toLocaleString('es-HN', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <a
+                      href={currentDefinition.signed_document_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium whitespace-nowrap"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Ver Documento
+                    </a>
+                  </div>
+
+                  {currentDefinition.signed_document_mime_type?.includes('image') && (
+                    <div className="mt-4">
+                      <img
+                        src={currentDefinition.signed_document_url}
+                        alt="Documento firmado"
+                        className="max-w-full h-auto rounded-lg border border-slate-300"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden print-content" ref={formRef}>

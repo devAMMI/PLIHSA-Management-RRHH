@@ -76,6 +76,8 @@ export function SignedDocumentUpload({
         .from(tableName)
         .update({
           signed_document_url: publicUrl,
+          signed_document_filename: selectedFile.name,
+          signed_document_mime_type: selectedFile.type,
           signed_document_uploaded_at: new Date().toISOString(),
           signed_document_uploaded_by: user.id,
           workflow_status: 'completed',
