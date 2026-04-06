@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Save, Printer, CreditCard as Edit2, X, ArrowLeft, Download, FileText, ExternalLink } from 'lucide-react';
+import { Save, Printer, CreditCard as Edit2, X, ArrowLeft, Download, FileText, ExternalLink, Eye } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { GoalWorkflowStatus } from './GoalWorkflowStatus';
 import { SignedDocumentUpload } from './SignedDocumentUpload';
+import { SignedDocumentViewer } from './SignedDocumentViewer';
 
 interface Employee {
   employee_code: string;
@@ -59,6 +60,7 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showDocumentViewer, setShowDocumentViewer] = useState(false);
   const [currentDefinition, setCurrentDefinition] = useState(definition);
 
   const [goals, setGoals] = useState(
@@ -365,28 +367,17 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                   Documento Firmado
                 </h3>
 
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
-                  <div className="flex items-start justify-between">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-start justify-between gap-4">
                     <div className="space-y-2 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-slate-700">Nombre del archivo:</span>
-                        <span className="text-sm text-slate-600">{currentDefinition.signed_document_filename || 'documento_firmado'}</span>
+                      <div className="flex items-start gap-2">
+                        <span className="text-sm font-medium text-slate-700 whitespace-nowrap">Nombre del archivo:</span>
+                        <span className="text-sm text-slate-600 break-all">{currentDefinition.signed_document_filename || 'documento_firmado'}</span>
                       </div>
 
-                      {currentDefinition.signed_document_mime_type && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-slate-700">Tipo:</span>
-                          <span className="text-sm text-slate-600">
-                            {currentDefinition.signed_document_mime_type === 'application/pdf' ? 'PDF' :
-                             currentDefinition.signed_document_mime_type.includes('image') ? 'Imagen' :
-                             currentDefinition.signed_document_mime_type}
-                          </span>
-                        </div>
-                      )}
-
                       {currentDefinition.signed_document_uploaded_at && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-slate-700">Fecha de subida:</span>
+                        <div className="flex items-start gap-2">
+                          <span className="text-sm font-medium text-slate-700 whitespace-nowrap">Fecha de subida:</span>
                           <span className="text-sm text-slate-600">
                             {new Date(currentDefinition.signed_document_uploaded_at).toLocaleString('es-HN', {
                               year: 'numeric',
@@ -400,26 +391,14 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                       )}
                     </div>
 
-                    <a
-                      href={currentDefinition.signed_document_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      onClick={() => setShowDocumentViewer(true)}
                       className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium whitespace-nowrap"
                     >
-                      <ExternalLink className="w-4 h-4" />
+                      <Eye className="w-4 h-4" />
                       Ver Documento
-                    </a>
+                    </button>
                   </div>
-
-                  {currentDefinition.signed_document_mime_type?.includes('image') && (
-                    <div className="mt-4">
-                      <img
-                        src={currentDefinition.signed_document_url}
-                        alt="Documento firmado"
-                        className="max-w-full h-auto rounded-lg border border-slate-300"
-                      />
-                    </div>
-                  )}
                 </div>
               </div>
             )}
@@ -653,6 +632,16 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
           currentDocumentUrl={currentDefinition.signed_document_url}
           onSuccess={handleUploadSuccess}
           onCancel={() => setShowUploadModal(false)}
+        />
+      )}
+
+      {showDocumentViewer && currentDefinition.signed_document_url && (
+        <SignedDocumentViewer
+          documentUrl={currentDefinition.signed_document_url}
+          filename={currentDefinition.signed_document_filename || 'documento_firmado'}
+          mimeType={currentDefinition.signed_document_mime_type || 'application/pdf'}
+          uploadedAt={currentDefinition.signed_document_uploaded_at}
+          onClose={() => setShowDocumentViewer(false)}
         />
       )}
     </div>
