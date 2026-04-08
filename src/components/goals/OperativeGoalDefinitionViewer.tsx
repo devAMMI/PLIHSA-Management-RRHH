@@ -170,9 +170,26 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
       });
 
       const imgWidth = 215.9;
+      const pageHeight = 279.4;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
       const pdf = new jsPDF('p', 'mm', 'letter');
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
+
+      if (imgHeight <= pageHeight) {
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
+      } else {
+        let position = 0;
+        let remainingHeight = imgHeight;
+        let firstPage = true;
+
+        while (remainingHeight > 0) {
+          if (!firstPage) pdf.addPage();
+          pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, -position, imgWidth, imgHeight);
+          position += pageHeight;
+          remainingHeight -= pageHeight;
+          firstPage = false;
+        }
+      }
 
       const pdfBlob = pdf.output('blob');
       return URL.createObjectURL(pdfBlob);
@@ -355,7 +372,7 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
             )}
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden print-content" ref={formRef}>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 print-content" ref={formRef}>
             <div className="grid grid-cols-12 border-b-2 border-slate-300">
               <div className="col-span-3 border-r-2 border-slate-300 p-4 flex items-center justify-center bg-white">
                 <img src="https://i.imgur.com/hii0TM1.png" alt="PLIHSA Logo" className="w-full h-auto max-w-[180px]" crossOrigin="anonymous" />
