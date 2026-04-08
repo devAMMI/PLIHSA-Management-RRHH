@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { FileText, Eye, Trash2, Calendar, User, Building2, CheckCircle, Clock, ArrowLeft, Upload } from 'lucide-react';
 import { GoalDefinitionViewer } from './GoalDefinitionViewer';
+import { OperativeGoalDefinitionViewer } from './OperativeGoalDefinitionViewer';
 
 interface Employee {
   first_name: string;
@@ -13,6 +14,7 @@ interface Employee {
   sub_department: { name: string } | null;
   manager: { first_name: string; last_name: string; position: string } | null;
 }
+
 
 interface AdministrativeGoalDefinition {
   id: string;
@@ -139,7 +141,10 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
               last_name,
               position,
               employee_code,
-              department:departments!employees_department_id_fkey (name)
+              hire_date,
+              department:departments!employees_department_id_fkey (name),
+              sub_department:sub_departments!employees_sub_department_id_fkey (name),
+              manager:manager_id (first_name, last_name, position)
             ),
             operative_individual_goals (
               goal_number,
@@ -352,6 +357,15 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
 
       {showModal && selectedDefinition && type === 'administrative' && isAdministrative(selectedDefinition) && (
         <GoalDefinitionViewer
+          definition={selectedDefinition}
+          onClose={() => setShowModal(false)}
+          onUpdate={fetchDefinitions}
+          mode="view"
+        />
+      )}
+
+      {showModal && selectedDefinition && type === 'operative' && isOperative(selectedDefinition) && (
+        <OperativeGoalDefinitionViewer
           definition={selectedDefinition}
           onClose={() => setShowModal(false)}
           onUpdate={fetchDefinitions}
