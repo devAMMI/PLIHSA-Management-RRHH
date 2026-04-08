@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { X, Save, User, Mail, Shield, Building2, AlertCircle } from 'lucide-react';
+import { X, Save, User, Mail, Shield, Building2, AlertCircle, Lock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { UserRole, ROLE_LABELS, ROLE_DESCRIPTIONS, ROLE_HIERARCHY } from '../../types/roles';
-import { permissionService } from '../../services/permissionService';
+import { userService } from '../../services/userService';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface SystemUser {
   id: string;
@@ -11,6 +12,7 @@ interface SystemUser {
   company_id: string;
   role: string;
   is_active: boolean;
+  email?: string;
 }
 
 interface Employee {
@@ -34,12 +36,15 @@ interface UserModalProps {
 }
 
 export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
+  const { systemUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const isSuperAdmin = systemUser?.role === 'superadmin';
+  const myLevel = systemUser ? ROLE_HIERARCHY[systemUser.role] : 0;
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -53,17 +58,8 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
   useEffect(() => {
     loadEmployees();
     loadCompanies();
-    loadUserRole();
-
-    if (user) {
-      loadUserData(user);
-    }
+    if (user) loadUserData(user);
   }, [user]);
-
-  const loadUserRole = async () => {
-    const role = await permissionService.getUserRole();
-    setUserRole(role);
-  };
 
   const loadUserData = async (userData: SystemUser) => {
     const { data } = await supabase
@@ -73,7 +69,7 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
       .single();
 
     setFormData({
-      email: '',
+      email: userData.email || '',
       password: '',
       employee_id: userData.employee_id || '',
       company_id: userData.company_id,
@@ -88,7 +84,6 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
       .from('employees')
       .select('id, first_name, last_name, email, employee_code')
       .order('first_name');
-
     setEmployees(data || []);
   };
 
@@ -97,9 +92,15 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
       .from('companies')
       .select('id, name, code')
       .order('name');
-
     setCompanies(data || []);
   };
+
+  const availableRoles = Object.entries(ROLE_LABELS).filter(([roleKey]) => {
+    const role = roleKey as UserRole;
+    const roleLevel = ROLE_HIERARCHY[role];
+    if (isSuperAdmin) return role !== 'superadmin';
+    return roleLevel < myLevel;
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,66 +108,37 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
     setError(null);
 
     try {
+      if (!formData.company_id) throw new Error('Selecciona una empresa principal');
+      if (!formData.role) throw new Error('Selecciona un rol');
+
       if (user) {
-        // Actualizar usuario existente
-        const { error: updateError } = await supabase
-          .from('system_users')
-          .update({
-            employee_id: formData.employee_id || null,
-            company_id: formData.company_id,
-            accessible_company_ids: formData.accessible_company_ids.length > 0 ? formData.accessible_company_ids : null,
-            role: formData.role,
-            is_active: formData.is_active,
-          })
-          .eq('id', user.id);
-
-        if (updateError) throw updateError;
-      } else {
-        // Crear nuevo usuario
-        if (!formData.email || !formData.password) {
-          throw new Error('Email y contraseña son requeridos');
-        }
-
-        if (formData.password.length < 6) {
-          throw new Error('La contraseña debe tener al menos 6 caracteres');
-        }
-
-        // Obtener la sesión actual para autenticación
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          throw new Error('No hay sesión activa');
-        }
-
-        // Llamar a la Edge Function para crear el usuario
-        const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-admin-user`;
-
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: formData.email,
-            password: formData.password,
-            companyId: formData.company_id,
-            employeeId: formData.employee_id || null,
-            accessibleCompanyIds: formData.accessible_company_ids.length > 0 ? formData.accessible_company_ids : null,
-            role: formData.role,
-            isActive: formData.is_active,
-          }),
+        const result = await userService.updateUser(user.id, {
+          employeeId: formData.employee_id || null,
+          companyId: formData.company_id,
+          accessibleCompanyIds: formData.accessible_company_ids,
+          role: formData.role,
+          isActive: formData.is_active,
         });
+        if (!result.success) throw new Error(result.error || 'Error al actualizar usuario');
+      } else {
+        if (!formData.email) throw new Error('El email es requerido');
+        if (!formData.password) throw new Error('La contrasena es requerida');
+        if (formData.password.length < 6) throw new Error('La contrasena debe tener al menos 6 caracteres');
 
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error || 'Error al crear el usuario');
-        }
+        const result = await userService.createUser({
+          email: formData.email,
+          password: formData.password,
+          companyId: formData.company_id,
+          employeeId: formData.employee_id || undefined,
+          accessibleCompanyIds: formData.accessible_company_ids,
+          role: formData.role,
+          isActive: formData.is_active,
+        });
+        if (!result.success) throw new Error(result.error || 'Error al crear usuario');
       }
 
       onSuccess();
     } catch (err: any) {
-      console.error('Error saving user:', err);
       setError(err.message || 'Error al guardar el usuario');
     } finally {
       setLoading(false);
@@ -180,15 +152,12 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
           <h2 className="text-xl font-bold text-slate-800">
             {user ? 'Editar Usuario' : 'Nuevo Usuario'}
           </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-lg transition"
-          >
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg transition">
+            <X className="w-5 h-5 text-slate-500" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {error && (
             <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
               <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -197,195 +166,165 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
           )}
 
           {!user && (
-            <>
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  <Mail className="w-4 h-4 inline mr-2" />
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  <Mail className="w-4 h-4 inline mr-1.5" />
                   Email *
                 </label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   required
-                  placeholder="usuario@ejemplo.com"
+                  placeholder="usuario@plihsa.com"
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Contraseña *
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  <Lock className="w-4 h-4 inline mr-1.5" />
+                  Contrasena *
                 </label>
                 <input
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   required
                   minLength={6}
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Minimo 6 caracteres"
                 />
               </div>
-            </>
+            </div>
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              <Building2 className="w-4 h-4 inline mr-2" />
-              Empresa Principal *
-            </label>
-            <select
-              value={formData.company_id}
-              onChange={(e) => setFormData({ ...formData, company_id: e.target.value })}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            >
-              <option value="">Seleccionar empresa</option>
-              {companies.map((company) => (
-                <option key={company.id} value={company.id}>
-                  {company.name} ({company.code})
-                </option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs text-slate-500">
-              Esta es la empresa a la que pertenece el usuario
-            </p>
+          {user && (
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+              <div className="text-xs text-slate-500 mb-0.5">Email del usuario</div>
+              <div className="text-sm font-medium text-slate-700">{formData.email || '—'}</div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                <Building2 className="w-4 h-4 inline mr-1.5" />
+                Empresa Principal *
+              </label>
+              <select
+                value={formData.company_id}
+                onChange={(e) => setFormData({ ...formData, company_id: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                required
+              >
+                <option value="">Seleccionar empresa</option>
+                {companies.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name} ({company.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                <Shield className="w-4 h-4 inline mr-1.5" />
+                Rol *
+              </label>
+              <select
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                required
+              >
+                {availableRoles.map(([roleKey, roleLabel]) => (
+                  <option key={roleKey} value={roleKey}>{roleLabel}</option>
+                ))}
+              </select>
+              {formData.role && ROLE_DESCRIPTIONS[formData.role] && (
+                <p className="mt-1 text-xs text-slate-500">{ROLE_DESCRIPTIONS[formData.role]}</p>
+              )}
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              <Building2 className="w-4 h-4 inline mr-2" />
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              <Building2 className="w-4 h-4 inline mr-1.5" />
               Empresas Adicionales Accesibles
             </label>
-            <div className="space-y-2 max-h-40 overflow-y-auto border border-slate-300 rounded-lg p-3">
+            <div className="border border-slate-300 rounded-lg p-3 space-y-1.5 max-h-36 overflow-y-auto">
               {companies
-                .filter(company => company.id !== formData.company_id)
+                .filter(c => c.id !== formData.company_id)
                 .map((company) => (
-                  <label key={company.id} className="flex items-center gap-2 hover:bg-slate-50 p-2 rounded cursor-pointer">
+                  <label key={company.id} className="flex items-center gap-2 hover:bg-slate-50 px-2 py-1.5 rounded cursor-pointer">
                     <input
                       type="checkbox"
                       checked={formData.accessible_company_ids.includes(company.id)}
                       onChange={(e) => {
-                        if (e.target.checked) {
-                          setFormData({
-                            ...formData,
-                            accessible_company_ids: [...formData.accessible_company_ids, company.id]
-                          });
-                        } else {
-                          setFormData({
-                            ...formData,
-                            accessible_company_ids: formData.accessible_company_ids.filter(id => id !== company.id)
-                          });
-                        }
+                        const ids = e.target.checked
+                          ? [...formData.accessible_company_ids, company.id]
+                          : formData.accessible_company_ids.filter(id => id !== company.id);
+                        setFormData({ ...formData, accessible_company_ids: ids });
                       }}
-                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-blue-600 rounded"
                     />
-                    <span className="text-sm text-slate-700">
-                      {company.name} ({company.code})
-                    </span>
+                    <span className="text-sm text-slate-700">{company.name} ({company.code})</span>
                   </label>
                 ))}
+              {companies.filter(c => c.id !== formData.company_id).length === 0 && (
+                <p className="text-xs text-slate-400 px-2">Selecciona una empresa principal primero</p>
+              )}
             </div>
-            <p className="mt-1 text-xs text-slate-500">
-              Selecciona las empresas adicionales a las que el usuario tendrá acceso (PLIHSA, PTM, AMMI, Millfoods).
-              Los usuarios pueden ver y gestionar empleados de estas empresas.
-            </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              <User className="w-4 h-4 inline mr-2" />
-              Empleado (Opcional)
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              <User className="w-4 h-4 inline mr-1.5" />
+              Empleado Vinculado (Opcional)
             </label>
             <select
               value={formData.employee_id}
               onChange={(e) => {
-                const selectedEmployee = employees.find(emp => emp.id === e.target.value);
+                const emp = employees.find(em => em.id === e.target.value);
                 setFormData({
                   ...formData,
                   employee_id: e.target.value,
-                  email: !user && selectedEmployee ? selectedEmployee.email : formData.email
+                  email: !user && emp ? emp.email : formData.email,
                 });
               }}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             >
               <option value="">Sin empleado vinculado</option>
-              {employees.map((employee) => (
-                <option key={employee.id} value={employee.id}>
-                  {employee.first_name} {employee.last_name} - {employee.employee_code}
+              {employees.map((emp) => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.first_name} {emp.last_name} — {emp.employee_code}
                 </option>
               ))}
             </select>
             <p className="mt-1 text-xs text-slate-500">
-              Vincular con un empleado existente para mostrar su nombre y heredar datos personales
+              Vincula con un empleado para mostrar su nombre y foto en el sistema
             </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              <Shield className="w-4 h-4 inline mr-2" />
-              Rol *
-            </label>
-            <select
-              value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            >
-              {Object.entries(ROLE_LABELS).map(([roleKey, roleLabel]) => {
-                const role = roleKey as UserRole;
-                const currentUserLevel = userRole ? ROLE_HIERARCHY[userRole] : 0;
-                const roleLevel = ROLE_HIERARCHY[role];
-
-                // Only show roles that are lower than the current user's role
-                if (roleLevel < currentUserLevel) {
-                  return (
-                    <option key={role} value={role}>
-                      {roleLabel}
-                    </option>
-                  );
-                }
-                return null;
-              })}
-            </select>
-            <div className="mt-2 text-xs text-slate-600 space-y-1">
-              {Object.entries(ROLE_DESCRIPTIONS).map(([roleKey, desc]) => {
-                const role = roleKey as UserRole;
-                const currentUserLevel = userRole ? ROLE_HIERARCHY[userRole] : 0;
-                const roleLevel = ROLE_HIERARCHY[role];
-
-                // Only show descriptions for roles the user can assign
-                if (roleLevel < currentUserLevel) {
-                  return (
-                    <div key={role}>
-                      <strong>{ROLE_LABELS[role]}:</strong> {desc}
-                    </div>
-                  );
-                }
-                return null;
-              })}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
             <input
               type="checkbox"
               id="is_active"
               checked={formData.is_active}
               onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-blue-600 rounded"
             />
-            <label htmlFor="is_active" className="text-sm font-medium text-slate-700">
-              Usuario activo
+            <label htmlFor="is_active" className="text-sm font-medium text-slate-700 cursor-pointer">
+              Usuario activo — puede iniciar sesion en el sistema
             </label>
           </div>
 
-          <div className="flex gap-3 pt-4 border-t border-slate-200">
+          <div className="flex gap-3 pt-2 border-t border-slate-200">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 flex items-center justify-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50"
+              className="flex-1 flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
               {loading ? 'Guardando...' : user ? 'Actualizar Usuario' : 'Crear Usuario'}
@@ -393,7 +332,7 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition font-medium"
+              className="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition font-medium"
             >
               Cancelar
             </button>

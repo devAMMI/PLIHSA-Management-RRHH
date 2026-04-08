@@ -1,99 +1,98 @@
 import { supabase } from '../lib/supabase';
 import { SystemUser, UserRole } from '../types/roles';
 
+const MANAGE_USERS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users`;
+
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('No hay sesion activa');
+  return {
+    'Authorization': `Bearer ${session.access_token}`,
+    'Content-Type': 'application/json',
+  };
+}
+
 export interface CreateUserData {
   email: string;
   password: string;
   companyId: string;
   employeeId?: string;
+  accessibleCompanyIds?: string[];
   role: UserRole;
   isActive: boolean;
 }
 
 export interface UpdateUserData {
-  employeeId?: string;
+  employeeId?: string | null;
   role?: UserRole;
   isActive?: boolean;
+  companyId?: string;
+  accessibleCompanyIds?: string[] | null;
 }
 
 class UserService {
-  async getUsers(companyId?: string): Promise<SystemUser[]> {
-    let query = supabase
-      .from('system_users')
-      .select(`
-        *,
-        employee:employees(first_name, last_name, photo_url),
-        company:companies(name)
-      `);
-
-    if (companyId) {
-      query = query.eq('company_id', companyId);
-    }
-
-    const { data, error } = await query.order('created_at', { ascending: false });
-
-    if (error) {
+  async getUsers(): Promise<SystemUser[]> {
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch(`${MANAGE_USERS_URL}?action=list`, { headers });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Error al obtener usuarios');
+      return result.users || [];
+    } catch (error: any) {
       console.error('Error fetching users:', error);
       throw error;
     }
-
-    const { data: authUsers } = await supabase.auth.admin.listUsers();
-
-    return (data || []).map(user => {
-      const authUser = authUsers?.users.find(u => u.id === user.user_id);
-      return {
-        ...user,
-        email: authUser?.email
-      };
-    });
   }
 
   async createUser(userData: CreateUserData): Promise<{ success: boolean; error?: string; userId?: string }> {
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: userData.email,
-        password: userData.password,
-        options: {
-          emailRedirectTo: undefined,
-        }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No hay sesion activa');
+
+      const CREATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-admin-user`;
+      const response = await fetch(CREATE_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: userData.email,
+          password: userData.password,
+          companyId: userData.companyId,
+          employeeId: userData.employeeId || null,
+          accessibleCompanyIds: userData.accessibleCompanyIds?.length ? userData.accessibleCompanyIds : null,
+          role: userData.role,
+          isActive: userData.isActive,
+        }),
       });
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('No se pudo crear el usuario');
-
-      const { error: userError } = await supabase
-        .from('system_users')
-        .insert({
-          user_id: authData.user.id,
-          company_id: userData.companyId,
-          employee_id: userData.employeeId || null,
-          role: userData.role,
-          is_active: userData.isActive
-        });
-
-      if (userError) throw userError;
-
-      return { success: true, userId: authData.user.id };
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Error al crear el usuario');
+      return { success: true, userId: result.userId };
     } catch (error: any) {
       console.error('Error creating user:', error);
       return { success: false, error: error.message };
     }
   }
 
-  async updateUser(userId: string, updates: UpdateUserData): Promise<{ success: boolean; error?: string }> {
+  async updateUser(systemUserId: string, updates: UpdateUserData): Promise<{ success: boolean; error?: string }> {
     try {
+      const updateData: Record<string, any> = { updated_at: new Date().toISOString() };
+      if (updates.employeeId !== undefined) updateData.employee_id = updates.employeeId;
+      if (updates.role !== undefined) updateData.role = updates.role;
+      if (updates.isActive !== undefined) updateData.is_active = updates.isActive;
+      if (updates.companyId !== undefined) updateData.company_id = updates.companyId;
+      if (updates.accessibleCompanyIds !== undefined) {
+        updateData.accessible_company_ids = updates.accessibleCompanyIds?.length ? updates.accessibleCompanyIds : null;
+      }
+
       const { error } = await supabase
         .from('system_users')
-        .update({
-          employee_id: updates.employeeId,
-          role: updates.role,
-          is_active: updates.isActive,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', userId);
+        .update(updateData)
+        .eq('id', systemUserId);
 
       if (error) throw error;
-
       return { success: true };
     } catch (error: any) {
       console.error('Error updating user:', error);
@@ -103,19 +102,15 @@ class UserService {
 
   async deleteUser(userId: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error: userError } = await supabase
-        .from('system_users')
-        .delete()
-        .eq('user_id', userId);
+      const headers = await getAuthHeaders();
+      const response = await fetch(MANAGE_USERS_URL, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ action: 'delete_user', userId }),
+      });
 
-      if (userError) throw userError;
-
-      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
-
-      if (authError) {
-        console.warn('Could not delete auth user:', authError);
-      }
-
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Error al eliminar el usuario');
       return { success: true };
     } catch (error: any) {
       console.error('Error deleting user:', error);
@@ -125,12 +120,15 @@ class UserService {
 
   async resetPassword(userId: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase.auth.admin.updateUserById(userId, {
-        password: newPassword
+      const headers = await getAuthHeaders();
+      const response = await fetch(MANAGE_USERS_URL, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ action: 'reset_password', userId, newPassword }),
       });
 
-      if (error) throw error;
-
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Error al cambiar la contrasena');
       return { success: true };
     } catch (error: any) {
       console.error('Error resetting password:', error);
@@ -145,15 +143,12 @@ class UserService {
 
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: user.email,
-        password: currentPassword
+        password: currentPassword,
       });
 
-      if (signInError) throw new Error('Contraseña actual incorrecta');
+      if (signInError) throw new Error('Contrasena actual incorrecta');
 
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
 
       return { success: true };
@@ -163,8 +158,8 @@ class UserService {
     }
   }
 
-  async toggleUserStatus(userId: string, isActive: boolean): Promise<{ success: boolean; error?: string }> {
-    return this.updateUser(userId, { isActive });
+  async toggleUserStatus(systemUserId: string, isActive: boolean): Promise<{ success: boolean; error?: string }> {
+    return this.updateUser(systemUserId, { isActive });
   }
 }
 

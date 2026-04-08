@@ -1,0 +1,162 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.57.4";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+};
+
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 200, headers: corsHeaders });
+  }
+
+  try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "No authorization header" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user: requestUser }, error: userError } = await supabaseAdmin.auth.getUser(token);
+
+    if (userError || !requestUser) {
+      return new Response(JSON.stringify({ error: "Invalid token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: systemUser, error: systemUserError } = await supabaseAdmin
+      .from("system_users")
+      .select("role, is_active, company_id")
+      .eq("user_id", requestUser.id)
+      .single();
+
+    if (systemUserError || !systemUser) {
+      return new Response(JSON.stringify({ error: "User not found in system" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!systemUser.is_active || !["admin", "superadmin"].includes(systemUser.role)) {
+      return new Response(JSON.stringify({ error: "User not allowed" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const url = new URL(req.url);
+    const action = url.searchParams.get("action") || (await req.json().catch(() => ({}))).action;
+
+    if (req.method === "GET" && url.searchParams.get("action") === "list") {
+      const { data: systemUsers, error: listError } = await supabaseAdmin
+        .from("system_users")
+        .select(`
+          *,
+          employee:employees(first_name, last_name, photo_url),
+          company:companies(name)
+        `)
+        .order("created_at", { ascending: false });
+
+      if (listError) throw listError;
+
+      const { data: authData, error: authListError } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
+      if (authListError) throw authListError;
+
+      const users = (systemUsers || []).map((u: any) => {
+        const authUser = authData?.users?.find((a: any) => a.id === u.user_id);
+        return { ...u, email: authUser?.email };
+      });
+
+      return new Response(JSON.stringify({ users }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const body = await req.json().catch(() => ({}));
+
+    if (req.method === "POST" && body.action === "reset_password") {
+      const { userId, newPassword } = body;
+      if (!userId || !newPassword) {
+        return new Response(JSON.stringify({ error: "userId and newPassword required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (newPassword.length < 6) {
+        return new Response(JSON.stringify({ error: "Password must be at least 6 characters" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, { password: newPassword });
+      if (error) throw error;
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (req.method === "DELETE" || body.action === "delete_user") {
+      const userId = body.userId || url.searchParams.get("userId");
+      if (!userId) {
+        return new Response(JSON.stringify({ error: "userId required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: targetUser } = await supabaseAdmin
+        .from("system_users")
+        .select("role")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (targetUser?.role === "superadmin" && systemUser.role !== "superadmin") {
+        return new Response(JSON.stringify({ error: "Cannot delete a superadmin" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { error: deleteSystemError } = await supabaseAdmin
+        .from("system_users")
+        .delete()
+        .eq("user_id", userId);
+
+      if (deleteSystemError) throw deleteSystemError;
+
+      await supabaseAdmin.auth.admin.deleteUser(userId);
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify({ error: "Unknown action" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
+  } catch (error: any) {
+    console.error("Error in manage-users:", error);
+    return new Response(JSON.stringify({ error: error.message || "Internal server error" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
