@@ -1,5 +1,6 @@
 import { ArrowLeft, Mail, Phone, MapPin, Calendar, Briefcase, User, GraduationCap, Users, Building2, Clock, MapPinned, Home, CreditCard as Edit2, Trash2, Heart } from 'lucide-react';
 import { formatSeniorityFromDate } from '../../lib/seniority';
+import { EmployeeEvaluationsHistory } from './EmployeeEvaluationsHistory';
 
 interface EmployeeProfilePageProps {
   employee: any;
@@ -268,6 +269,11 @@ export function EmployeeProfilePage({ employee, onBack, onEdit, onDelete }: Empl
                     </div>
                   </div>
                 )}
+
+                <EmployeeEvaluationsHistory
+                  employeeId={employee.id}
+                  employeeType={employee.employee_type || 'administrativo'}
+                />
               </div>
 
               <div className="space-y-6">
