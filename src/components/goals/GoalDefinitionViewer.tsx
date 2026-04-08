@@ -696,6 +696,13 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
         <SignedDocumentUpload
           goalDefinitionId={definition.id}
           definitionType="administrative"
+          evalYear={new Date(definition.definition_date).getFullYear()}
+          employee={{
+            id: definition.employee_id,
+            employee_code: definition.employee.employee_code,
+            first_name: definition.employee.first_name,
+            last_name: definition.employee.last_name
+          }}
           currentDocumentUrl={currentDefinition.signed_document_url}
           onSuccess={handleUploadSuccess}
           onCancel={() => setShowUploadModal(false)}

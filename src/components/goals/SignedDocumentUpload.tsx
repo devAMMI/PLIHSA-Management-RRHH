@@ -2,17 +2,42 @@ import { useState } from 'react';
 import { Upload, FileText, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
+interface EmployeeInfo {
+  id: string;
+  employee_code: string;
+  first_name: string;
+  last_name: string;
+}
+
 interface SignedDocumentUploadProps {
   goalDefinitionId: string;
   definitionType: 'administrative' | 'operative';
+  evalYear?: number;
+  employee?: EmployeeInfo;
   currentDocumentUrl?: string;
   onSuccess: () => void;
   onCancel: () => void;
 }
 
+const PHASE_1_LABEL = 'Definicion de Metas';
+
+function buildStoragePath(
+  employeeId: string,
+  employeeCode: string,
+  year: number,
+  definitionType: 'administrative' | 'operative',
+  fileExt: string
+): string {
+  const typeSlug = definitionType === 'administrative' ? 'Administrativo' : 'Operativo';
+  const filename = `${employeeCode}_Definicion_Metas_${year}.${fileExt}`;
+  return `${employeeId}/${year}/01_definicion_metas/${typeSlug}/${filename}`;
+}
+
 export function SignedDocumentUpload({
   goalDefinitionId,
   definitionType,
+  evalYear,
+  employee,
   currentDocumentUrl,
   onSuccess,
   onCancel
@@ -25,8 +50,7 @@ export function SignedDocumentUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const maxSize = 10 * 1024 * 1024;
-    if (file.size > maxSize) {
+    if (file.size > 10 * 1024 * 1024) {
       setError('El archivo no puede ser mayor a 10MB');
       return;
     }
@@ -51,22 +75,34 @@ export function SignedDocumentUpload({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No hay usuario autenticado');
 
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${goalDefinitionId}_${Date.now()}.${fileExt}`;
-      const filePath = `${definitionType}/${fileName}`;
+      const fileExt = selectedFile.name.split('.').pop() || 'pdf';
+      const year = evalYear || new Date().getFullYear();
+
+      let storagePath: string;
+      if (employee) {
+        storagePath = buildStoragePath(
+          employee.id,
+          employee.employee_code,
+          year,
+          definitionType,
+          fileExt
+        );
+      } else {
+        storagePath = `${definitionType}/${goalDefinitionId}_${Date.now()}.${fileExt}`;
+      }
 
       const { error: uploadError } = await supabase.storage
         .from('goal-signed-documents')
-        .upload(filePath, selectedFile, {
+        .upload(storagePath, selectedFile, {
           cacheControl: '3600',
-          upsert: false
+          upsert: true
         });
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
         .from('goal-signed-documents')
-        .getPublicUrl(filePath);
+        .getPublicUrl(storagePath);
 
       const tableName = definitionType === 'administrative'
         ? 'goal_definitions'
@@ -85,6 +121,37 @@ export function SignedDocumentUpload({
         .eq('id', goalDefinitionId);
 
       if (updateError) throw updateError;
+
+      if (employee) {
+        const employeeName = `${employee.first_name} ${employee.last_name}`;
+        const { error: regError } = await supabase
+          .from('evaluation_documents')
+          .upsert({
+            employee_id: employee.id,
+            employee_code: employee.employee_code,
+            employee_name: employeeName,
+            eval_year: year,
+            eval_phase: 1,
+            phase_label: PHASE_1_LABEL,
+            employee_type: definitionType,
+            source_table: tableName,
+            source_record_id: goalDefinitionId,
+            document_url: publicUrl,
+            document_filename: selectedFile.name,
+            document_mime_type: selectedFile.type,
+            storage_path: storagePath,
+            document_kind: 'signed',
+            uploaded_by: user.id,
+            uploaded_at: new Date().toISOString()
+          }, {
+            onConflict: 'employee_id,eval_year,eval_phase,document_kind,source_record_id',
+            ignoreDuplicates: false
+          });
+
+        if (regError) {
+          console.warn('Could not register in evaluation_documents:', regError.message);
+        }
+      }
 
       onSuccess();
     } catch (err: any) {
@@ -118,16 +185,29 @@ export function SignedDocumentUpload({
             </div>
           )}
 
+          {employee && (
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 flex items-center gap-3">
+              <FileText className="w-4 h-4 text-slate-500 flex-shrink-0" />
+              <div className="text-sm text-slate-700">
+                <span className="font-medium">{employee.first_name} {employee.last_name}</span>
+                <span className="text-slate-400 mx-2">·</span>
+                <span className="text-slate-500">{employee.employee_code}</span>
+                <span className="text-slate-400 mx-2">·</span>
+                <span className="text-slate-500">Definicion de Metas {evalYear || new Date().getFullYear()}</span>
+              </div>
+            </div>
+          )}
+
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-blue-800">
                 <p className="font-medium mb-2">Instrucciones:</p>
                 <ol className="list-decimal list-inside space-y-1">
-                  <li>Imprime el documento de definición de metas</li>
-                  <li>Firma el documento a puño y letra</li>
+                  <li>Imprime el documento de definicion de metas</li>
+                  <li>Firma el documento a puno y letra</li>
                   <li>Escanea o toma una foto clara del documento firmado</li>
-                  <li>Sube el archivo aquí (PDF, JPG o PNG, máximo 10MB)</li>
+                  <li>Sube el archivo aqui (PDF, JPG o PNG, maximo 10MB)</li>
                 </ol>
               </div>
             </div>
@@ -136,7 +216,7 @@ export function SignedDocumentUpload({
           {currentDocumentUrl && (
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
               <p className="text-sm text-slate-700 mb-2">
-                Ya existe un documento firmado:
+                Ya existe un documento firmado. Subir uno nuevo lo reemplazara:
               </p>
               <a
                 href={currentDocumentUrl}
@@ -191,7 +271,7 @@ export function SignedDocumentUpload({
                     <div className="text-sm text-slate-600">
                       <p className="font-medium">Haz clic para seleccionar un archivo</p>
                       <p className="text-slate-500 mt-1">
-                        PDF, JPG o PNG (máximo 10MB)
+                        PDF, JPG o PNG (maximo 10MB)
                       </p>
                     </div>
                   </>
