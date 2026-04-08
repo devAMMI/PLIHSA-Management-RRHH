@@ -80,8 +80,7 @@ export function SignedDocumentUpload({
           signed_document_mime_type: selectedFile.type,
           signed_document_uploaded_at: new Date().toISOString(),
           signed_document_uploaded_by: user.id,
-          workflow_status: 'completed',
-          completed_at: new Date().toISOString()
+          workflow_status: 'pending_signature'
         })
         .eq('id', goalDefinitionId);
 
@@ -209,7 +208,7 @@ export function SignedDocumentUpload({
             className="flex-1 flex items-center justify-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Upload className="w-4 h-4" />
-            {uploading ? 'Subiendo...' : 'Subir y Finalizar'}
+            {uploading ? 'Subiendo...' : 'Subir Documento'}
           </button>
           <button
             onClick={onCancel}

@@ -102,17 +102,13 @@ export function GoalWorkflowStatus({
 
       {status === 'pending_signature' && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <p className="text-sm text-amber-800 mb-4">
-            <strong>Paso requerido:</strong> Firma el documento impreso a puño y letra, escanéalo y súbelo aquí.
-          </p>
-
           {signedDocumentUrl ? (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 p-3 rounded-lg border border-green-200">
                 <CheckCircle className="w-4 h-4" />
-                <span>Documento firmado subido exitosamente</span>
+                <span className="font-medium">Documento firmado subido correctamente. Presiona "Finalizar Definicion" para completar el proceso.</span>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <a
                   href={signedDocumentUrl}
                   target="_blank"
@@ -122,28 +118,42 @@ export function GoalWorkflowStatus({
                   <FileText className="w-4 h-4" />
                   Ver Documento
                 </a>
+                {onUploadSigned && (
+                  <button
+                    onClick={onUploadSigned}
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition text-sm font-medium"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Reemplazar Documento
+                  </button>
+                )}
                 {onMarkAsCompleted && (
                   <button
                     onClick={onMarkAsCompleted}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium"
+                    className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-semibold shadow-sm"
                   >
                     <CheckCircle className="w-4 h-4" />
-                    Marcar como Completado
+                    Finalizar Definicion
                   </button>
                 )}
               </div>
             </div>
           ) : (
-            <div className="flex gap-2">
-              {onUploadSigned && (
-                <button
-                  onClick={onUploadSigned}
-                  className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition text-sm font-medium"
-                >
-                  <Upload className="w-4 h-4" />
-                  Subir Documento Firmado
-                </button>
-              )}
+            <div>
+              <p className="text-sm text-amber-800 mb-3">
+                <strong>Paso requerido:</strong> Firma el documento impreso a puño y letra, escanéalo y súbelo aquí.
+              </p>
+              <div className="flex gap-2">
+                {onUploadSigned && (
+                  <button
+                    onClick={onUploadSigned}
+                    className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition text-sm font-medium"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Subir Documento Firmado
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>

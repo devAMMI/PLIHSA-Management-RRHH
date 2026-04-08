@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { FileText, Eye, Trash2, Calendar, User, Building2, CheckCircle, Clock, AlertCircle, ArrowLeft } from 'lucide-react';
+import { FileText, Eye, Trash2, Calendar, User, Building2, CheckCircle, Clock, ArrowLeft, Upload } from 'lucide-react';
 import { GoalDefinitionViewer } from './GoalDefinitionViewer';
 
 interface Employee {
@@ -118,14 +118,12 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
           `)
           .order('created_at', { ascending: false });
 
-        if (filterStatus !== 'all') {
-          query = query.eq('status', filterStatus);
-        }
-
         if (workflowFilter === 'draft-pending') {
-          query = query.in('workflow_status', ['draft', 'pending_signature']);
+          query = query.in('workflow_status', ['draft', 'pending_signature', null]);
         } else if (workflowFilter === 'completed') {
           query = query.eq('workflow_status', 'completed');
+        } else if (filterStatus !== 'all') {
+          query = query.eq('workflow_status', filterStatus);
         }
 
         const { data, error } = await query;
@@ -155,14 +153,12 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
           `)
           .order('created_at', { ascending: false });
 
-        if (filterStatus !== 'all') {
-          query = query.eq('status', filterStatus);
-        }
-
         if (workflowFilter === 'draft-pending') {
-          query = query.in('workflow_status', ['draft', 'pending_signature']);
+          query = query.in('workflow_status', ['draft', 'pending_signature', null]);
         } else if (workflowFilter === 'completed') {
           query = query.eq('workflow_status', 'completed');
+        } else if (filterStatus !== 'all') {
+          query = query.eq('workflow_status', filterStatus);
         }
 
         const { data, error } = await query;
@@ -195,13 +191,14 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const badges = {
+  const getWorkflowBadge = (workflowStatus?: string) => {
+    const ws = workflowStatus || 'draft';
+    const badges: Record<string, { bg: string; text: string; icon: typeof Clock; label: string }> = {
       draft: { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: Clock, label: 'Borrador' },
-      submitted: { bg: 'bg-blue-100', text: 'text-blue-800', icon: AlertCircle, label: 'Enviado' },
-      approved: { bg: 'bg-green-100', text: 'text-green-800', icon: CheckCircle, label: 'Aprobado' }
+      pending_signature: { bg: 'bg-amber-100', text: 'text-amber-700', icon: Upload, label: 'Pendiente Firma' },
+      completed: { bg: 'bg-green-100', text: 'text-green-800', icon: CheckCircle, label: 'Finalizado' }
     };
-    const badge = badges[status as keyof typeof badges] || badges.draft;
+    const badge = badges[ws] || badges.draft;
     const Icon = badge.icon;
 
     return (
@@ -262,8 +259,8 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
                   >
                     <option value="all">Todos</option>
                     <option value="draft">Borrador</option>
-                    <option value="submitted">Enviado</option>
-                    <option value="approved">Aprobado</option>
+                    <option value="pending_signature">Pendiente Firma</option>
+                    <option value="completed">Finalizado</option>
                   </select>
                 </div>
               </div>
@@ -293,7 +290,7 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
                           <h3 className="text-lg font-bold text-slate-800">
                             {definition.employee.first_name} {definition.employee.last_name}
                           </h3>
-                          {getStatusBadge(definition.status)}
+                          {getWorkflowBadge(definition.workflow_status)}
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-slate-600 mb-3">
                           <div className="flex items-center gap-2">
