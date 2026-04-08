@@ -12,6 +12,7 @@ interface Competency {
 }
 
 interface PDFTemplateProps {
+  id?: string;
   employeeName: string;
   position: string;
   department: string;
@@ -29,6 +30,7 @@ interface PDFTemplateProps {
 }
 
 export function OperativeEvaluationPDFTemplate({
+  id = 'pdf-content-operative',
   employeeName,
   position,
   department,
@@ -45,7 +47,7 @@ export function OperativeEvaluationPDFTemplate({
   createdAt
 }: PDFTemplateProps) {
   return (
-    <div id="pdf-content-operative" className="bg-white p-8 w-[210mm] mx-auto" style={{ fontFamily: 'Arial, sans-serif' }}>
+    <div id={id} className="bg-white p-8 w-[210mm] mx-auto" style={{ fontFamily: 'Arial, sans-serif' }}>
       <div className="mb-6 border-b-2 border-blue-600 pb-4">
         <div className="flex items-center justify-between mb-2">
           <img src="/Profile-pic-plihsa-logo-foto.jpg" alt="PLIHSA" className="h-12" />

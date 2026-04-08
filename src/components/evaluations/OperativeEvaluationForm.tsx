@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
-import { Save, Download, Printer } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Save, Download, Printer, Upload, CheckCircle, Eye, X, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Toast } from '../ui/Toast';
 import { OperativeEvaluationPDFTemplate } from './OperativeEvaluationPDFTemplate';
 import { generatePDF, downloadBlob } from '../../lib/pdfExport';
 import { getCurrentTimestamp } from '../../lib/timezone';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface FunctionalFactor {
   factor_number: number;
@@ -32,7 +34,10 @@ interface OperativeEvaluationFormProps {
   onCancel?: () => void;
 }
 
+type WorkflowStatus = 'draft' | 'pending_signature' | 'completed';
+
 export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: OperativeEvaluationFormProps) {
+  const formRef = useRef<HTMLDivElement>(null);
   const { employee, systemUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -44,6 +49,16 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: Opera
   const [savedEvaluationId, setSavedEvaluationId] = useState<string | null>(editingEvaluationId || null);
   const [showPDFTemplate, setShowPDFTemplate] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState(false);
+  const [workflowStatus, setWorkflowStatus] = useState<WorkflowStatus>('draft');
+  const [signedDocumentUrl, setSignedDocumentUrl] = useState<string | null>(null);
+  const [signedDocumentFilename, setSignedDocumentFilename] = useState<string | null>(null);
+  const [signedDocumentMimeType, setSignedDocumentMimeType] = useState<string | null>(null);
+  const [signedDocumentUploadedAt, setSignedDocumentUploadedAt] = useState<string | null>(null);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showSignedDocViewer, setShowSignedDocViewer] = useState(false);
+  const [originalPdfUrl, setOriginalPdfUrl] = useState<string | null>(null);
+  const [completing, setCompleting] = useState(false);
 
   const [formData, setFormData] = useState({
     department: '',
@@ -111,6 +126,17 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: Opera
           manager_comments: evalData.manager_comments || '',
           employee_comments: evalData.employee_comments || ''
         });
+
+        if (evalData.status === 'completed') setWorkflowStatus('completed');
+        else if (evalData.signed_document_url) setWorkflowStatus('pending_signature');
+        else setWorkflowStatus('draft');
+
+        if (evalData.signed_document_url) {
+          setSignedDocumentUrl(evalData.signed_document_url);
+          setSignedDocumentFilename(evalData.signed_document_filename);
+          setSignedDocumentMimeType(evalData.signed_document_mime_type);
+          setSignedDocumentUploadedAt(evalData.signed_document_uploaded_at);
+        }
 
         const { data: factorsData } = await supabase
           .from('evaluation_functional_factors')
@@ -291,6 +317,31 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: Opera
     }
   };
 
+  const generateOriginalPdfUrl = async (): Promise<string | null> => {
+    if (!formRef.current) return null;
+    try {
+      const canvas = await html2canvas(formRef.current, {
+        scale: 2.5,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: formRef.current.scrollWidth,
+        windowHeight: formRef.current.scrollHeight,
+        scrollX: 0,
+        scrollY: 0
+      });
+      const imgWidth = 215.9;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const pdf = new jsPDF('p', 'mm', 'letter');
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
+      const pdfBlob = pdf.output('blob');
+      return URL.createObjectURL(pdfBlob);
+    } catch (error) {
+      return null;
+    }
+  };
+
   const handleSavePDF = async () => {
     if (!savedEvaluationId || !selectedEmployee || !period) {
       setToast({ message: 'Primero debe guardar la evaluación', type: 'error' });
@@ -305,6 +356,8 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: Opera
         const blob = await generatePDF('pdf-content-operative', `evaluacion_${selectedEmployee.first_name}_${selectedEmployee.last_name}_${Date.now()}.pdf`);
 
         if (blob) {
+          const pdfUrl = URL.createObjectURL(blob);
+          window.open(pdfUrl, '_blank');
           const fileName = `Evaluacion_Operativa_${selectedEmployee.first_name}_${selectedEmployee.last_name}_${new Date().toISOString().split('T')[0]}.pdf`;
           downloadBlob(blob, fileName);
           setToast({ message: 'PDF generado exitosamente', type: 'success' });
@@ -330,11 +383,126 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: Opera
     setShowPDFTemplate(true);
 
     setTimeout(() => {
-      window.print();
-      setTimeout(() => {
-        setShowPDFTemplate(false);
-      }, 500);
+      const printWindow = window.open('', '_blank');
+      const pdfEl = document.getElementById('pdf-content-operative');
+      if (printWindow && pdfEl) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Evaluación Operativa</title>
+              <style>body { margin: 0; padding: 20px; } @media print { body { margin: 0; padding: 0; } }</style>
+            </head>
+            <body>${pdfEl.innerHTML}</body>
+          </html>
+        `);
+        printWindow.document.close();
+        setTimeout(() => {
+          printWindow.print();
+          setShowPDFTemplate(false);
+        }, 500);
+      } else {
+        window.print();
+        setTimeout(() => setShowPDFTemplate(false), 500);
+      }
     }, 100);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setToast({ message: 'El archivo no puede ser mayor a 10MB', type: 'error' });
+      return;
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      setToast({ message: 'Solo se permiten archivos PDF, JPG o PNG', type: 'error' });
+      return;
+    }
+
+    setSelectedFile(file);
+  };
+
+  const handleUploadSignedDocument = async () => {
+    if (!selectedFile || !savedEvaluationId) return;
+
+    setUploadingDoc(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No hay usuario autenticado');
+
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${savedEvaluationId}_${Date.now()}.${fileExt}`;
+      const filePath = `operative/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('goal-signed-documents')
+        .upload(filePath, selectedFile, { cacheControl: '3600', upsert: false });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('goal-signed-documents')
+        .getPublicUrl(filePath);
+
+      const now = new Date().toISOString();
+      const { error: updateError } = await supabase
+        .from('operative_evaluations')
+        .update({
+          signed_document_url: publicUrl,
+          signed_document_filename: selectedFile.name,
+          signed_document_mime_type: selectedFile.type,
+          signed_document_uploaded_at: now,
+          signed_document_uploaded_by: user.id
+        })
+        .eq('id', savedEvaluationId);
+
+      if (updateError) throw updateError;
+
+      setSignedDocumentUrl(publicUrl);
+      setSignedDocumentFilename(selectedFile.name);
+      setSignedDocumentMimeType(selectedFile.type);
+      setSignedDocumentUploadedAt(now);
+      setSelectedFile(null);
+      setWorkflowStatus('pending_signature');
+      setToast({ message: 'Documento firmado subido correctamente', type: 'success' });
+    } catch (err: any) {
+      console.error('Error uploading document:', err);
+      setToast({ message: err.message || 'Error al subir el documento', type: 'error' });
+    } finally {
+      setUploadingDoc(false);
+    }
+  };
+
+  const handleFinalize = async () => {
+    if (!savedEvaluationId || !signedDocumentUrl) {
+      setToast({ message: 'Debe subir el documento firmado antes de finalizar', type: 'error' });
+      return;
+    }
+
+    setCompleting(true);
+    try {
+      const { error } = await supabase
+        .from('operative_evaluations')
+        .update({
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', savedEvaluationId);
+
+      if (error) throw error;
+
+      setWorkflowStatus('completed');
+      setToast({ message: 'Evaluación finalizada y completada exitosamente', type: 'success' });
+    } catch (error) {
+      console.error('Error finalizing evaluation:', error);
+      setToast({ message: 'Error al finalizar la evaluación', type: 'error' });
+    } finally {
+      setCompleting(false);
+    }
   };
 
   if (loading) {
@@ -351,19 +519,39 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: Opera
     );
   }
 
+  const isReadOnly = workflowStatus === 'completed';
+
   return (
     <div className="p-8 max-w-7xl mx-auto">
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200">
+      {workflowStatus === 'completed' && (
+        <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-5 flex items-center gap-4">
+          <CheckCircle className="w-8 h-8 text-green-600 flex-shrink-0" />
+          <div>
+            <p className="font-semibold text-green-800 text-lg">Evaluacion Completada</p>
+            <p className="text-green-700 text-sm">Esta evaluación ha sido finalizada y firmada correctamente.</p>
+          </div>
+        </div>
+      )}
+
+      {workflowStatus === 'pending_signature' && (
+        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-5 flex items-center gap-4">
+          <FileText className="w-8 h-8 text-amber-600 flex-shrink-0" />
+          <div>
+            <p className="font-semibold text-amber-800 text-lg">Documento Firmado Cargado</p>
+            <p className="text-amber-700 text-sm">El documento firmado ha sido subido. Presiona "Finalizar" para completar el proceso.</p>
+          </div>
+        </div>
+      )}
+
+      <div ref={formRef} className="bg-white rounded-lg shadow-sm border border-slate-200">
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 rounded-t-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="bg-white p-3 rounded-lg">
-                <img src="/Profile-pic-plihsa-logo-foto.jpg" alt="PLIHSA" className="h-12" />
-              </div>
-              <div className="text-white">
-                <h1 className="text-2xl font-bold">Definición de Factores y Revisión del Desempeño Operativo</h1>
-                <p className="text-blue-100 mt-1">Código: {period.form_code} | Versión: {period.form_version}</p>
-              </div>
+          <div className="flex items-center gap-4">
+            <div className="bg-white p-3 rounded-lg">
+              <img src="/Profile-pic-plihsa-logo-foto.jpg" alt="PLIHSA" className="h-12" />
+            </div>
+            <div className="text-white">
+              <h1 className="text-2xl font-bold">Definición de Factores y Revisión del Desempeño Operativo</h1>
+              <p className="text-blue-100 mt-1">Código: {period.form_code} | Versión: {period.form_version}</p>
             </div>
           </div>
         </div>
@@ -371,13 +559,12 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: Opera
         <div className="p-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Nombre del Colaborador *
-              </label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Nombre del Colaborador *</label>
               <select
                 value={selectedEmployeeId}
                 onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                disabled={isReadOnly || !!editingEvaluationId}
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-600"
               >
                 <option value="">Seleccione un colaborador</option>
                 {employees.map(emp => (
@@ -389,9 +576,7 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: Opera
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Posición del Colaborador
-              </label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Posición del Colaborador</label>
               <input
                 type="text"
                 value={selectedEmployee?.position || ''}
@@ -401,33 +586,29 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: Opera
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Departamento
-              </label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Departamento</label>
               <input
                 type="text"
                 value={formData.department}
                 onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                disabled={isReadOnly}
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Sub-departamento
-              </label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Sub-departamento</label>
               <input
                 type="text"
                 value={formData.sub_department}
                 onChange={(e) => setFormData({ ...formData, sub_department: e.target.value })}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                disabled={isReadOnly}
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Fecha de Ingreso
-              </label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Fecha de Ingreso</label>
               <input
                 type="date"
                 value={selectedEmployee?.hire_date || ''}
@@ -437,14 +618,13 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: Opera
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Fecha de definición de factores a evaluar
-              </label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Fecha de definición de factores a evaluar</label>
               <input
                 type="date"
                 value={formData.definition_date}
                 onChange={(e) => setFormData({ ...formData, definition_date: e.target.value })}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                disabled={isReadOnly}
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50"
               />
             </div>
           </div>
@@ -470,7 +650,8 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: Opera
                         <textarea
                           value={factor.job_function}
                           onChange={(e) => handleFactorChange(index, 'job_function', e.target.value)}
-                          className="w-full px-3 py-2 border-0 focus:ring-2 focus:ring-blue-500 rounded resize-none"
+                          disabled={isReadOnly}
+                          className="w-full px-3 py-2 border-0 focus:ring-2 focus:ring-blue-500 rounded resize-none disabled:bg-transparent"
                           rows={3}
                         />
                       </td>
@@ -478,7 +659,8 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: Opera
                         <textarea
                           value={factor.expected_results}
                           onChange={(e) => handleFactorChange(index, 'expected_results', e.target.value)}
-                          className="w-full px-3 py-2 border-0 focus:ring-2 focus:ring-blue-500 rounded resize-none"
+                          disabled={isReadOnly}
+                          className="w-full px-3 py-2 border-0 focus:ring-2 focus:ring-blue-500 rounded resize-none disabled:bg-transparent"
                           rows={3}
                         />
                       </td>
@@ -509,7 +691,8 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: Opera
                         <textarea
                           value={comp.competency_description}
                           onChange={(e) => handleCompetencyChange(index, e.target.value)}
-                          className="w-full px-3 py-2 border-0 focus:ring-2 focus:ring-blue-500 rounded resize-none"
+                          disabled={isReadOnly}
+                          className="w-full px-3 py-2 border-0 focus:ring-2 focus:ring-blue-500 rounded resize-none disabled:bg-transparent"
                           rows={2}
                         />
                       </td>
@@ -522,25 +705,23 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: Opera
 
           <div className="grid grid-cols-1 gap-6 mb-8">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Comentarios Jefe Inmediato
-              </label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Comentarios Jefe Inmediato</label>
               <textarea
                 value={formData.manager_comments}
                 onChange={(e) => setFormData({ ...formData, manager_comments: e.target.value })}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                disabled={isReadOnly}
+                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none disabled:bg-slate-50"
                 rows={4}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Comentarios del Colaborador
-              </label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Comentarios del Colaborador</label>
               <textarea
                 value={formData.employee_comments}
                 onChange={(e) => setFormData({ ...formData, employee_comments: e.target.value })}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                disabled={isReadOnly}
+                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none disabled:bg-slate-50"
                 rows={4}
               />
             </div>
@@ -549,11 +730,11 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: Opera
           <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">
             <button
               onClick={handleSavePDF}
-              disabled={!savedEvaluationId}
+              disabled={!savedEvaluationId || generatingPDF}
               className="flex items-center gap-2 px-5 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Download className="w-5 h-5" />
-              Guardar PDF
+              {generatingPDF ? 'Generando...' : 'Guardar PDF'}
             </button>
             <button
               onClick={handlePrint}
@@ -563,17 +744,168 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: Opera
               <Printer className="w-5 h-5" />
               Imprimir
             </button>
-            <button
-              onClick={handleSave}
-              disabled={saving || !selectedEmployeeId}
-              className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Save className="w-5 h-5" />
-              {saving ? 'Guardando...' : 'Guardar'}
-            </button>
+            {!isReadOnly && (
+              <button
+                onClick={handleSave}
+                disabled={saving || !selectedEmployeeId}
+                className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save className="w-5 h-5" />
+                {saving ? 'Guardando...' : 'Guardar'}
+              </button>
+            )}
           </div>
         </div>
       </div>
+
+      {savedEvaluationId && !isReadOnly && (
+        <div className="mt-6 bg-white border border-slate-200 rounded-xl shadow-sm p-6">
+          <h3 className="text-lg font-semibold text-slate-800 mb-1 flex items-center gap-2">
+            <Upload className="w-5 h-5 text-blue-600" />
+            Paso Final: Subir Documento Firmado
+          </h3>
+          <p className="text-sm text-slate-500 mb-5">
+            Imprime el PDF, fírmalo a puño y letra, luego escanéalo o tómale una foto y sube el archivo aquí para finalizar.
+          </p>
+
+          {signedDocumentUrl && (
+            <div className="mb-5 bg-green-50 border border-green-200 rounded-lg p-4 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-green-800">{signedDocumentFilename || 'Documento subido'}</p>
+                  {signedDocumentUploadedAt && (
+                    <p className="text-xs text-green-600">
+                      Subido el {new Date(signedDocumentUploadedAt).toLocaleString('es-HN')}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={async () => {
+                  const pdfUrl = await generateOriginalPdfUrl();
+                  setOriginalPdfUrl(pdfUrl);
+                  setShowSignedDocViewer(true);
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium"
+              >
+                <Eye className="w-4 h-4" />
+                Ver Documentos
+              </button>
+            </div>
+          )}
+
+          <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-blue-400 transition mb-5">
+            <input
+              type="file"
+              id="signed-doc-upload-operative"
+              accept=".pdf,.jpg,.jpeg,.png"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <label htmlFor="signed-doc-upload-operative" className="cursor-pointer flex flex-col items-center gap-3">
+              {selectedFile ? (
+                <>
+                  <FileText className="w-10 h-10 text-blue-600" />
+                  <div className="text-sm text-slate-700">
+                    <p className="font-medium">{selectedFile.name}</p>
+                    <p className="text-slate-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); setSelectedFile(null); }}
+                    className="text-sm text-red-600 hover:text-red-700"
+                  >
+                    Eliminar archivo
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Upload className="w-10 h-10 text-slate-400" />
+                  <div className="text-sm text-slate-600">
+                    <p className="font-medium">Haz clic para seleccionar el documento firmado</p>
+                    <p className="text-slate-500 mt-1">PDF, JPG o PNG (máximo 10MB)</p>
+                  </div>
+                </>
+              )}
+            </label>
+          </div>
+
+          <div className="flex gap-3">
+            {selectedFile && (
+              <button
+                onClick={handleUploadSignedDocument}
+                disabled={uploadingDoc}
+                className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50"
+              >
+                <Upload className="w-4 h-4" />
+                {uploadingDoc ? 'Subiendo...' : 'Subir Documento'}
+              </button>
+            )}
+
+            {signedDocumentUrl && (
+              <button
+                onClick={handleFinalize}
+                disabled={completing}
+                className="flex items-center gap-2 px-8 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold disabled:opacity-50"
+              >
+                <CheckCircle className="w-5 h-5" />
+                {completing ? 'Finalizando...' : 'Finalizar Evaluacion'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {workflowStatus === 'completed' && signedDocumentUrl && (
+        <div className="mt-6 bg-white border border-slate-200 rounded-xl shadow-sm p-6">
+          <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+            <CheckCircle className="w-5 h-5 text-green-600" />
+            Documentos de la Evaluacion
+          </h3>
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <FileText className="w-5 h-5 text-green-600 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-green-800">{signedDocumentFilename || 'Documento firmado'}</p>
+                {signedDocumentUploadedAt && (
+                  <p className="text-xs text-green-600">
+                    Subido el {new Date(signedDocumentUploadedAt).toLocaleString('es-HN')}
+                  </p>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={async () => {
+                const pdfUrl = await generateOriginalPdfUrl();
+                setOriginalPdfUrl(pdfUrl);
+                setShowSignedDocViewer(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium"
+            >
+              <Eye className="w-4 h-4" />
+              Ver Documentos
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showSignedDocViewer && signedDocumentUrl && (
+        <SignedDocViewerModal
+          documentUrl={signedDocumentUrl}
+          filename={signedDocumentFilename || 'documento_firmado'}
+          mimeType={signedDocumentMimeType || 'application/pdf'}
+          uploadedAt={signedDocumentUploadedAt || undefined}
+          originalDocumentUrl={originalPdfUrl || undefined}
+          onClose={() => {
+            setShowSignedDocViewer(false);
+            if (originalPdfUrl) {
+              URL.revokeObjectURL(originalPdfUrl);
+              setOriginalPdfUrl(null);
+            }
+          }}
+        />
+      )}
 
       {toast && (
         <Toast
@@ -586,6 +918,7 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: Opera
       {showPDFTemplate && selectedEmployee && period && (
         <div className="fixed top-[-9999px] left-[-9999px]">
           <OperativeEvaluationPDFTemplate
+            id="pdf-content-operative"
             employeeName={`${selectedEmployee.first_name} ${selectedEmployee.last_name}`}
             position={selectedEmployee.position || ''}
             department={formData.department}
@@ -603,6 +936,155 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel }: Opera
           />
         </div>
       )}
+    </div>
+  );
+}
+
+function SignedDocViewerModal({
+  documentUrl,
+  filename,
+  mimeType,
+  uploadedAt,
+  originalDocumentUrl,
+  onClose
+}: {
+  documentUrl: string;
+  filename: string;
+  mimeType: string;
+  uploadedAt?: string;
+  originalDocumentUrl?: string;
+  onClose: () => void;
+}) {
+  const [activeTab, setActiveTab] = useState<'both' | 'original' | 'signed'>(originalDocumentUrl ? 'both' : 'signed');
+  const isPDF = mimeType === 'application/pdf';
+  const isImage = mimeType.includes('image');
+
+  const handleDownload = (url: string, name: string) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col">
+        <div className="bg-green-700 text-white px-6 py-4 flex items-center justify-between rounded-t-xl">
+          <div className="flex items-center gap-3">
+            <FileText className="w-6 h-6" />
+            <div>
+              <h2 className="text-lg font-bold">Visualizador de Documentos</h2>
+              <p className="text-sm text-green-100">{filename}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {originalDocumentUrl && (
+              <button
+                onClick={() => {
+                  handleDownload(documentUrl, `Firmado_${filename}`);
+                  setTimeout(() => {
+                    if (originalDocumentUrl) handleDownload(originalDocumentUrl, `Original_${filename}`);
+                  }, 500);
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-white text-green-700 rounded-lg hover:bg-green-50 transition font-medium text-sm"
+              >
+                <Download className="w-4 h-4" />
+                Descargar Ambos
+              </button>
+            )}
+            <button
+              onClick={() => handleDownload(documentUrl, filename)}
+              className="flex items-center gap-2 px-4 py-2 bg-white text-green-700 rounded-lg hover:bg-green-50 transition font-medium text-sm"
+            >
+              <Download className="w-4 h-4" />
+              Descargar Firmado
+            </button>
+            <button onClick={onClose} className="p-2 hover:bg-green-600 rounded-lg transition">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+
+        {uploadedAt && (
+          <div className="px-6 py-2 bg-green-50 border-b border-green-200 text-sm text-green-800">
+            <span className="font-medium">Fecha de subida:</span>{' '}
+            {new Date(uploadedAt).toLocaleString('es-HN', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+          </div>
+        )}
+
+        {originalDocumentUrl && (
+          <div className="border-b border-slate-200 px-6">
+            <div className="flex gap-2">
+              {(['both', 'original', 'signed'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-3 font-medium text-sm border-b-2 transition ${
+                    activeTab === tab ? 'border-green-600 text-green-700' : 'border-transparent text-slate-600 hover:text-slate-800'
+                  }`}
+                >
+                  {tab === 'both' ? 'Ver Ambos' : tab === 'original' ? 'Original' : 'Firmado'}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex-1 bg-slate-100 p-4 overflow-hidden">
+          {activeTab === 'both' && originalDocumentUrl && (
+            <div className="grid grid-cols-2 gap-4 h-full">
+              <div className="flex flex-col">
+                <h3 className="text-sm font-semibold text-slate-700 mb-2 px-2">Documento Original</h3>
+                <iframe src={originalDocumentUrl} className="flex-1 w-full rounded-lg border-2 border-slate-300 bg-white" title="Original" />
+              </div>
+              <div className="flex flex-col">
+                <h3 className="text-sm font-semibold text-slate-700 mb-2 px-2">Documento Firmado</h3>
+                {isPDF ? (
+                  <iframe src={documentUrl} className="flex-1 w-full rounded-lg border-2 border-slate-300 bg-white" title="Firmado" />
+                ) : isImage ? (
+                  <div className="flex-1 flex items-center justify-center bg-white rounded-lg border-2 border-slate-300">
+                    <img src={documentUrl} alt="Firmado" className="max-w-full max-h-full rounded-lg" />
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'original' && originalDocumentUrl && (
+            <iframe src={originalDocumentUrl} className="w-full h-full rounded-lg border-2 border-slate-300 bg-white" title="Original" />
+          )}
+
+          {(activeTab === 'signed' || !originalDocumentUrl) && (
+            isPDF ? (
+              <iframe src={documentUrl} className="w-full h-full rounded-lg border-2 border-slate-300 bg-white" title="Firmado" />
+            ) : isImage ? (
+              <div className="flex items-center justify-center h-full">
+                <img src={documentUrl} alt="Firmado" className="max-w-full max-h-full rounded-lg shadow-lg border-2 border-slate-300" />
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center bg-white rounded-lg p-8 shadow-md">
+                  <FileText className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+                  <p className="text-slate-700 mb-4">No se puede previsualizar este tipo de archivo</p>
+                  <button onClick={() => handleDownload(documentUrl, filename)} className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium mx-auto">
+                    <Download className="w-5 h-5" />
+                    Descargar
+                  </button>
+                </div>
+              </div>
+            )
+          )}
+        </div>
+
+        <div className="border-t border-slate-200 px-6 py-4 flex items-center justify-between">
+          <span className="text-sm text-slate-500">Tipo: {mimeType.includes('pdf') ? 'PDF' : 'Imagen'}</span>
+          <button onClick={onClose} className="px-6 py-2.5 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition font-medium">
+            Cerrar
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
