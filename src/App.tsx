@@ -147,15 +147,16 @@ function AppContent() {
       <Sidebar currentView={currentView} onViewChange={setCurrentView} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header title={getViewTitle()} />
-        {currentView === 'employees' ? (
-          <main className="flex-1 overflow-hidden bg-slate-50">
-            {renderView()}
-          </main>
-        ) : (
-          <main className="flex-1 overflow-y-auto p-8 bg-slate-50">
-            {renderView()}
-          </main>
-        )}
+        <main className={`flex-1 bg-slate-50 ${[
+          'employees',
+          'evaluation-admin-enero',
+          'evaluation-operative-enero',
+          'evaluaciones-plihsa',
+          'evaluacion-administrativa-nueva',
+          'nueva-evaluacion-administrativa',
+        ].includes(currentView) ? 'overflow-hidden' : 'overflow-y-auto p-8'}`}>
+          {renderView()}
+        </main>
       </div>
     </div>
   );

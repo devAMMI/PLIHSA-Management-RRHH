@@ -215,12 +215,16 @@ export function EmployeeList() {
 
   if (showDetail && selectedEmployee) {
     return (
-      <EmployeeProfilePage
-        employee={selectedEmployee}
-        onBack={handleCloseDetail}
-        onEdit={handleEditEmployee}
-        onDelete={handleDeleteEmployee}
-      />
+      <div className="h-full overflow-y-auto">
+        <div className="p-8">
+          <EmployeeProfilePage
+            employee={selectedEmployee}
+            onBack={handleCloseDetail}
+            onEdit={handleEditEmployee}
+            onDelete={handleDeleteEmployee}
+          />
+        </div>
+      </div>
     );
   }
 
