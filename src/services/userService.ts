@@ -33,14 +33,17 @@ export interface UpdateUserData {
 class UserService {
   async getUsers(): Promise<SystemUser[]> {
     try {
-      const headers = await getAuthHeaders();
-      const response = await fetch(`${MANAGE_USERS_URL}?action=list`, { headers });
-      const result = await response.json();
-      if (!response.ok) {
-        console.error('Edge function error:', response.status, result);
-        throw new Error(result.error || result.message || `HTTP ${response.status}`);
-      }
-      return result.users || [];
+      const { data, error } = await supabase
+        .from('system_users')
+        .select(`
+          *,
+          employee:employees(first_name, last_name, photo_url),
+          company:companies(name)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return (data || []) as unknown as SystemUser[];
     } catch (error: any) {
       console.error('Error fetching users:', error);
       throw error;
