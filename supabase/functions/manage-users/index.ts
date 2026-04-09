@@ -59,8 +59,9 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    if (!systemUser.is_active || !["admin", "superadmin"].includes(systemUser.role)) {
-      return new Response(JSON.stringify({ error: "User not allowed" }), {
+    const ALLOWED_MANAGER_ROLES = ["superadmin", "admin", "rrhh"];
+    if (!systemUser.is_active || !ALLOWED_MANAGER_ROLES.includes(systemUser.role)) {
+      return new Response(JSON.stringify({ error: "No tienes permisos para gestionar usuarios" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
