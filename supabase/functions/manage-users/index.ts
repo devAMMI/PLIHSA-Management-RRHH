@@ -7,6 +7,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
+const ROLE_HIERARCHY: Record<string, number> = {
+  superadmin: 6,
+  admin: 5,
+  rrhh: 4,
+  manager: 3,
+  employee: 2,
+  viewer: 1,
+};
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -41,7 +50,7 @@ Deno.serve(async (req: Request) => {
       .from("system_users")
       .select("role, is_active, company_id")
       .eq("user_id", requestUser.id)
-      .single();
+      .maybeSingle();
 
     if (systemUserError || !systemUser) {
       return new Response(JSON.stringify({ error: "User not found in system" }), {
@@ -57,8 +66,10 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    const requesterLevel = ROLE_HIERARCHY[systemUser.role] ?? 0;
+    const isSuperAdmin = systemUser.role === "superadmin";
+
     const url = new URL(req.url);
-    const action = url.searchParams.get("action") || (await req.json().catch(() => ({}))).action;
 
     if (req.method === "GET" && url.searchParams.get("action") === "list") {
       const { data: systemUsers, error: listError } = await supabaseAdmin
@@ -78,6 +89,11 @@ Deno.serve(async (req: Request) => {
       const users = (systemUsers || []).map((u: any) => {
         const authUser = authData?.users?.find((a: any) => a.id === u.user_id);
         return { ...u, email: authUser?.email };
+      }).filter((u: any) => {
+        if (isSuperAdmin) return true;
+        if (u.user_id === requestUser.id) return true;
+        const targetLevel = ROLE_HIERARCHY[u.role] ?? 0;
+        return targetLevel < requesterLevel;
       });
 
       return new Response(JSON.stringify({ users }), {
@@ -101,6 +117,22 @@ Deno.serve(async (req: Request) => {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+      }
+
+      if (userId !== requestUser.id) {
+        const { data: targetUser } = await supabaseAdmin
+          .from("system_users")
+          .select("role")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        const targetLevel = ROLE_HIERARCHY[targetUser?.role ?? ""] ?? 0;
+        if (!isSuperAdmin && targetLevel >= requesterLevel) {
+          return new Response(JSON.stringify({ error: "No tienes permiso para cambiar la contrasena de este usuario" }), {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
       }
 
       const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, { password: newPassword });
@@ -127,18 +159,19 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      if (systemUser.role !== "superadmin") {
-        const { data: targetUser } = await supabaseAdmin
-          .from("system_users")
-          .select("role")
-          .eq("user_id", userId)
-          .maybeSingle();
-        if (targetUser?.role === "superadmin") {
-          return new Response(JSON.stringify({ error: "No tienes permiso para eliminar este usuario" }), {
-            status: 403,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
+      const { data: targetUser } = await supabaseAdmin
+        .from("system_users")
+        .select("role")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      const targetLevel = ROLE_HIERARCHY[targetUser?.role ?? ""] ?? 0;
+
+      if (!isSuperAdmin && targetLevel >= requesterLevel) {
+        return new Response(JSON.stringify({ error: "No tienes permiso para eliminar este usuario" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
 
       const { error: deleteSystemError } = await supabaseAdmin
