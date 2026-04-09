@@ -20,6 +20,7 @@ import { RawEvaluations } from './components/debug/RawEvaluations';
 import { SQLExecutor } from './components/debug/SQLExecutor';
 import { GoalDefinitionsHome } from './components/goals/GoalDefinitionsHome';
 import { GoalDefinitionsList } from './components/goals/GoalDefinitionsList';
+import { EvaluacionJunio } from './components/evaluations/EvaluacionJunio';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -76,6 +77,8 @@ function AppContent() {
         return 'Definición de Metas';
       case 'goal-definitions-list':
         return 'Definiciones de Metas Guardadas';
+      case 'evaluacion-junio':
+        return '2da Evaluación - Junio';
       default:
         return 'Dashboard';
     }
@@ -137,6 +140,8 @@ function AppContent() {
         return <GoalDefinitionsHome />;
       case 'goal-definitions-list':
         return <GoalDefinitionsList />;
+      case 'evaluacion-junio':
+        return <EvaluacionJunio />;
       default:
         return <Dashboard />;
     }

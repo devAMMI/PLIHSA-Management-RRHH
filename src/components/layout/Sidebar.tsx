@@ -15,7 +15,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'employees', label: 'Empleados', icon: Users },
     { id: 'goal-definition-enero', label: 'Definición de Metas', icon: Target, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager'] },
-    { id: 'goal-definitions-list', label: 'Ver Definiciones de Metas', icon: Archive, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager'] },
+    { id: 'evaluacion-junio', label: '2da Evaluación - Junio', icon: ClipboardCheck, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager'] },
     { id: 'evaluacion-administrativa-nueva', label: 'Nueva Evaluación Admin', icon: ClipboardCheck, requiredRoles: ['superadmin', 'admin', 'rrhh'] },
     { id: 'evaluaciones-plihsa', label: 'Evaluaciones PLIHSA', icon: BarChart3, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager'] },
     { id: 'evaluations-list', label: 'Ver Evaluaciones', icon: FileText },
