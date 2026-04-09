@@ -37,9 +37,9 @@ export function UserList() {
       setLoading(true);
       const data = await userService.getUsers();
       setUsers(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading users:', error);
-      showToast('error', 'Error al cargar usuarios');
+      showToast('error', error?.message || 'Error al cargar usuarios');
     } finally {
       setLoading(false);
     }

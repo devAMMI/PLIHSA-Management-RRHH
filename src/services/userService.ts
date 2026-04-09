@@ -36,7 +36,10 @@ class UserService {
       const headers = await getAuthHeaders();
       const response = await fetch(`${MANAGE_USERS_URL}?action=list`, { headers });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Error al obtener usuarios');
+      if (!response.ok) {
+        console.error('Edge function error:', response.status, result);
+        throw new Error(result.error || result.message || `HTTP ${response.status}`);
+      }
       return result.users || [];
     } catch (error: any) {
       console.error('Error fetching users:', error);
