@@ -155,8 +155,17 @@ export function UserList() {
     return map[role] || 'bg-gray-100 text-gray-700 border-gray-300';
   };
 
-  const activeCount = users.filter(u => u.is_active).length;
-  const inactiveCount = users.filter(u => !u.is_active).length;
+  const visibleUsers = users.filter((user) => {
+    if (!isSuperAdmin && systemUser) {
+      const myLevel = ROLE_HIERARCHY[systemUser.role];
+      const targetLevel = ROLE_HIERARCHY[user.role];
+      if (targetLevel >= myLevel && user.user_id !== systemUser.user_id) return false;
+    }
+    return true;
+  });
+
+  const activeCount = visibleUsers.filter(u => u.is_active).length;
+  const inactiveCount = visibleUsers.filter(u => !u.is_active).length;
 
   if (loading) {
     return (
@@ -204,7 +213,7 @@ export function UserList() {
             <Users className="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <div className="text-2xl font-bold text-slate-800">{users.length}</div>
+            <div className="text-2xl font-bold text-slate-800">{visibleUsers.length}</div>
             <div className="text-xs text-slate-500">Total usuarios</div>
           </div>
         </div>
