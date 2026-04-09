@@ -120,17 +120,25 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      const { data: targetUser } = await supabaseAdmin
-        .from("system_users")
-        .select("role")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      if (targetUser?.role === "superadmin" && systemUser.role !== "superadmin") {
-        return new Response(JSON.stringify({ error: "Cannot delete a superadmin" }), {
+      if (userId === requestUser.id) {
+        return new Response(JSON.stringify({ error: "No puedes eliminar tu propia cuenta" }), {
           status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+      }
+
+      if (systemUser.role !== "superadmin") {
+        const { data: targetUser } = await supabaseAdmin
+          .from("system_users")
+          .select("role")
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (targetUser?.role === "superadmin") {
+          return new Response(JSON.stringify({ error: "No tienes permiso para eliminar este usuario" }), {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
       }
 
       const { error: deleteSystemError } = await supabaseAdmin

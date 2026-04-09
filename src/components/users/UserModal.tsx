@@ -98,7 +98,7 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
   const availableRoles = Object.entries(ROLE_LABELS).filter(([roleKey]) => {
     const role = roleKey as UserRole;
     const roleLevel = ROLE_HIERARCHY[role];
-    if (isSuperAdmin) return role !== 'superadmin';
+    if (isSuperAdmin) return true;
     return roleLevel < myLevel;
   });
 

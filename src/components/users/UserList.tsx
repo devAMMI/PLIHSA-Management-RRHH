@@ -45,10 +45,20 @@ export function UserList() {
     }
   };
 
+  const isMe = (targetUser: SystemUser) => targetUser.user_id === systemUser?.user_id;
+
   const canAct = (targetUser: SystemUser) => {
     if (!systemUser) return false;
-    if (targetUser.user_id === systemUser.user_id) return false;
-    return isSuperAdmin || canManageUser(systemUser.role, targetUser.role);
+    if (isSuperAdmin) return true;
+    if (isMe(targetUser)) return false;
+    return canManageUser(systemUser.role, targetUser.role);
+  };
+
+  const canDelete = (targetUser: SystemUser) => {
+    if (!systemUser) return false;
+    if (isMe(targetUser)) return false;
+    if (isSuperAdmin) return true;
+    return canManageUser(systemUser.role, targetUser.role);
   };
 
   const handleToggleActive = async (user: SystemUser) => {
@@ -70,7 +80,7 @@ export function UserList() {
   };
 
   const handleDeleteUser = async (user: SystemUser) => {
-    if (!canAct(user)) return;
+    if (!canDelete(user)) return;
     const name = user.employee
       ? `${user.employee.first_name} ${user.employee.last_name}`
       : user.email || 'este usuario';
@@ -253,13 +263,14 @@ export function UserList() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredUsers.map((user) => {
-                const isMe = user.user_id === systemUser?.user_id;
+                const isMeRow = isMe(user);
                 const canEdit = canAct(user);
+                const canDel = canDelete(user);
                 const isDeleting = actionLoading === `delete-${user.id}`;
                 const isToggling = actionLoading === `toggle-${user.id}`;
 
                 return (
-                  <tr key={user.id} className={`hover:bg-slate-50 transition ${isMe ? 'bg-blue-50/40' : ''}`}>
+                  <tr key={user.id} className={`hover:bg-slate-50 transition ${isMeRow ? 'bg-blue-50/40' : ''}`}>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         {user.employee?.photo_url ? (
@@ -276,7 +287,7 @@ export function UserList() {
                               : <span className="text-slate-400 italic">Sin empleado vinculado</span>
                             }
                           </div>
-                          {isMe && (
+                          {isMeRow && (
                             <span className="text-xs text-blue-500 font-medium">Yo</span>
                           )}
                         </div>
@@ -315,7 +326,7 @@ export function UserList() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center justify-end gap-1">
-                        {canEdit ? (
+                        {canEdit && (
                           <>
                             <button
                               onClick={() => handleResetPassword(user)}
@@ -331,19 +342,20 @@ export function UserList() {
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
-                            <button
-                              onClick={() => handleDeleteUser(user)}
-                              disabled={isDeleting}
-                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition disabled:opacity-50"
-                              title="Eliminar usuario"
-                            >
-                              {isDeleting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                            </button>
                           </>
-                        ) : (
-                          !isMe && (
-                            <span className="text-xs text-slate-400 px-2 py-1 bg-slate-50 rounded-lg">Sin permisos</span>
-                          )
+                        )}
+                        {canDel && (
+                          <button
+                            onClick={() => handleDeleteUser(user)}
+                            disabled={isDeleting}
+                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition disabled:opacity-50"
+                            title="Eliminar usuario"
+                          >
+                            {isDeleting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                          </button>
+                        )}
+                        {!canEdit && !canDel && !isMeRow && (
+                          <span className="text-xs text-slate-400 px-2 py-1 bg-slate-50 rounded-lg">Sin permisos</span>
                         )}
                       </div>
                     </td>
