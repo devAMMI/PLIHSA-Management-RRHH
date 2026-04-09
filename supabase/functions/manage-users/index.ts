@@ -82,15 +82,15 @@ Deno.serve(async (req: Request) => {
         `)
         .order("created_at", { ascending: false });
 
-      if (listError) throw listError;
+      if (listError) {
+        console.error("Error listing system_users:", listError);
+        return new Response(JSON.stringify({ error: "Database error finding users: " + listError.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
-      const { data: authData, error: authListError } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
-      if (authListError) throw authListError;
-
-      const users = (systemUsers || []).map((u: any) => {
-        const authUser = authData?.users?.find((a: any) => a.id === u.user_id);
-        return { ...u, email: authUser?.email };
-      }).filter((u: any) => {
+      const users = (systemUsers || []).filter((u: any) => {
         if (isSuperAdmin) return true;
         if (u.user_id === requestUser.id) return true;
         const targetLevel = ROLE_HIERARCHY[u.role] ?? 0;

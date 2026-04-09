@@ -120,6 +120,7 @@ Deno.serve(async (req: Request) => {
       .from("system_users")
       .insert({
         user_id: authData.user.id,
+        email: email,
         employee_id: employeeId || null,
         company_id: companyId,
         accessible_company_ids: accessibleCompanyIds || null,
