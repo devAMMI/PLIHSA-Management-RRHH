@@ -93,7 +93,7 @@ Deno.serve(async (req: Request) => {
         if (isSuperAdmin) return true;
         if (u.user_id === requestUser.id) return true;
         const targetLevel = ROLE_HIERARCHY[u.role] ?? 0;
-        return targetLevel < requesterLevel;
+        return targetLevel <= requesterLevel;
       });
 
       return new Response(JSON.stringify({ users }), {
@@ -127,7 +127,7 @@ Deno.serve(async (req: Request) => {
           .maybeSingle();
 
         const targetLevel = ROLE_HIERARCHY[targetUser?.role ?? ""] ?? 0;
-        if (!isSuperAdmin && targetLevel >= requesterLevel) {
+        if (!isSuperAdmin && targetLevel > requesterLevel) {
           return new Response(JSON.stringify({ error: "No tienes permiso para cambiar la contrasena de este usuario" }), {
             status: 403,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -167,7 +167,7 @@ Deno.serve(async (req: Request) => {
 
       const targetLevel = ROLE_HIERARCHY[targetUser?.role ?? ""] ?? 0;
 
-      if (!isSuperAdmin && targetLevel >= requesterLevel) {
+      if (!isSuperAdmin && targetLevel > requesterLevel) {
         return new Response(JSON.stringify({ error: "No tienes permiso para eliminar este usuario" }), {
           status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },

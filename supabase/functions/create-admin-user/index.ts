@@ -96,8 +96,8 @@ Deno.serve(async (req: Request) => {
     }
 
     const targetLevel = ROLE_HIERARCHY[role] ?? 0;
-    if (!isSuperAdmin && targetLevel >= requesterLevel) {
-      return new Response(JSON.stringify({ error: "No puedes crear un usuario con un rol igual o superior al tuyo" }), {
+    if (!isSuperAdmin && targetLevel > requesterLevel) {
+      return new Response(JSON.stringify({ error: "No puedes crear un usuario con un rol superior al tuyo" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
