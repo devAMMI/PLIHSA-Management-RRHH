@@ -32,11 +32,12 @@ interface EvaluationPeriod {
 interface AdministrativeEvaluationFormProps {
   editingEvaluationId?: string | null;
   onCancel?: () => void;
+  periodId?: string;
 }
 
 type WorkflowStatus = 'draft' | 'pending_signature' | 'completed';
 
-export function AdministrativeEvaluationForm({ editingEvaluationId, onCancel }: AdministrativeEvaluationFormProps) {
+export function AdministrativeEvaluationForm({ editingEvaluationId, onCancel, periodId }: AdministrativeEvaluationFormProps) {
   const formRef = useRef<HTMLDivElement>(null);
   const { employee, systemUser } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -173,14 +174,19 @@ export function AdministrativeEvaluationForm({ editingEvaluationId, onCancel }: 
 
   const loadData = async () => {
     try {
-      const { data: periodData } = await supabase
+      let periodQuery = supabase
         .from('evaluation_periods')
         .select('*')
         .eq('status', 'active')
-        .eq('employee_type', 'administrativo')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .eq('employee_type', 'administrativo');
+
+      if (periodId) {
+        periodQuery = periodQuery.eq('id', periodId);
+      } else {
+        periodQuery = periodQuery.order('created_at', { ascending: true }).limit(1);
+      }
+
+      const { data: periodData } = await periodQuery.maybeSingle();
 
       if (periodData) {
         setPeriod(periodData);

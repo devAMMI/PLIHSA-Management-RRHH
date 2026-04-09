@@ -1,6 +1,134 @@
-import { Building2, Users, Calendar, ClipboardList, Clock } from 'lucide-react';
+import { useState } from 'react';
+import { Building2, Users, List, File as FileEdit, FileCheck, Calendar, ClipboardList } from 'lucide-react';
+import { AdministrativeEvaluationForm } from './AdministrativeEvaluationForm';
+import { OperativeEvaluationForm } from './OperativeEvaluationForm';
+import { JuneEvaluationsList } from './JuneEvaluationsList';
+
+const JUNE_ADMIN_PERIOD_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567891';
+const JUNE_OPERATIVE_PERIOD_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567892';
+
+type ViewType =
+  | 'home'
+  | 'admin-form'
+  | 'operative-form'
+  | 'admin-list'
+  | 'operative-list'
+  | 'admin-drafts'
+  | 'operative-drafts'
+  | 'admin-finalized'
+  | 'operative-finalized';
 
 export function EvaluacionJunio() {
+  const [currentView, setCurrentView] = useState<ViewType>('home');
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const handleEditAdmin = (id: string) => {
+    setEditingId(id);
+    setCurrentView('admin-form');
+  };
+
+  const handleEditOperative = (id: string) => {
+    setEditingId(id);
+    setCurrentView('operative-form');
+  };
+
+  const handleBackFromForm = (type: 'admin' | 'operative') => {
+    setEditingId(null);
+    setCurrentView(type === 'admin' ? 'admin-list' : 'operative-list');
+  };
+
+  if (currentView === 'admin-form') {
+    return (
+      <AdministrativeEvaluationForm
+        periodId={JUNE_ADMIN_PERIOD_ID}
+        editingEvaluationId={editingId}
+        onCancel={() => handleBackFromForm('admin')}
+      />
+    );
+  }
+
+  if (currentView === 'operative-form') {
+    return (
+      <OperativeEvaluationForm
+        periodId={JUNE_OPERATIVE_PERIOD_ID}
+        editingEvaluationId={editingId}
+        onCancel={() => handleBackFromForm('operative')}
+      />
+    );
+  }
+
+  if (currentView === 'admin-list') {
+    return (
+      <JuneEvaluationsList
+        type="administrative"
+        statusFilter="all"
+        onBack={() => setCurrentView('home')}
+        onNew={() => { setEditingId(null); setCurrentView('admin-form'); }}
+        onEdit={handleEditAdmin}
+      />
+    );
+  }
+
+  if (currentView === 'operative-list') {
+    return (
+      <JuneEvaluationsList
+        type="operative"
+        statusFilter="all"
+        onBack={() => setCurrentView('home')}
+        onNew={() => { setEditingId(null); setCurrentView('operative-form'); }}
+        onEdit={handleEditOperative}
+      />
+    );
+  }
+
+  if (currentView === 'admin-drafts') {
+    return (
+      <JuneEvaluationsList
+        type="administrative"
+        statusFilter="draft"
+        onBack={() => setCurrentView('home')}
+        onNew={() => { setEditingId(null); setCurrentView('admin-form'); }}
+        onEdit={handleEditAdmin}
+      />
+    );
+  }
+
+  if (currentView === 'operative-drafts') {
+    return (
+      <JuneEvaluationsList
+        type="operative"
+        statusFilter="draft"
+        onBack={() => setCurrentView('home')}
+        onNew={() => { setEditingId(null); setCurrentView('operative-form'); }}
+        onEdit={handleEditOperative}
+      />
+    );
+  }
+
+  if (currentView === 'admin-finalized') {
+    return (
+      <JuneEvaluationsList
+        type="administrative"
+        statusFilter="completed"
+        onBack={() => setCurrentView('home')}
+        onNew={() => { setEditingId(null); setCurrentView('admin-form'); }}
+        onEdit={handleEditAdmin}
+      />
+    );
+  }
+
+  if (currentView === 'operative-finalized') {
+    return (
+      <JuneEvaluationsList
+        type="operative"
+        statusFilter="completed"
+        onBack={() => setCurrentView('home')}
+        onNew={() => { setEditingId(null); setCurrentView('operative-form'); }}
+        onEdit={handleEditOperative}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -12,58 +140,26 @@ export function EvaluacionJunio() {
               className="w-16 h-16 object-contain mr-4"
             />
             <div>
-              <h1 className="text-4xl font-bold text-slate-800">2da Evaluación - Junio</h1>
-              <p className="text-slate-500 text-sm mt-1">Evaluación de Desempeño Semestral</p>
+              <h1 className="text-4xl font-bold text-slate-800">2da Evaluacion - Junio</h1>
+              <p className="text-slate-500 text-sm mt-1">Evaluacion de Desempeno Semestral &mdash; Junio 2026</p>
             </div>
           </div>
 
           <div className="max-w-3xl mx-auto text-center">
             <p className="text-lg text-slate-600 mb-4">
-              La segunda evaluación del año corresponde al seguimiento semestral del desempeño
-              de los colaboradores de PLIHSA. Este proceso mide el avance en las metas definidas
-              en enero y el cumplimiento de los objetivos del periodo.
+              La segunda evaluacion del ano mide el avance en las metas definidas en enero
+              y el cumplimiento de los objetivos del primer semestre.
+              Seleccione el tipo de evaluacion segun el perfil del colaborador.
             </p>
-
-            <div className="flex items-center justify-center gap-2 text-slate-500">
-              <Calendar className="w-4 h-4" />
-              <span className="text-sm font-medium">Periodo: Junio 2026</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="max-w-4xl mx-auto mb-8">
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-9 h-9 bg-green-100 rounded-lg flex items-center justify-center">
-                  <ClipboardList className="w-5 h-5 text-green-600" />
-                </div>
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Etapa</span>
+            <div className="flex items-center justify-center gap-6 mt-4">
+              <div className="flex items-center gap-2 text-slate-500">
+                <Calendar className="w-4 h-4" />
+                <span className="text-sm">Periodo: Abril &ndash; Junio 2026</span>
               </div>
-              <p className="text-sm font-bold text-slate-800">2 de 3</p>
-              <p className="text-xs text-slate-500">En el ciclo anual</p>
-            </div>
-
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-blue-600" />
-                </div>
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Periodo</span>
+              <div className="flex items-center gap-2 text-slate-500">
+                <ClipboardList className="w-4 h-4" />
+                <span className="text-sm">Etapa 2 de 3</span>
               </div>
-              <p className="text-sm font-bold text-slate-800">Junio 2026</p>
-              <p className="text-xs text-slate-500">Evaluacion semestral</p>
-            </div>
-
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-9 h-9 bg-amber-100 rounded-lg flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-amber-600" />
-                </div>
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Estado</span>
-              </div>
-              <p className="text-sm font-bold text-slate-800">Proximo</p>
-              <p className="text-xs text-slate-500">En preparacion</p>
             </div>
           </div>
         </div>
@@ -79,14 +175,46 @@ export function EvaluacionJunio() {
                   <h2 className="text-xl font-bold text-slate-800">Administrativo</h2>
                 </div>
 
-                <div className="bg-white/60 rounded-2xl p-6 text-center border border-blue-200/50">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Clock className="w-8 h-8 text-blue-400" />
-                  </div>
-                  <h3 className="text-sm font-bold text-slate-700 mb-2">Modulo en Preparacion</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    El modulo de evaluacion administrativa para junio estara disponible proximamente.
-                  </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => { setEditingId(null); setCurrentView('admin-form'); }}
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-blue-500 flex flex-col items-center text-center"
+                  >
+                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <Building2 className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">Nueva Evaluacion</h3>
+                  </button>
+
+                  <button
+                    onClick={() => setCurrentView('admin-list')}
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-blue-500 flex flex-col items-center text-center"
+                  >
+                    <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <List className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">Ver Evaluaciones</h3>
+                  </button>
+
+                  <button
+                    onClick={() => setCurrentView('admin-drafts')}
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-blue-500 flex flex-col items-center text-center"
+                  >
+                    <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <FileEdit className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">Borradores</h3>
+                  </button>
+
+                  <button
+                    onClick={() => setCurrentView('admin-finalized')}
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-blue-500 flex flex-col items-center text-center"
+                  >
+                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <FileCheck className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">Finalizados</h3>
+                  </button>
                 </div>
               </div>
             </div>
@@ -100,14 +228,46 @@ export function EvaluacionJunio() {
                   <h2 className="text-xl font-bold text-slate-800">Operativo</h2>
                 </div>
 
-                <div className="bg-white/60 rounded-2xl p-6 text-center border border-orange-200/50">
-                  <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Clock className="w-8 h-8 text-orange-400" />
-                  </div>
-                  <h3 className="text-sm font-bold text-slate-700 mb-2">Modulo en Preparacion</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    El modulo de evaluacion operativa para junio estara disponible proximamente.
-                  </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => { setEditingId(null); setCurrentView('operative-form'); }}
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-orange-500 flex flex-col items-center text-center"
+                  >
+                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <Users className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">Nueva Evaluacion</h3>
+                  </button>
+
+                  <button
+                    onClick={() => setCurrentView('operative-list')}
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-orange-500 flex flex-col items-center text-center"
+                  >
+                    <div className="w-14 h-14 bg-gradient-to-br from-orange-400 to-orange-500 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <List className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">Ver Evaluaciones</h3>
+                  </button>
+
+                  <button
+                    onClick={() => setCurrentView('operative-drafts')}
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-orange-500 flex flex-col items-center text-center"
+                  >
+                    <div className="w-14 h-14 bg-gradient-to-br from-orange-400 to-orange-500 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <FileEdit className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">Borradores</h3>
+                  </button>
+
+                  <button
+                    onClick={() => setCurrentView('operative-finalized')}
+                    className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-orange-500 flex flex-col items-center text-center"
+                  >
+                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <FileCheck className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">Finalizados</h3>
+                  </button>
                 </div>
               </div>
             </div>
@@ -124,7 +284,7 @@ export function EvaluacionJunio() {
             <div className="ml-4">
               <h3 className="text-sm font-semibold text-blue-800 mb-1">Ciclo de Evaluaciones Anual</h3>
               <p className="text-sm text-blue-700">
-                <span className="font-medium">1. Definicion de Metas (Enero)</span> &rarr; Establecimiento de objetivos del periodo. &nbsp;
+                <span className="font-medium">1. Definicion de Metas (Enero)</span> &rarr; Establecimiento de objetivos. &nbsp;
                 <span className="font-semibold text-blue-900">2. Evaluacion - Junio</span> &rarr; Seguimiento semestral del desempeno. &nbsp;
                 <span className="font-medium">3. Evaluacion - Diciembre</span> &rarr; Cierre y evaluacion final del ano.
               </p>

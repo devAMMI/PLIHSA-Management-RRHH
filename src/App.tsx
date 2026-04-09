@@ -159,7 +159,10 @@ function AppContent() {
           'evaluaciones-plihsa',
           'evaluacion-administrativa-nueva',
           'nueva-evaluacion-administrativa',
-        ].includes(currentView) ? 'overflow-hidden' : 'overflow-y-auto p-8'}`}>
+        ].includes(currentView) ? 'overflow-hidden' : [
+          'evaluacion-junio',
+          'goal-definition-enero',
+        ].includes(currentView) ? 'overflow-y-auto' : 'overflow-y-auto p-8'}`}>
           {renderView()}
         </main>
       </div>
