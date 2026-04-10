@@ -485,113 +485,47 @@ export function JuneReviewForm({ evaluationId, onCancel, onSaved }: JuneReviewFo
         </div>
       )}
 
-      <div ref={formRef} className="bg-white rounded-lg border border-slate-300 overflow-hidden shadow-sm">
-        <div className="border-b-2 border-slate-300">
-          <div className="grid grid-cols-12">
-            <div className="col-span-3 border-r-2 border-slate-300 p-4 flex items-center justify-center">
-              <img
-                src="/Logo_PLIHSA_BLUE.png"
-                alt="PLIHSA"
-                className="w-full h-auto max-w-[160px] object-contain"
-              />
-            </div>
-            <div className="col-span-6 border-r-2 border-slate-300 p-4 flex items-center justify-center">
-              <h1 className="text-base font-bold text-slate-800 text-center leading-tight">
-                Definicion de Factores y Revision del Desempeno Administrativo
-              </h1>
-            </div>
-            <div className="col-span-3 p-2 text-xs">
-              <div className="border-b border-slate-300 px-2 py-1">
-                <span className="font-semibold">Codigo:</span> {period?.form_code || 'PL-RH-P-002-F01'}
-              </div>
-              <div className="border-b border-slate-300 px-2 py-1">
-                <span className="font-semibold">Version:</span> {period?.form_version || '01'}
-              </div>
-              <div className="px-2 py-1">
-                <span className="font-semibold">Fecha de Revision:</span> 09/07/2025
-              </div>
-            </div>
-          </div>
-        </div>
+      <div ref={formRef} className="bg-white border border-slate-300 shadow-sm" style={{ fontFamily: 'Arial, sans-serif' }}>
+        <div className="px-6 pt-6 pb-4">
 
-        <div className="p-6">
-          <div className="grid grid-cols-12 border border-slate-300">
-            <div className="col-span-12 bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm">
-              Nombre del Colaborador:
-            </div>
-            <div className="col-span-12 bg-slate-50 px-4 py-2 text-sm border-t border-slate-300">
-              {empName}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-12 border border-slate-300 border-t-0">
-            <div className="col-span-12 bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm">
-              Posicion del Colaborador:
-            </div>
-            <div className="col-span-12 bg-slate-50 px-4 py-2 text-sm border-t border-slate-300">
-              {employee.position || ''}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 border border-slate-300 border-t-0">
-            <div className="border-r border-slate-300">
-              <div className="bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm">Departamento:</div>
-              <div className="bg-slate-50 px-4 py-2 text-sm border-t border-slate-300">
-                {employee.departments?.name || evaluation.department || ''}
-              </div>
-            </div>
-            <div>
-              <div className="bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm">Sub-departamento:</div>
-              <div className="bg-slate-50 px-4 py-2 text-sm border-t border-slate-300">
-                {evaluation.sub_department || ''}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 border border-slate-300 border-t-0">
-            <div className="border-r border-slate-300">
-              <div className="bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm">Fecha de Ingreso:</div>
-              <div className="bg-slate-50 px-4 py-2 text-sm border-t border-slate-300">{hireDate}</div>
-            </div>
-            <div>
-              <div className="bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm">Jefe Inmediato:</div>
-              <div className="bg-slate-50 px-4 py-2 text-sm border-t border-slate-300">{managerName}</div>
-            </div>
-          </div>
-
-          <div className="mt-6 bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm text-center">
+          <div className="bg-[#1e5a96] text-white px-4 py-2.5 font-bold text-sm text-center mb-0">
             REVISION DE METAS INDIVIDUALES
           </div>
 
-          <div className="grid grid-cols-2 border border-slate-300 border-t-0">
-            <div className="bg-[#1e5a96] text-white px-4 py-2 font-semibold text-sm border-r border-slate-300">
-              Fecha de Revision:
-            </div>
-            <div className="bg-slate-50 px-2 py-1 border-t-0">
-              <input
-                type="date"
-                value={reviewDate}
-                onChange={(e) => setReviewDate(e.target.value)}
-                disabled={isReadOnly}
-                className="w-full bg-transparent border-0 outline-none text-sm disabled:text-slate-600 px-2 py-1"
-              />
-            </div>
-          </div>
+          <table className="w-full border-collapse border border-[#1e5a96] border-t-0 mb-0">
+            <tbody>
+              <tr>
+                <td className="bg-[#1e5a96] text-white font-semibold text-sm px-3 py-2 w-36 border border-[#1e5a96]">
+                  Fecha de Revision
+                </td>
+                <td className="bg-slate-100 px-3 py-1 border border-slate-300">
+                  <input
+                    type="date"
+                    value={reviewDate}
+                    onChange={(e) => setReviewDate(e.target.value)}
+                    disabled={isReadOnly}
+                    className="bg-transparent border-0 outline-none text-sm text-slate-700 disabled:text-slate-600 w-48"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
-          <table className="w-full border-collapse border border-slate-300 border-t-0">
+          <table className="w-full border-collapse mt-4">
             <thead>
               <tr className="bg-[#1e5a96] text-white">
-                <th className="border border-slate-300 px-3 py-2 text-sm font-bold text-center w-10" rowSpan={2}>No.</th>
-                <th className="border border-slate-300 px-3 py-2 text-sm font-bold text-center w-1/3" rowSpan={2}>
+                <th className="border border-slate-400 px-3 py-2 text-sm font-bold text-center w-10" rowSpan={2}>No.</th>
+                <th className="border border-slate-400 px-3 py-2 text-sm font-bold text-left" rowSpan={2}>
                   Metas Individuales/Resultados
                 </th>
-                <th className="border border-slate-300 px-3 py-2 text-sm font-bold text-center" colSpan={4}>
-                  Calificacion (Marque una X en la opcion que corresponda)
+                <th className="border border-slate-400 px-2 py-1.5 text-xs font-bold text-center" colSpan={4}>
+                  Calificacion<br />
+                  <span className="font-normal">(Marque una X en la opcion que corresponda)</span>
                 </th>
               </tr>
               <tr className="bg-[#1e5a96] text-white">
                 {RATING_COLS.map((r) => (
-                  <th key={r} className="border border-slate-300 px-2 py-2 text-xs font-semibold text-center w-[11%]">
+                  <th key={r} className="border border-slate-400 px-1 py-2 text-xs font-semibold text-center w-[12%]">
                     {RATING_LABELS[r]}
                   </th>
                 ))}
@@ -601,37 +535,39 @@ export function JuneReviewForm({ evaluationId, onCancel, onSaved }: JuneReviewFo
               {goalReviews.map((goal, index) => (
                 <>
                   <tr key={`goal-${index}`} className="bg-white">
-                    <td className="border border-slate-300 px-3 py-3 text-center font-semibold text-sm" rowSpan={2}>
+                    <td className="border border-slate-400 px-3 py-4 text-center font-bold text-sm align-middle" rowSpan={2}>
                       {goal.goal_number}
                     </td>
-                    <td className="border border-slate-300 px-3 py-3 text-sm align-top">
-                      {goal.goal_description || <span className="text-slate-400 italic">Sin descripcion</span>}
+                    <td className="border border-slate-400 px-3 py-3 text-sm align-top min-h-[60px]">
+                      <div className="min-h-[48px] text-slate-800">
+                        {goal.goal_description || ''}
+                      </div>
                     </td>
                     {RATING_COLS.map((r) => (
-                      <td key={r} className="border border-slate-300 px-2 py-3 text-center">
+                      <td key={r} className="border border-slate-400 px-2 py-3 text-center align-middle">
                         <button
                           type="button"
                           onClick={() => !isReadOnly && handleGoalRatingChange(index, r)}
                           disabled={isReadOnly}
-                          className={`w-6 h-6 rounded border-2 flex items-center justify-center mx-auto transition-all
+                          className={`w-5 h-5 border-2 flex items-center justify-center mx-auto transition-all text-xs font-bold
                             ${goal.rating === r
-                              ? 'bg-[#1e5a96] border-[#1e5a96] text-white'
-                              : 'border-slate-400 hover:border-[#1e5a96]'
-                            } ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}`}
+                              ? 'border-slate-700 text-slate-800'
+                              : 'border-slate-400'
+                            } ${isReadOnly ? 'cursor-default' : 'cursor-pointer hover:border-slate-600'}`}
                         >
-                          {goal.rating === r && <span className="text-xs font-bold">X</span>}
+                          {goal.rating === r ? 'X' : ''}
                         </button>
                       </td>
                     ))}
                   </tr>
                   <tr key={`goal-results-${index}`} className="bg-slate-50">
-                    <td className="border border-slate-300 px-3 py-2 text-xs text-slate-600 font-medium" colSpan={5}>
-                      <span className="font-semibold">Resultados a la fecha de revision:</span>
+                    <td className="border border-slate-400 px-3 py-2" colSpan={5}>
+                      <div className="text-xs font-semibold text-slate-700 mb-1">Resultados a la fecha de revision</div>
                       <textarea
                         value={goal.results_description}
                         onChange={(e) => handleGoalResultsChange(index, e.target.value)}
                         disabled={isReadOnly}
-                        className="w-full mt-1 bg-transparent border-0 outline-none resize-none text-sm text-slate-700 disabled:text-slate-600 min-h-[40px]"
+                        className="w-full bg-transparent border-0 outline-none resize-none text-sm text-slate-700 disabled:text-slate-600"
                         rows={2}
                         placeholder=""
                       />
@@ -642,25 +578,26 @@ export function JuneReviewForm({ evaluationId, onCancel, onSaved }: JuneReviewFo
             </tbody>
           </table>
 
-          <div className="mt-6 bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm text-center">
+          <div className="bg-[#1e5a96] text-white px-4 py-2.5 font-bold text-sm text-center mt-6">
             REVISION DE FACTORES CONDUCTUALES Y HABILIDADES TECNICAS
           </div>
 
-          <table className="w-full border-collapse border border-slate-300 border-t-0">
+          <table className="w-full border-collapse border border-slate-400 border-t-0">
             <thead>
               <tr className="bg-[#1e5a96] text-white">
-                <th className="border border-slate-300 px-3 py-2 text-sm font-bold text-center w-10" rowSpan={2}>No.</th>
-                <th className="border border-slate-300 px-3 py-2 text-sm font-bold text-center w-1/3" rowSpan={2}>
+                <th className="border border-slate-400 px-3 py-2 text-sm font-bold text-center w-10" rowSpan={2}>No.</th>
+                <th className="border border-slate-400 px-3 py-2 text-sm font-bold text-center" rowSpan={2}>
                   Conductas y Habilidades Tecnicas<br />
                   <span className="text-xs font-normal">(Evaluar las 5 Definidas)</span>
                 </th>
-                <th className="border border-slate-300 px-3 py-2 text-sm font-bold text-center" colSpan={4}>
-                  Calificacion (Marque una X en la opcion que corresponda)
+                <th className="border border-slate-400 px-2 py-1.5 text-xs font-bold text-center" colSpan={4}>
+                  Calificacion<br />
+                  <span className="font-normal">(Marque una X en la opcion que corresponda)</span>
                 </th>
               </tr>
               <tr className="bg-[#1e5a96] text-white">
                 {RATING_COLS.map((r) => (
-                  <th key={r} className="border border-slate-300 px-2 py-2 text-xs font-semibold text-center w-[11%]">
+                  <th key={r} className="border border-slate-400 px-1 py-2 text-xs font-semibold text-center w-[12%]">
                     {RATING_LABELS[r]}
                   </th>
                 ))}
@@ -669,25 +606,25 @@ export function JuneReviewForm({ evaluationId, onCancel, onSaved }: JuneReviewFo
             <tbody>
               {competencyReviews.map((comp, index) => (
                 <tr key={`comp-${index}`} className="bg-white">
-                  <td className="border border-slate-300 px-3 py-3 text-center font-semibold text-sm">
+                  <td className="border border-slate-400 px-3 py-2.5 text-center font-bold text-sm">
                     {comp.competency_number}
                   </td>
-                  <td className="border border-slate-300 px-3 py-3 text-sm">
-                    {comp.competency_description || <span className="text-slate-400 italic">Sin descripcion</span>}
+                  <td className="border border-slate-400 px-3 py-2.5 text-sm text-slate-800">
+                    {comp.competency_description || ''}
                   </td>
                   {RATING_COLS.map((r) => (
-                    <td key={r} className="border border-slate-300 px-2 py-3 text-center">
+                    <td key={r} className="border border-slate-400 px-2 py-2.5 text-center">
                       <button
                         type="button"
                         onClick={() => !isReadOnly && handleCompetencyRatingChange(index, r)}
                         disabled={isReadOnly}
-                        className={`w-6 h-6 rounded border-2 flex items-center justify-center mx-auto transition-all
+                        className={`w-5 h-5 border-2 flex items-center justify-center mx-auto transition-all text-xs font-bold
                           ${comp.rating === r
-                            ? 'bg-[#1e5a96] border-[#1e5a96] text-white'
-                            : 'border-slate-400 hover:border-[#1e5a96]'
-                          } ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}`}
+                            ? 'border-slate-700 text-slate-800'
+                            : 'border-slate-400'
+                          } ${isReadOnly ? 'cursor-default' : 'cursor-pointer hover:border-slate-600'}`}
                       >
-                        {comp.rating === r && <span className="text-xs font-bold">X</span>}
+                        {comp.rating === r ? 'X' : ''}
                       </button>
                     </td>
                   ))}
@@ -696,53 +633,59 @@ export function JuneReviewForm({ evaluationId, onCancel, onSaved }: JuneReviewFo
             </tbody>
           </table>
 
-          <div className="mt-4 border border-slate-300">
-            <div className="bg-[#2c5282] text-white px-4 py-3 font-bold text-sm">
-              Comentarios Jefe Inmediato
+          <table className="w-full border-collapse border border-slate-400 border-t-0 mt-4">
+            <tbody>
+              <tr>
+                <td className="bg-[#1e5a96] text-white font-bold text-sm px-4 py-3 w-48 align-top border border-slate-400">
+                  Comentarios Jefe Inmediato
+                </td>
+                <td className="bg-white px-4 py-2 border border-slate-400 min-h-[70px]">
+                  <textarea
+                    value={managerComments}
+                    onChange={(e) => setManagerComments(e.target.value)}
+                    disabled={isReadOnly}
+                    className="w-full bg-transparent border-0 outline-none resize-none text-sm text-slate-700 disabled:text-slate-600 min-h-[56px]"
+                    rows={3}
+                    placeholder=""
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td className="bg-[#1e5a96] text-white font-bold text-sm px-4 py-3 align-top border border-slate-400">
+                  Comentarios del Colaborador
+                </td>
+                <td className="bg-white px-4 py-2 border border-slate-400 min-h-[70px]">
+                  <textarea
+                    value={employeeComments}
+                    onChange={(e) => setEmployeeComments(e.target.value)}
+                    disabled={isReadOnly}
+                    className="w-full bg-transparent border-0 outline-none resize-none text-sm text-slate-700 disabled:text-slate-600 min-h-[56px]"
+                    rows={3}
+                    placeholder=""
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div className="grid grid-cols-3 px-4 pt-12 pb-6 mt-4 gap-8">
+            <div className="text-center">
+              <div className="border-t border-slate-700 pt-1 mt-10">
+                <p className="text-xs font-semibold text-slate-800">Firma Colaborador</p>
+              </div>
             </div>
-            <div className="bg-white px-4 py-3 min-h-[80px]">
-              <textarea
-                value={managerComments}
-                onChange={(e) => setManagerComments(e.target.value)}
-                disabled={isReadOnly}
-                className="w-full bg-transparent border-0 outline-none resize-none text-sm disabled:text-slate-600 min-h-[70px]"
-                placeholder=""
-              />
+            <div className="text-center">
+              <div className="border-t border-slate-700 pt-1 mt-10">
+                <p className="text-xs font-semibold text-slate-800">Firma Jefe Inmediato</p>
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="border-t border-slate-700 pt-1 mt-10">
+                <p className="text-xs font-semibold text-slate-800">Firma RRHH</p>
+              </div>
             </div>
           </div>
 
-          <div className="mt-4 border border-slate-300">
-            <div className="bg-[#2c5282] text-white px-4 py-3 font-bold text-sm">
-              Comentarios del Colaborador
-            </div>
-            <div className="bg-white px-4 py-3 min-h-[80px]">
-              <textarea
-                value={employeeComments}
-                onChange={(e) => setEmployeeComments(e.target.value)}
-                disabled={isReadOnly}
-                className="w-full bg-transparent border-0 outline-none resize-none text-sm disabled:text-slate-600 min-h-[70px]"
-                placeholder=""
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-12 px-8 py-8 mt-8">
-            <div className="text-center">
-              <div className="border-t-2 border-slate-800 pt-2 mt-16">
-                <p className="text-sm font-semibold text-slate-800">Firma Colaborador</p>
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="border-t-2 border-slate-800 pt-2 mt-16">
-                <p className="text-sm font-semibold text-slate-800">Firma Jefe Inmediato</p>
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="border-t-2 border-slate-800 pt-2 mt-16">
-                <p className="text-sm font-semibold text-slate-800">Firma RRHH</p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
