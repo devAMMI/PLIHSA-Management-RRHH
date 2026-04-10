@@ -3,7 +3,7 @@ import { Users, Plus, Search, Shield, Trash2, CreditCard as Edit2, Eye, EyeOff, 
 import { useAuth } from '../../contexts/AuthContext';
 import { UserModal } from './UserModal';
 import { ChangePasswordModal } from './ChangePasswordModal';
-import { SystemUser, ROLE_LABELS, ROLE_HIERARCHY, canManageUser } from '../../types/roles';
+import { SystemUser, ROLE_LABELS, canManageUser, canSeeUser } from '../../types/roles';
 import { userService } from '../../services/userService';
 
 export function UserList() {
@@ -125,13 +125,12 @@ export function UserList() {
     showToast('success', 'Contrasena actualizada correctamente');
   };
 
-  const filteredUsers = users.filter((user) => {
-    if (!isSuperAdmin && systemUser) {
-      const myLevel = ROLE_HIERARCHY[systemUser.role];
-      const targetLevel = ROLE_HIERARCHY[user.role];
-      if (targetLevel >= myLevel && user.user_id !== systemUser.user_id) return false;
-    }
+  const visibleUsers = users.filter((user) => {
+    if (!systemUser) return false;
+    return canSeeUser(systemUser.role, user.role, isMe(user));
+  });
 
+  const filteredUsers = visibleUsers.filter((user) => {
     const q = searchTerm.toLowerCase();
     const email = user.email?.toLowerCase() || '';
     const name = user.employee
@@ -154,15 +153,6 @@ export function UserList() {
     };
     return map[role] || 'bg-gray-100 text-gray-700 border-gray-300';
   };
-
-  const visibleUsers = users.filter((user) => {
-    if (!isSuperAdmin && systemUser) {
-      const myLevel = ROLE_HIERARCHY[systemUser.role];
-      const targetLevel = ROLE_HIERARCHY[user.role];
-      if (targetLevel >= myLevel && user.user_id !== systemUser.user_id) return false;
-    }
-    return true;
-  });
 
   const activeCount = visibleUsers.filter(u => u.is_active).length;
   const inactiveCount = visibleUsers.filter(u => !u.is_active).length;
