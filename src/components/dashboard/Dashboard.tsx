@@ -188,9 +188,7 @@ export function Dashboard() {
         </div>
       </div>
 
-      <div className="flex justify-end">
-        <DigitalClock />
-      </div>
+      <DigitalClock />
     </div>
   );
 }

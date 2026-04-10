@@ -28,19 +28,34 @@ export function DigitalClock() {
   const year = now.getFullYear();
 
   return (
-    <div className="bg-slate-900 text-white rounded-xl px-6 py-4 shadow-lg border border-slate-700 min-w-[240px]">
-      <div className="text-center">
-        <div className="flex items-end justify-center gap-1 font-mono leading-none">
-          <span className="text-4xl font-bold tracking-wider text-white">{hours}</span>
-          <span className="text-3xl font-bold text-slate-400 mb-0.5">:</span>
-          <span className="text-4xl font-bold tracking-wider text-white">{minutes}</span>
-          <span className="text-3xl font-bold text-slate-400 mb-0.5">:</span>
-          <span className="text-2xl font-semibold tracking-wider text-blue-400 mb-0.5">{seconds}</span>
+    <div
+      style={{
+        position: 'fixed',
+        bottom: '24px',
+        right: '24px',
+        zIndex: 50,
+        background: 'rgba(15, 23, 42, 0.45)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        border: '1px solid rgba(255,255,255,0.12)',
+        borderRadius: '16px',
+        padding: '14px 22px',
+        minWidth: '220px',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+      }}
+    >
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '2px', fontFamily: 'monospace', lineHeight: 1 }}>
+          <span style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.92)' }}>{hours}</span>
+          <span style={{ fontSize: '1.6rem', fontWeight: 700, color: 'rgba(255,255,255,0.4)', marginBottom: '2px' }}>:</span>
+          <span style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.92)' }}>{minutes}</span>
+          <span style={{ fontSize: '1.6rem', fontWeight: 700, color: 'rgba(255,255,255,0.4)', marginBottom: '2px' }}>:</span>
+          <span style={{ fontSize: '1.35rem', fontWeight: 600, letterSpacing: '0.1em', color: 'rgba(96,165,250,0.85)', marginBottom: '2px' }}>{seconds}</span>
         </div>
-        <div className="mt-2 text-slate-400 text-sm font-medium tracking-wide">
+        <div style={{ marginTop: '6px', fontSize: '0.75rem', color: 'rgba(255,255,255,0.55)', fontWeight: 500, letterSpacing: '0.03em' }}>
           {dayName}, {dayNum} de {monthName} de {year}
         </div>
-        <div className="mt-1 text-slate-600 text-xs">
+        <div style={{ marginTop: '2px', fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.04em' }}>
           GMT -6 · América Central
         </div>
       </div>
