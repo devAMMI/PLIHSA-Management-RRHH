@@ -64,6 +64,7 @@ const emptyCompetencies = (): CompetencyRow[] =>
 
 export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', onCancel, onSaved }: JuneReviewFormNewProps) {
   const formRef = useRef<HTMLDivElement>(null);
+  const pdfRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState(false);
@@ -465,16 +466,17 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
   };
 
   const generatePdfUrl = async (): Promise<string | null> => {
-    if (!formRef.current) return null;
+    const el = pdfRef.current;
+    if (!el) return null;
     try {
-      const canvas = await html2canvas(formRef.current, {
+      const canvas = await html2canvas(el, {
         scale: 2.5,
         useCORS: true,
         allowTaint: true,
         logging: false,
         backgroundColor: '#ffffff',
-        windowWidth: formRef.current.scrollWidth,
-        windowHeight: formRef.current.scrollHeight,
+        windowWidth: el.offsetWidth,
+        windowHeight: el.offsetHeight,
         scrollX: 0,
         scrollY: 0,
       });
@@ -490,7 +492,7 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
   };
 
   const handleDownloadPDF = async () => {
-    if (!formRef.current) return;
+    if (!pdfRef.current) return;
     setGeneratingPDF(true);
     try {
       const pdfUrl = await generatePdfUrl();
@@ -532,13 +534,13 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
-    if (printWindow && formRef.current) {
+    if (printWindow && pdfRef.current) {
       const styles = Array.from(document.styleSheets)
         .map(ss => {
           try { return Array.from(ss.cssRules).map(r => r.cssText).join('\n'); }
           catch { return ''; }
         }).join('\n');
-      printWindow.document.write(`<html><head><title>Revision Junio</title><style>${styles}body{margin:0;padding:20px}@media print{body{margin:0;padding:0}}</style></head><body>${formRef.current.innerHTML}</body></html>`);
+      printWindow.document.write(`<html><head><title>Revision Junio</title><style>${styles}body{margin:0;padding:20px}@media print{body{margin:0;padding:0}}</style></head><body>${pdfRef.current.innerHTML}</body></html>`);
       printWindow.document.close();
       setTimeout(() => printWindow.print(), 500);
     }
@@ -662,8 +664,8 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
 
       <div
         ref={formRef}
-        className="bg-white border border-slate-300 shadow-sm"
-        style={{ fontFamily: 'Arial, sans-serif', fontSize: '11px', width: '900px', maxWidth: '900px' }}
+        className="bg-white border border-slate-300 shadow-sm overflow-hidden"
+        style={{ fontFamily: 'Arial, sans-serif', fontSize: '11px' }}
       >
         <div style={{ padding: '16px' }}>
 
@@ -674,26 +676,39 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
           <table style={{ width: '100%', borderCollapse: 'collapse', borderLeft: '1px solid #1e3a5f', borderRight: '1px solid #1e3a5f', borderBottom: '1px solid #1e3a5f' }}>
             <tbody>
               <tr>
-                <td style={{ background: '#1e3a5f', color: 'white', fontWeight: '600', fontSize: '11px', padding: '5px 8px', width: '130px', border: '1px solid #1e3a5f' }}>
+                <td style={{ background: '#1e3a5f', color: 'white', fontWeight: '600', fontSize: '11px', padding: '5px 10px', width: '140px', border: '1px solid #1e3a5f', whiteSpace: 'nowrap' }}>
                   Fecha de Revision {!reviewDate && <span style={{ color: '#fca5a5' }}>*</span>}
                 </td>
-                <td style={{ background: '#f1f5f9', padding: '4px 8px', border: '1px solid #cbd5e1' }}>
-                  <input
-                    type="date"
-                    value={reviewDate}
-                    onChange={(e) => setReviewDate(e.target.value)}
-                    disabled={isReadOnly}
-                    style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '11px', color: '#374151' }}
-                  />
+                <td style={{ background: '#f1f5f9', padding: '5px 10px', border: '1px solid #cbd5e1' }}>
+                  {isReadOnly ? (
+                    <span style={{ fontSize: '11px', color: '#374151' }}>
+                      {reviewDate ? new Date(reviewDate + 'T00:00:00').toLocaleDateString('es-HN') : ''}
+                    </span>
+                  ) : (
+                    <input
+                      type="date"
+                      value={reviewDate}
+                      onChange={(e) => setReviewDate(e.target.value)}
+                      style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '11px', color: '#374151' }}
+                    />
+                  )}
                 </td>
               </tr>
             </tbody>
           </table>
 
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '8px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '8px', tableLayout: 'fixed' }}>
+            <colgroup>
+              <col style={{ width: '40px' }} />
+              <col />
+              <col style={{ width: '13%' }} />
+              <col style={{ width: '13%' }} />
+              <col style={{ width: '13%' }} />
+              <col style={{ width: '13%' }} />
+            </colgroup>
             <thead>
               <tr style={{ background: '#1e3a5f', color: 'white' }}>
-                <th style={{ border: '1px solid #94a3b8', padding: '5px', textAlign: 'center', width: '32px', fontSize: '11px', fontWeight: 'bold' }} rowSpan={2}>No.</th>
+                <th style={{ border: '1px solid #94a3b8', padding: '5px 4px', textAlign: 'center', fontSize: '11px', fontWeight: 'bold' }} rowSpan={2}>No.</th>
                 <th style={{ border: '1px solid #94a3b8', padding: '5px', textAlign: 'left', fontSize: '11px', fontWeight: 'bold' }} rowSpan={2}>
                   Metas Individuales/Resultados
                 </th>
@@ -1070,6 +1085,177 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
           employeeName={selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : undefined}
         />
       )}
+
+      <div
+        ref={pdfRef}
+        style={{
+          position: 'fixed',
+          top: '-9999px',
+          left: '-9999px',
+          width: '794px',
+          fontFamily: 'Arial, sans-serif',
+          fontSize: '11px',
+          background: 'white',
+          padding: '20px',
+        }}
+        aria-hidden="true"
+      >
+        <div style={{ background: '#1e3a5f', color: 'white', padding: '7px 12px', fontWeight: 'bold', fontSize: '12px', textAlign: 'center' }}>
+          REVISION DE METAS INDIVIDUALES
+        </div>
+
+        <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #1e3a5f' }}>
+          <tbody>
+            <tr>
+              <td style={{ background: '#1e3a5f', color: 'white', fontWeight: '600', fontSize: '11px', padding: '5px 10px', width: '140px', border: '1px solid #1e3a5f', whiteSpace: 'nowrap' }}>
+                Fecha de Revision
+              </td>
+              <td style={{ background: '#f1f5f9', padding: '5px 10px', border: '1px solid #cbd5e1', fontSize: '11px', color: '#374151' }}>
+                {reviewDate ? new Date(reviewDate + 'T00:00:00').toLocaleDateString('es-HN') : ''}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '8px', tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: '36px' }} />
+            <col />
+            <col style={{ width: '12%' }} />
+            <col style={{ width: '12%' }} />
+            <col style={{ width: '12%' }} />
+            <col style={{ width: '12%' }} />
+          </colgroup>
+          <thead>
+            <tr style={{ background: '#1e3a5f', color: 'white' }}>
+              <th style={{ border: '1px solid #94a3b8', padding: '5px 4px', textAlign: 'center', fontSize: '11px', fontWeight: 'bold' }} rowSpan={2}>No.</th>
+              <th style={{ border: '1px solid #94a3b8', padding: '5px', textAlign: 'left', fontSize: '11px', fontWeight: 'bold' }} rowSpan={2}>
+                Metas Individuales/Resultados
+              </th>
+              <th style={{ border: '1px solid #94a3b8', padding: '4px', textAlign: 'center', fontSize: '10px', fontWeight: 'bold' }} colSpan={4}>
+                Calificacion<br /><span style={{ fontWeight: 'normal', fontSize: '9px' }}>(Marque una X en la opcion que corresponda)</span>
+              </th>
+            </tr>
+            <tr style={{ background: '#1e3a5f', color: 'white' }}>
+              {RATING_COLS.map(r => (
+                <th key={r} style={{ border: '1px solid #94a3b8', padding: '4px 2px', textAlign: 'center', fontSize: '9px', fontWeight: '600' }}>
+                  {RATING_LABELS[r]}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {goals.map((goal) => (
+              <>
+                <tr key={`pdf-goal-${goal.goal_number}`} style={{ background: 'white' }}>
+                  <td style={{ border: '1px solid #94a3b8', padding: '6px 4px', textAlign: 'center', fontWeight: 'bold', fontSize: '11px', verticalAlign: 'middle' }} rowSpan={2}>
+                    {goal.goal_number}
+                  </td>
+                  <td style={{ border: '1px solid #94a3b8', padding: '5px 6px', fontSize: '11px', verticalAlign: 'top', background: goal.goal_description ? '#eff6ff' : 'white', fontWeight: goal.goal_description ? '600' : 'normal', wordBreak: 'break-word' }}>
+                    {goal.goal_description || '\u00A0'}
+                  </td>
+                  {RATING_COLS.map(r => (
+                    <td key={r} style={{ border: '1px solid #94a3b8', padding: '6px 4px', textAlign: 'center', verticalAlign: 'middle' }}>
+                      <div style={{ width: '16px', height: '16px', border: `2px solid ${goal.rating === r ? '#1e293b' : '#94a3b8'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', fontSize: '10px', fontWeight: 'bold', color: '#1e293b', background: 'white' }}>
+                        {goal.rating === r ? 'X' : ''}
+                      </div>
+                    </td>
+                  ))}
+                </tr>
+                <tr key={`pdf-goal-res-${goal.goal_number}`} style={{ background: '#f8fafc' }}>
+                  <td style={{ border: '1px solid #94a3b8', padding: '4px 6px' }} colSpan={5}>
+                    <div style={{ fontSize: '9px', fontWeight: '600', color: '#475569', marginBottom: '2px' }}>Resultados a la fecha de revision</div>
+                    <div style={{ fontSize: '11px', color: '#374151', minHeight: '18px', wordBreak: 'break-word' }}>{goal.results_description || '\u00A0'}</div>
+                  </td>
+                </tr>
+              </>
+            ))}
+          </tbody>
+        </table>
+
+        <div style={{ background: '#1e3a5f', color: 'white', padding: '7px 12px', fontWeight: 'bold', fontSize: '12px', textAlign: 'center', marginTop: '10px' }}>
+          REVISION DE FACTORES CONDUCTUALES Y HABILIDADES TECNICAS
+        </div>
+
+        <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #94a3b8', tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: '36px' }} />
+            <col />
+            <col style={{ width: '12%' }} />
+            <col style={{ width: '12%' }} />
+            <col style={{ width: '12%' }} />
+            <col style={{ width: '12%' }} />
+          </colgroup>
+          <thead>
+            <tr style={{ background: '#1e3a5f', color: 'white' }}>
+              <th style={{ border: '1px solid #94a3b8', padding: '5px 4px', textAlign: 'center', fontSize: '11px', fontWeight: 'bold' }} rowSpan={2}>No.</th>
+              <th style={{ border: '1px solid #94a3b8', padding: '5px', textAlign: 'center', fontSize: '11px', fontWeight: 'bold' }} rowSpan={2}>
+                Conductas y Habilidades Tecnicas<br /><span style={{ fontSize: '9px', fontWeight: 'normal' }}>(Evaluar las 5 Definidas)</span>
+              </th>
+              <th style={{ border: '1px solid #94a3b8', padding: '4px', textAlign: 'center', fontSize: '10px', fontWeight: 'bold' }} colSpan={4}>
+                Calificacion<br /><span style={{ fontWeight: 'normal', fontSize: '9px' }}>(Marque una X en la opcion que corresponda)</span>
+              </th>
+            </tr>
+            <tr style={{ background: '#1e3a5f', color: 'white' }}>
+              {RATING_COLS.map(r => (
+                <th key={r} style={{ border: '1px solid #94a3b8', padding: '4px 2px', textAlign: 'center', fontSize: '9px', fontWeight: '600' }}>
+                  {RATING_LABELS[r]}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {competencies.map((comp) => (
+              <tr key={`pdf-comp-${comp.competency_number}`} style={{ background: 'white' }}>
+                <td style={{ border: '1px solid #94a3b8', padding: '6px 4px', textAlign: 'center', fontWeight: 'bold', fontSize: '11px' }}>
+                  {comp.competency_number}
+                </td>
+                <td style={{ border: '1px solid #94a3b8', padding: '5px 6px', background: comp.competency_description ? '#eff6ff' : 'white', fontSize: '11px', fontWeight: comp.competency_description ? '600' : 'normal', wordBreak: 'break-word' }}>
+                  {comp.competency_description || '\u00A0'}
+                </td>
+                {RATING_COLS.map(r => (
+                  <td key={r} style={{ border: '1px solid #94a3b8', padding: '6px 4px', textAlign: 'center' }}>
+                    <div style={{ width: '16px', height: '16px', border: `2px solid ${comp.rating === r ? '#1e293b' : '#94a3b8'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', fontSize: '10px', fontWeight: 'bold', color: '#1e293b', background: 'white' }}>
+                      {comp.rating === r ? 'X' : ''}
+                    </div>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #94a3b8', marginTop: '8px' }}>
+          <tbody>
+            <tr>
+              <td style={{ background: '#1e3a5f', color: 'white', fontWeight: 'bold', fontSize: '11px', padding: '6px 10px', width: '160px', verticalAlign: 'top', border: '1px solid #94a3b8' }}>
+                Comentarios Jefe Inmediato
+              </td>
+              <td style={{ background: 'white', padding: '5px 8px', border: '1px solid #94a3b8', fontSize: '11px', color: '#374151', minHeight: '40px', wordBreak: 'break-word' }}>
+                {managerComments || '\u00A0\u00A0\u00A0'}
+              </td>
+            </tr>
+            <tr>
+              <td style={{ background: '#1e3a5f', color: 'white', fontWeight: 'bold', fontSize: '11px', padding: '6px 10px', verticalAlign: 'top', border: '1px solid #94a3b8' }}>
+                Comentarios del Colaborador
+              </td>
+              <td style={{ background: 'white', padding: '5px 8px', border: '1px solid #94a3b8', fontSize: '11px', color: '#374151', minHeight: '40px', wordBreak: 'break-word' }}>
+                {employeeComments || '\u00A0\u00A0\u00A0'}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', padding: '36px 20px 16px', gap: '32px', marginTop: '4px' }}>
+          {['Firma Colaborador', 'Firma Jefe Inmediato', 'Firma RRHH'].map(label => (
+            <div key={label} style={{ textAlign: 'center' }}>
+              <div style={{ borderTop: '1px solid #1e293b', paddingTop: '4px', marginTop: '28px' }}>
+                <span style={{ fontSize: '10px', fontWeight: '600', color: '#1e293b' }}>{label}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
