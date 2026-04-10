@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Building2, Users, List, File as FileEdit, FileCheck, Calendar, ClipboardList } from 'lucide-react';
+import { Building2, Users, List, File as FileEdit, FileCheck, Calendar, ClipboardList, ClipboardCheck } from 'lucide-react';
 import { AdministrativeEvaluationForm } from './AdministrativeEvaluationForm';
 import { OperativeEvaluationForm } from './OperativeEvaluationForm';
 import { JuneEvaluationsList } from './JuneEvaluationsList';
+import { JuneReviewForm } from './JuneReviewForm';
 
 const JUNE_ADMIN_PERIOD_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567891';
 const JUNE_OPERATIVE_PERIOD_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567892';
@@ -11,6 +12,7 @@ type ViewType =
   | 'home'
   | 'admin-form'
   | 'operative-form'
+  | 'admin-review'
   | 'admin-list'
   | 'operative-list'
   | 'admin-drafts'
@@ -27,6 +29,11 @@ export function EvaluacionJunio() {
     setCurrentView('admin-form');
   };
 
+  const handleReviewAdmin = (id: string) => {
+    setEditingId(id);
+    setCurrentView('admin-review');
+  };
+
   const handleEditOperative = (id: string) => {
     setEditingId(id);
     setCurrentView('operative-form');
@@ -36,6 +43,15 @@ export function EvaluacionJunio() {
     setEditingId(null);
     setCurrentView(type === 'admin' ? 'admin-list' : 'operative-list');
   };
+
+  if (currentView === 'admin-review' && editingId) {
+    return (
+      <JuneReviewForm
+        evaluationId={editingId}
+        onCancel={() => { setEditingId(null); setCurrentView('admin-list'); }}
+      />
+    );
+  }
 
   if (currentView === 'admin-form') {
     return (
@@ -65,6 +81,7 @@ export function EvaluacionJunio() {
         onBack={() => setCurrentView('home')}
         onNew={() => { setEditingId(null); setCurrentView('admin-form'); }}
         onEdit={handleEditAdmin}
+        onReview={handleReviewAdmin}
       />
     );
   }
@@ -89,6 +106,7 @@ export function EvaluacionJunio() {
         onBack={() => setCurrentView('home')}
         onNew={() => { setEditingId(null); setCurrentView('admin-form'); }}
         onEdit={handleEditAdmin}
+        onReview={handleReviewAdmin}
       />
     );
   }
@@ -113,6 +131,7 @@ export function EvaluacionJunio() {
         onBack={() => setCurrentView('home')}
         onNew={() => { setEditingId(null); setCurrentView('admin-form'); }}
         onEdit={handleEditAdmin}
+        onReview={handleReviewAdmin}
       />
     );
   }
@@ -214,6 +233,21 @@ export function EvaluacionJunio() {
                       <FileCheck className="w-7 h-7 text-white" />
                     </div>
                     <h3 className="text-xs font-bold text-slate-800">Finalizados</h3>
+                  </button>
+                </div>
+
+                <div className="mt-3 border-t border-blue-200 pt-3">
+                  <button
+                    onClick={() => setCurrentView('admin-list')}
+                    className="group w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-teal-500 flex items-center gap-3"
+                  >
+                    <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
+                      <ClipboardCheck className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="text-xs font-bold text-slate-800">Revision Junio (Parte 2)</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">Calificar metas y conductas</p>
+                    </div>
                   </button>
                 </div>
               </div>

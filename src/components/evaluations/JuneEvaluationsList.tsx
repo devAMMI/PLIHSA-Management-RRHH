@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Eye, FileText, User, Building2, Calendar, CheckCircle, Clock, AlertCircle, Plus } from 'lucide-react';
+import { ArrowLeft, Eye, FileText, User, Building2, Calendar, CheckCircle, Clock, AlertCircle, Plus, ClipboardCheck } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useCompany } from '../../contexts/CompanyContext';
 
@@ -10,6 +10,7 @@ interface JuneEvaluation {
   id: string;
   evaluation_code: string | null;
   status: string;
+  review_status: string | null;
   created_at: string;
   employee_id: string;
   department: string | null;
@@ -23,6 +24,7 @@ interface JuneEvaluationsListProps {
   onBack: () => void;
   onNew: () => void;
   onEdit: (id: string) => void;
+  onReview?: (id: string) => void;
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -31,7 +33,14 @@ const STATUS_LABELS: Record<string, { label: string; color: string; icon: React.
   completed: { label: 'Finalizado', color: 'bg-green-100 text-green-700 border border-green-200', icon: <CheckCircle className="w-3.5 h-3.5" /> },
 };
 
-export function JuneEvaluationsList({ type, statusFilter = 'all', onBack, onNew, onEdit }: JuneEvaluationsListProps) {
+const REVIEW_STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  not_started: { label: 'Sin Revision', color: 'bg-slate-100 text-slate-600 border border-slate-200' },
+  draft: { label: 'Revision en Progreso', color: 'bg-amber-100 text-amber-700 border border-amber-200' },
+  pending_signature: { label: 'Revision Pendiente Firma', color: 'bg-blue-100 text-blue-700 border border-blue-200' },
+  completed: { label: 'Revision Completa', color: 'bg-green-100 text-green-700 border border-green-200' },
+};
+
+export function JuneEvaluationsList({ type, statusFilter = 'all', onBack, onNew, onEdit, onReview }: JuneEvaluationsListProps) {
   const { activeCompany } = useCompany();
   const [evaluations, setEvaluations] = useState<JuneEvaluation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,6 +63,7 @@ export function JuneEvaluationsList({ type, statusFilter = 'all', onBack, onNew,
           id,
           evaluation_code,
           status,
+          review_status,
           created_at,
           employee_id,
           department,
@@ -73,6 +83,7 @@ export function JuneEvaluationsList({ type, statusFilter = 'all', onBack, onNew,
         id: e.id,
         evaluation_code: e.evaluation_code,
         status: e.status,
+        review_status: e.review_status || 'not_started',
         created_at: e.created_at,
         employee_id: e.employee_id,
         department: e.department,
@@ -154,13 +165,17 @@ export function JuneEvaluationsList({ type, statusFilter = 'all', onBack, onNew,
                   <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Codigo</th>
                   <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Departamento</th>
                   <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Fecha</th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Estado</th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Definicion</th>
+                  {isAdmin && onReview && (
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Revision Junio</th>
+                  )}
                   <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {filtered.map((ev) => {
                   const statusInfo = STATUS_LABELS[ev.status] || STATUS_LABELS['draft'];
+                  const reviewInfo = REVIEW_STATUS_LABELS[ev.review_status || 'not_started'];
                   return (
                     <tr key={ev.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-5 py-4">
@@ -195,18 +210,36 @@ export function JuneEvaluationsList({ type, statusFilter = 'all', onBack, onNew,
                           {statusInfo.label}
                         </span>
                       </td>
+                      {isAdmin && onReview && (
+                        <td className="px-5 py-4">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${reviewInfo.color}`}>
+                            {reviewInfo.label}
+                          </span>
+                        </td>
+                      )}
                       <td className="px-5 py-4 text-right">
-                        <button
-                          onClick={() => onEdit(ev.id)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                            isAdmin
-                              ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-                              : 'bg-orange-50 text-orange-700 hover:bg-orange-100'
-                          }`}
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          {ev.status === 'completed' ? 'Ver' : 'Editar'}
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => onEdit(ev.id)}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                              isAdmin
+                                ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                                : 'bg-orange-50 text-orange-700 hover:bg-orange-100'
+                            }`}
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            {ev.status === 'completed' ? 'Ver' : 'Editar'}
+                          </button>
+                          {isAdmin && onReview && (
+                            <button
+                              onClick={() => onReview(ev.id)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-teal-50 text-teal-700 hover:bg-teal-100"
+                            >
+                              <ClipboardCheck className="w-3.5 h-3.5" />
+                              Revision
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
