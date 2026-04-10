@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search, Filter, Users } from 'lucide-react';
 import { EmployeeCard } from './EmployeeCard';
 import { EmployeeModal } from './EmployeeModal';
 import { EmployeeProfilePage } from './EmployeeProfilePage';
 import { EmployeeFilterSidebar } from './EmployeeFilterSidebar';
 import { useCompany } from '../../contexts/CompanyContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Employee {
   id: string;
@@ -42,6 +43,8 @@ interface WorkLocation {
 
 export function EmployeeList() {
   const { activeCompany } = useCompany();
+  const { systemUser } = useAuth();
+  const isManager = systemUser?.role === 'manager';
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -243,6 +246,18 @@ export function EmployeeList() {
 
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 space-y-6">
+          {isManager && (
+            <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl mb-2">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Users className="w-4 h-4 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-blue-800">Vista de Gerente</p>
+                <p className="text-xs text-blue-600">Mostrando empleados bajo tu cargo directo</p>
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex-1 flex items-center gap-4 flex-wrap min-w-[300px]">
           <div className="relative flex-1 max-w-md">
@@ -256,6 +271,7 @@ export function EmployeeList() {
             />
           </div>
 
+          {!isManager && (
           <div className="flex items-center gap-2">
             <Filter className="w-5 h-5 text-slate-600" />
             <select
@@ -271,6 +287,7 @@ export function EmployeeList() {
               ))}
             </select>
           </div>
+          )}
 
           <div className="flex items-center gap-2">
             <select
@@ -285,13 +302,15 @@ export function EmployeeList() {
           </div>
         </div>
 
-            <button
-              onClick={handleNewEmployee}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
-            >
-              <Plus className="w-5 h-5" />
-              Nuevo Empleado
-            </button>
+            {!isManager && (
+              <button
+                onClick={handleNewEmployee}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+              >
+                <Plus className="w-5 h-5" />
+                Nuevo Empleado
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-4 text-sm text-slate-600 flex-wrap">

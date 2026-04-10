@@ -57,7 +57,7 @@ export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   superadmin: 'Acceso total al sistema. Puede gestionar todo incluyendo usuarios y configuraciones.',
   admin: 'Administrador de empresa. Acceso completo a su empresa.',
   rrhh: 'Recursos Humanos. Gestión completa de empleados.',
-  manager: 'Gerente. Acceso de lectura y escritura limitado.',
+  manager: 'Gerente. Acceso a sus empleados directos bajo su cargo.',
   employee: 'Empleado. Acceso de solo lectura.',
   viewer: 'Visitante. Acceso muy limitado.'
 };

@@ -18,8 +18,8 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
     { id: 'evaluacion-junio', label: '2da Evaluación - Junio', icon: ClipboardCheck, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager'] },
     { id: 'evaluacion-administrativa-nueva', label: 'Nueva Evaluación Admin', icon: ClipboardCheck, requiredRoles: ['superadmin', 'admin', 'rrhh'] },
     { id: 'evaluaciones-plihsa', label: 'Evaluaciones PLIHSA', icon: BarChart3, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager'] },
-    { id: 'evaluations-list', label: 'Ver Evaluaciones', icon: FileText },
-    { id: 'nueva-evaluacion-administrativa', label: 'Nueva Evaluación Completa', icon: ClipboardCheck },
+    { id: 'evaluations-list', label: 'Ver Evaluaciones', icon: FileText, requiredRoles: ['superadmin', 'admin', 'rrhh'] },
+    { id: 'nueva-evaluacion-administrativa', label: 'Nueva Evaluación Completa', icon: ClipboardCheck, requiredRoles: ['superadmin', 'admin', 'rrhh'] },
     { id: 'system-users', label: 'Usuarios', icon: Shield, requiredRoles: ['superadmin', 'admin'] },
     { id: 'companies', label: 'Empresas', icon: Building2, requiredRoles: ['superadmin'] },
     { id: 'settings', label: 'Configuración', icon: Settings, requiredRoles: ['superadmin'] },
@@ -140,7 +140,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
             {systemUser?.role === 'superadmin' && 'Superadministrador'}
             {systemUser?.role === 'admin' && 'Administrador'}
             {systemUser?.role === 'rrhh' && 'Recursos Humanos'}
-            {systemUser?.role === 'manager' && 'Manager'}
+            {systemUser?.role === 'manager' && 'Gerente'}
             {systemUser?.role === 'employee' && 'Empleado'}
             {systemUser?.role === 'viewer' && 'Visor'}
           </div>
