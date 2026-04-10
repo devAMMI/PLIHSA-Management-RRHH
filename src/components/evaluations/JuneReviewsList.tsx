@@ -15,6 +15,7 @@ interface JuneReview {
 }
 
 interface JuneReviewsListProps {
+  employeeType?: 'administrativo' | 'operativo';
   statusFilter?: 'draft' | 'pending_signature' | 'completed' | 'all';
   onBack: () => void;
   onNew: () => void;
@@ -39,7 +40,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
   },
 };
 
-export function JuneReviewsList({ statusFilter = 'all', onBack, onNew, onEdit }: JuneReviewsListProps) {
+export function JuneReviewsList({ employeeType = 'administrativo', statusFilter = 'all', onBack, onNew, onEdit }: JuneReviewsListProps) {
   const [reviews, setReviews] = useState<JuneReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -53,7 +54,7 @@ export function JuneReviewsList({ statusFilter = 'all', onBack, onNew, onEdit }:
 
   useEffect(() => {
     loadReviews();
-  }, [statusFilter]);
+  }, [statusFilter, employeeType]);
 
   const loadReviews = async () => {
     setLoading(true);
@@ -71,6 +72,7 @@ export function JuneReviewsList({ statusFilter = 'all', onBack, onNew, onEdit }:
           employee_id,
           employee:employees(first_name, last_name)
         `)
+        .eq('employee_type', employeeType)
         .order('created_at', { ascending: false });
 
       if (statusFilter !== 'all') {
@@ -119,13 +121,15 @@ export function JuneReviewsList({ statusFilter = 'all', onBack, onNew, onEdit }:
           </button>
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-slate-800">
-              {titleMap[statusFilter]} &mdash; Administrativo
+              {titleMap[statusFilter]} &mdash; {employeeType === 'operativo' ? 'Operativo' : 'Administrativo'}
             </h1>
             <p className="text-sm text-slate-500">2da Evaluacion &mdash; Revision Junio 2026</p>
           </div>
           <button
             onClick={onNew}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-white font-semibold transition shadow-sm bg-teal-600 hover:bg-teal-700"
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-white font-semibold transition shadow-sm ${
+              employeeType === 'operativo' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-teal-600 hover:bg-teal-700'
+            }`}
           >
             <Plus className="w-4 h-4" />
             Nueva Revision
@@ -172,8 +176,8 @@ export function JuneReviewsList({ statusFilter = 'all', onBack, onNew, onEdit }:
                     <tr key={review.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0">
-                            <User className="w-4 h-4 text-teal-600" />
+                          <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${employeeType === 'operativo' ? 'bg-orange-100' : 'bg-teal-100'}`}>
+                            <User className={`w-4 h-4 ${employeeType === 'operativo' ? 'text-orange-600' : 'text-teal-600'}`} />
                           </div>
                           <div>
                             <p className="text-sm font-semibold text-slate-800">{review.employee_name}</p>
@@ -207,7 +211,7 @@ export function JuneReviewsList({ statusFilter = 'all', onBack, onNew, onEdit }:
                       <td className="px-5 py-4 text-right">
                         <button
                           onClick={() => onEdit(review.id)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-teal-50 text-teal-700 hover:bg-teal-100"
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${employeeType === 'operativo' ? 'bg-orange-50 text-orange-700 hover:bg-orange-100' : 'bg-teal-50 text-teal-700 hover:bg-teal-100'}`}
                         >
                           <Eye className="w-3.5 h-3.5" />
                           {review.status === 'completed' ? 'Ver' : 'Editar'}

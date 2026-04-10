@@ -25,6 +25,7 @@ interface CompetencyRow {
 
 interface JuneReviewFormNewProps {
   reviewId: string | null;
+  employeeType?: 'administrativo' | 'operativo';
   onCancel: () => void;
   onSaved: () => void;
 }
@@ -60,7 +61,7 @@ const emptyCompetencies = (): CompetencyRow[] =>
     rating: null,
   }));
 
-export function JuneReviewFormNew({ reviewId, onCancel, onSaved }: JuneReviewFormNewProps) {
+export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', onCancel, onSaved }: JuneReviewFormNewProps) {
   const formRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -106,7 +107,7 @@ export function JuneReviewFormNew({ reviewId, onCancel, onSaved }: JuneReviewFor
     const { data } = await supabase
       .from('employees')
       .select('id, first_name, last_name, position, departments(name)')
-      .eq('employee_type', 'administrativo')
+      .eq('employee_type', employeeType)
       .eq('status', 'active')
       .order('first_name');
     setEmployees(data || []);
@@ -224,7 +225,7 @@ export function JuneReviewFormNew({ reviewId, onCancel, onSaved }: JuneReviewFor
       if (!currentReviewId) {
         const { data: newRev, error } = await supabase
           .from('june_reviews')
-          .insert({ ...reviewPayload, created_by: user?.id })
+          .insert({ ...reviewPayload, employee_type: employeeType, created_by: user?.id })
           .select()
           .single();
         if (error) throw error;
@@ -400,7 +401,8 @@ export function JuneReviewFormNew({ reviewId, onCancel, onSaved }: JuneReviewFor
       const empName = selectedEmployee
         ? `${selectedEmployee.first_name}_${selectedEmployee.last_name}`
         : 'Revision';
-      pdf.save(`Revision_Junio_${empName}_${reviewDate || 'borrador'}.pdf`);
+      const typeLabel = employeeType === 'operativo' ? 'Operativo' : 'Administrativo';
+      pdf.save(`Revision_Junio_${typeLabel}_${empName}_${reviewDate || 'borrador'}.pdf`);
       setToast({ message: 'PDF descargado correctamente', type: 'success' });
     } catch {
       setToast({ message: 'Error al generar el PDF', type: 'error' });
