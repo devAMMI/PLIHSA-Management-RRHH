@@ -39,5 +39,11 @@ export function formatDateOnly(dateString: string | null | undefined): string {
 }
 
 export function getCurrentTimestamp(): string {
+  const now = new Date();
+  const gmtMinus6 = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+  return gmtMinus6.toISOString().replace('Z', '-06:00');
+}
+
+export function getCurrentTimestampUTC(): string {
   return new Date().toISOString();
 }
