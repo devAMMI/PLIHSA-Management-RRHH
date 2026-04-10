@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Save, Download, Printer, Upload, CheckCircle, Eye, X, FileText } from 'lucide-react';
+import { ArrowLeft, Save, Download, Printer, Upload, CheckCircle, Eye, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Toast } from '../ui/Toast';
+import { SignedDocumentViewer } from '../goals/SignedDocumentViewer';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -93,6 +94,7 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
   const [signedDocUploadedAt, setSignedDocUploadedAt] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showDocViewer, setShowDocViewer] = useState(false);
+  const [digitalPdfUrl, setDigitalPdfUrl] = useState<string | null>(null);
 
   const isReadOnly = status === 'completed';
   const isEditing = reviewId !== null;
@@ -277,6 +279,10 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
       setToast({ message: 'Debe seleccionar un colaborador', type: 'error' });
       return;
     }
+    if (!reviewDate) {
+      setToast({ message: 'La fecha de revision es obligatoria', type: 'error' });
+      return;
+    }
 
     setSaving(true);
     try {
@@ -456,25 +462,75 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
     }
   };
 
+  const generatePdfBlob = async (): Promise<string | null> => {
+    if (!formRef.current) return null;
+    const el = formRef.current;
+    const canvas = await html2canvas(el, {
+      scale: 3,
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      windowWidth: 900,
+      width: 900,
+      scrollX: 0,
+      scrollY: 0,
+    });
+    const PAGE_W = 215.9;
+    const PAGE_H = 279.4;
+    const MARGIN = 6;
+    const usableW = PAGE_W - MARGIN * 2;
+    const usableH = PAGE_H - MARGIN * 2;
+    const imgAspect = canvas.height / canvas.width;
+    const renderedH = usableW * imgAspect;
+    const pdf = new jsPDF('p', 'mm', 'letter');
+    if (renderedH <= usableH) {
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', MARGIN, MARGIN, usableW, renderedH);
+    } else {
+      const scale = usableH / renderedH;
+      const scaledW = usableW * scale;
+      const xOffset = MARGIN + (usableW - scaledW) / 2;
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', xOffset, MARGIN, scaledW, usableH);
+    }
+    return pdf.output('datauristring');
+  };
+
   const handleDownloadPDF = async () => {
     if (!formRef.current) return;
     setGeneratingPDF(true);
     try {
-      const canvas = await html2canvas(formRef.current, {
-        scale: 2.5, useCORS: true, allowTaint: true, logging: false,
-        backgroundColor: '#ffffff',
-        windowWidth: formRef.current.scrollWidth,
-        windowHeight: formRef.current.scrollHeight,
-        scrollX: 0, scrollY: 0,
-      });
-      const imgWidth = 215.9;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      const pdf = new jsPDF('p', 'mm', 'letter');
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
       const empName = selectedEmployee
         ? `${selectedEmployee.first_name}_${selectedEmployee.last_name}`
         : 'Revision';
       const typeLabel = employeeType === 'operativo' ? 'Operativo' : 'Administrativo';
+      const el = formRef.current;
+      const canvas = await html2canvas(el, {
+        scale: 3,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: 900,
+        width: 900,
+        scrollX: 0,
+        scrollY: 0,
+      });
+      const PAGE_W = 215.9;
+      const PAGE_H = 279.4;
+      const MARGIN = 6;
+      const usableW = PAGE_W - MARGIN * 2;
+      const usableH = PAGE_H - MARGIN * 2;
+      const imgAspect = canvas.height / canvas.width;
+      const renderedH = usableW * imgAspect;
+      const pdf = new jsPDF('p', 'mm', 'letter');
+      if (renderedH <= usableH) {
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', MARGIN, MARGIN, usableW, renderedH);
+      } else {
+        const scale = usableH / renderedH;
+        const scaledW = usableW * scale;
+        const xOffset = MARGIN + (usableW - scaledW) / 2;
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', xOffset, MARGIN, scaledW, usableH);
+      }
       pdf.save(`Revision_Junio_${typeLabel}_${empName}_${reviewDate || 'borrador'}.pdf`);
       setToast({ message: 'PDF descargado correctamente', type: 'success' });
     } catch {
@@ -592,47 +648,50 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
         </div>
       )}
 
-      <div ref={formRef} className="bg-white border border-slate-300 shadow-sm" style={{ fontFamily: 'Arial, sans-serif' }}>
-        <div className="px-6 pt-6 pb-6">
+      <div
+        ref={formRef}
+        className="bg-white border border-slate-300 shadow-sm"
+        style={{ fontFamily: 'Arial, sans-serif', fontSize: '11px', width: '900px', maxWidth: '900px' }}
+      >
+        <div style={{ padding: '16px' }}>
 
-          <div className="bg-[#1e3a5f] text-white px-4 py-2.5 font-bold text-sm text-center mb-0">
+          <div style={{ background: '#1e3a5f', color: 'white', padding: '6px 12px', fontWeight: 'bold', fontSize: '12px', textAlign: 'center' }}>
             REVISION DE METAS INDIVIDUALES
           </div>
 
-          <table className="w-full border-collapse border border-[#1e3a5f] border-t-0 mb-0">
+          <table style={{ width: '100%', borderCollapse: 'collapse', borderLeft: '1px solid #1e3a5f', borderRight: '1px solid #1e3a5f', borderBottom: '1px solid #1e3a5f' }}>
             <tbody>
               <tr>
-                <td className="bg-[#1e3a5f] text-white font-semibold text-sm px-3 py-2 w-40 border border-[#1e3a5f]">
-                  Fecha de Revision
+                <td style={{ background: '#1e3a5f', color: 'white', fontWeight: '600', fontSize: '11px', padding: '5px 8px', width: '130px', border: '1px solid #1e3a5f' }}>
+                  Fecha de Revision {!reviewDate && <span style={{ color: '#fca5a5' }}>*</span>}
                 </td>
-                <td className="bg-slate-100 px-3 py-1 border border-slate-300">
+                <td style={{ background: '#f1f5f9', padding: '4px 8px', border: '1px solid #cbd5e1' }}>
                   <input
                     type="date"
                     value={reviewDate}
                     onChange={(e) => setReviewDate(e.target.value)}
                     disabled={isReadOnly}
-                    className="bg-transparent border-0 outline-none text-sm text-slate-700 disabled:text-slate-600 w-48"
+                    style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '11px', color: '#374151' }}
                   />
                 </td>
               </tr>
             </tbody>
           </table>
 
-          <table className="w-full border-collapse mt-4">
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '8px' }}>
             <thead>
-              <tr className="bg-[#1e3a5f] text-white">
-                <th className="border border-slate-400 px-3 py-2 text-sm font-bold text-center w-10" rowSpan={2}>No.</th>
-                <th className="border border-slate-400 px-3 py-2 text-sm font-bold text-left" rowSpan={2}>
+              <tr style={{ background: '#1e3a5f', color: 'white' }}>
+                <th style={{ border: '1px solid #94a3b8', padding: '5px', textAlign: 'center', width: '32px', fontSize: '11px', fontWeight: 'bold' }} rowSpan={2}>No.</th>
+                <th style={{ border: '1px solid #94a3b8', padding: '5px', textAlign: 'left', fontSize: '11px', fontWeight: 'bold' }} rowSpan={2}>
                   Metas Individuales/Resultados
                 </th>
-                <th className="border border-slate-400 px-2 py-1.5 text-xs font-bold text-center" colSpan={4}>
-                  Calificacion<br />
-                  <span className="font-normal text-xs">(Marque una X en la opcion que corresponda)</span>
+                <th style={{ border: '1px solid #94a3b8', padding: '4px', textAlign: 'center', fontSize: '10px', fontWeight: 'bold' }} colSpan={4}>
+                  Calificacion<br /><span style={{ fontWeight: 'normal', fontSize: '9px' }}>(Marque una X en la opcion que corresponda)</span>
                 </th>
               </tr>
-              <tr className="bg-[#1e3a5f] text-white">
+              <tr style={{ background: '#1e3a5f', color: 'white' }}>
                 {RATING_COLS.map(r => (
-                  <th key={r} className="border border-slate-400 px-1 py-2 text-xs font-semibold text-center w-[12%]">
+                  <th key={r} style={{ border: '1px solid #94a3b8', padding: '4px 2px', textAlign: 'center', fontSize: '9px', fontWeight: '600', width: '11%' }}>
                     {RATING_LABELS[r]}
                   </th>
                 ))}
@@ -641,48 +700,42 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
             <tbody>
               {goals.map((goal, index) => (
                 <>
-                  <tr key={`goal-${index}`} className="bg-white">
-                    <td className="border border-slate-400 px-3 py-4 text-center font-bold text-sm align-middle" rowSpan={2}>
+                  <tr key={`goal-${index}`} style={{ background: 'white' }}>
+                    <td style={{ border: '1px solid #94a3b8', padding: '6px 4px', textAlign: 'center', fontWeight: 'bold', fontSize: '11px', verticalAlign: 'middle' }} rowSpan={2}>
                       {goal.goal_number}
                     </td>
-                    <td className="border border-slate-400 px-3 py-2 text-sm align-top">
+                    <td style={{ border: '1px solid #94a3b8', padding: '4px 6px', fontSize: '11px', verticalAlign: 'top', background: goal.goal_description ? '#eff6ff' : 'white' }}>
                       <textarea
                         value={goal.goal_description}
                         onChange={(e) => handleGoalChange(index, 'goal_description', e.target.value)}
                         disabled={isReadOnly}
-                        rows={2}
+                        rows={1}
                         placeholder="Meta individual..."
-                        className={`w-full border-0 outline-none resize-none text-sm min-h-[40px] ${
-                          goal.goal_description
-                            ? 'bg-blue-50 text-slate-800 font-medium'
-                            : 'bg-transparent text-slate-800 placeholder-slate-300'
-                        } disabled:text-slate-600`}
+                        style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', resize: 'none', fontSize: '11px', color: '#1e293b', fontWeight: goal.goal_description ? '600' : 'normal', minHeight: '22px' }}
                       />
                     </td>
                     {RATING_COLS.map(r => (
-                      <td key={r} className="border border-slate-400 px-2 py-3 text-center align-middle">
+                      <td key={r} style={{ border: '1px solid #94a3b8', padding: '4px', textAlign: 'center', verticalAlign: 'middle' }}>
                         <button
                           type="button"
                           onClick={() => !isReadOnly && handleGoalRating(index, r)}
                           disabled={isReadOnly}
-                          className={`w-5 h-5 border-2 flex items-center justify-center mx-auto transition-all text-xs font-bold
-                            ${goal.rating === r ? 'border-slate-700 text-slate-800' : 'border-slate-400'}
-                            ${isReadOnly ? 'cursor-default' : 'cursor-pointer hover:border-slate-600'}`}
+                          style={{ width: '16px', height: '16px', border: `2px solid ${goal.rating === r ? '#1e293b' : '#94a3b8'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', fontSize: '10px', fontWeight: 'bold', cursor: isReadOnly ? 'default' : 'pointer', background: 'white', color: '#1e293b' }}
                         >
                           {goal.rating === r ? 'X' : ''}
                         </button>
                       </td>
                     ))}
                   </tr>
-                  <tr key={`goal-res-${index}`} className="bg-slate-50">
-                    <td className="border border-slate-400 px-3 py-2" colSpan={5}>
-                      <div className="text-xs font-semibold text-slate-600 mb-1">Resultados a la fecha de revision</div>
+                  <tr key={`goal-res-${index}`} style={{ background: '#f8fafc' }}>
+                    <td style={{ border: '1px solid #94a3b8', padding: '3px 6px' }} colSpan={5}>
+                      <div style={{ fontSize: '9px', fontWeight: '600', color: '#475569', marginBottom: '2px' }}>Resultados a la fecha de revision</div>
                       <textarea
                         value={goal.results_description}
                         onChange={(e) => handleGoalChange(index, 'results_description', e.target.value)}
                         disabled={isReadOnly}
-                        rows={2}
-                        className="w-full bg-transparent border-0 outline-none resize-none text-sm text-slate-700 disabled:text-slate-600"
+                        rows={1}
+                        style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', resize: 'none', fontSize: '11px', color: '#374151', minHeight: '20px' }}
                       />
                     </td>
                   </tr>
@@ -691,26 +744,24 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
             </tbody>
           </table>
 
-          <div className="bg-[#1e3a5f] text-white px-4 py-2.5 font-bold text-sm text-center mt-6">
+          <div style={{ background: '#1e3a5f', color: 'white', padding: '6px 12px', fontWeight: 'bold', fontSize: '12px', textAlign: 'center', marginTop: '10px' }}>
             REVISION DE FACTORES CONDUCTUALES Y HABILIDADES TECNICAS
           </div>
 
-          <table className="w-full border-collapse border border-slate-400 border-t-0">
+          <table style={{ width: '100%', borderCollapse: 'collapse', borderLeft: '1px solid #94a3b8', borderRight: '1px solid #94a3b8', borderBottom: '1px solid #94a3b8' }}>
             <thead>
-              <tr className="bg-[#1e3a5f] text-white">
-                <th className="border border-slate-400 px-3 py-2 text-sm font-bold text-center w-10" rowSpan={2}>No.</th>
-                <th className="border border-slate-400 px-3 py-2 text-sm font-bold text-center" rowSpan={2}>
-                  Conductas y Habilidades Tecnicas<br />
-                  <span className="text-xs font-normal">(Evaluar las 5 Definidas)</span>
+              <tr style={{ background: '#1e3a5f', color: 'white' }}>
+                <th style={{ border: '1px solid #94a3b8', padding: '5px', textAlign: 'center', width: '32px', fontSize: '11px', fontWeight: 'bold' }} rowSpan={2}>No.</th>
+                <th style={{ border: '1px solid #94a3b8', padding: '5px', textAlign: 'center', fontSize: '11px', fontWeight: 'bold' }} rowSpan={2}>
+                  Conductas y Habilidades Tecnicas<br /><span style={{ fontSize: '9px', fontWeight: 'normal' }}>(Evaluar las 5 Definidas)</span>
                 </th>
-                <th className="border border-slate-400 px-2 py-1.5 text-xs font-bold text-center" colSpan={4}>
-                  Calificacion<br />
-                  <span className="font-normal text-xs">(Marque una X en la opcion que corresponda)</span>
+                <th style={{ border: '1px solid #94a3b8', padding: '4px', textAlign: 'center', fontSize: '10px', fontWeight: 'bold' }} colSpan={4}>
+                  Calificacion<br /><span style={{ fontWeight: 'normal', fontSize: '9px' }}>(Marque una X en la opcion que corresponda)</span>
                 </th>
               </tr>
-              <tr className="bg-[#1e3a5f] text-white">
+              <tr style={{ background: '#1e3a5f', color: 'white' }}>
                 {RATING_COLS.map(r => (
-                  <th key={r} className="border border-slate-400 px-1 py-2 text-xs font-semibold text-center w-[12%]">
+                  <th key={r} style={{ border: '1px solid #94a3b8', padding: '4px 2px', textAlign: 'center', fontSize: '9px', fontWeight: '600', width: '11%' }}>
                     {RATING_LABELS[r]}
                   </th>
                 ))}
@@ -718,33 +769,27 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
             </thead>
             <tbody>
               {competencies.map((comp, index) => (
-                <tr key={`comp-${index}`} className="bg-white">
-                  <td className="border border-slate-400 px-3 py-3 text-center font-bold text-sm">
+                <tr key={`comp-${index}`} style={{ background: 'white' }}>
+                  <td style={{ border: '1px solid #94a3b8', padding: '5px', textAlign: 'center', fontWeight: 'bold', fontSize: '11px' }}>
                     {comp.competency_number}
                   </td>
-                  <td className="border border-slate-400 px-3 py-2">
+                  <td style={{ border: '1px solid #94a3b8', padding: '4px 6px', background: comp.competency_description ? '#eff6ff' : 'white' }}>
                     <input
                       type="text"
                       value={comp.competency_description}
                       onChange={(e) => handleCompetencyChange(index, 'competency_description', e.target.value)}
                       disabled={isReadOnly}
                       placeholder="Conducta o habilidad tecnica..."
-                      className={`w-full border-0 outline-none text-sm disabled:text-slate-600 ${
-                        comp.competency_description
-                          ? 'bg-blue-50 text-slate-800 font-medium'
-                          : 'bg-transparent text-slate-800 placeholder-slate-300'
-                      }`}
+                      style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', fontSize: '11px', color: '#1e293b', fontWeight: comp.competency_description ? '600' : 'normal' }}
                     />
                   </td>
                   {RATING_COLS.map(r => (
-                    <td key={r} className="border border-slate-400 px-2 py-3 text-center">
+                    <td key={r} style={{ border: '1px solid #94a3b8', padding: '4px', textAlign: 'center' }}>
                       <button
                         type="button"
                         onClick={() => !isReadOnly && handleCompetencyRating(index, r)}
                         disabled={isReadOnly}
-                        className={`w-5 h-5 border-2 flex items-center justify-center mx-auto transition-all text-xs font-bold
-                          ${comp.rating === r ? 'border-slate-700 text-slate-800' : 'border-slate-400'}
-                          ${isReadOnly ? 'cursor-default' : 'cursor-pointer hover:border-slate-600'}`}
+                        style={{ width: '16px', height: '16px', border: `2px solid ${comp.rating === r ? '#1e293b' : '#94a3b8'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', fontSize: '10px', fontWeight: 'bold', cursor: isReadOnly ? 'default' : 'pointer', background: 'white', color: '#1e293b' }}
                       >
                         {comp.rating === r ? 'X' : ''}
                       </button>
@@ -755,44 +800,44 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
             </tbody>
           </table>
 
-          <table className="w-full border-collapse border border-slate-400 border-t-0 mt-4">
+          <table style={{ width: '100%', borderCollapse: 'collapse', borderLeft: '1px solid #94a3b8', borderRight: '1px solid #94a3b8', borderBottom: '1px solid #94a3b8', marginTop: '8px' }}>
             <tbody>
               <tr>
-                <td className="bg-[#1e3a5f] text-white font-bold text-sm px-4 py-3 w-48 align-top border border-slate-400">
+                <td style={{ background: '#1e3a5f', color: 'white', fontWeight: 'bold', fontSize: '11px', padding: '6px 10px', width: '160px', verticalAlign: 'top', border: '1px solid #94a3b8' }}>
                   Comentarios Jefe Inmediato
                 </td>
-                <td className="bg-white px-4 py-2 border border-slate-400">
+                <td style={{ background: 'white', padding: '4px 8px', border: '1px solid #94a3b8' }}>
                   <textarea
                     value={managerComments}
                     onChange={(e) => setManagerComments(e.target.value)}
                     disabled={isReadOnly}
-                    rows={3}
-                    className="w-full bg-transparent border-0 outline-none resize-none text-sm text-slate-700 disabled:text-slate-600 min-h-[56px]"
+                    rows={2}
+                    style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', resize: 'none', fontSize: '11px', color: '#374151', minHeight: '40px' }}
                   />
                 </td>
               </tr>
               <tr>
-                <td className="bg-[#1e3a5f] text-white font-bold text-sm px-4 py-3 align-top border border-slate-400">
+                <td style={{ background: '#1e3a5f', color: 'white', fontWeight: 'bold', fontSize: '11px', padding: '6px 10px', verticalAlign: 'top', border: '1px solid #94a3b8' }}>
                   Comentarios del Colaborador
                 </td>
-                <td className="bg-white px-4 py-2 border border-slate-400">
+                <td style={{ background: 'white', padding: '4px 8px', border: '1px solid #94a3b8' }}>
                   <textarea
                     value={employeeComments}
                     onChange={(e) => setEmployeeComments(e.target.value)}
                     disabled={isReadOnly}
-                    rows={3}
-                    className="w-full bg-transparent border-0 outline-none resize-none text-sm text-slate-700 disabled:text-slate-600 min-h-[56px]"
+                    rows={2}
+                    style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', resize: 'none', fontSize: '11px', color: '#374151', minHeight: '40px' }}
                   />
                 </td>
               </tr>
             </tbody>
           </table>
 
-          <div className="grid grid-cols-3 px-4 pt-12 pb-6 mt-4 gap-8">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', padding: '32px 16px 12px', gap: '24px', marginTop: '4px' }}>
             {['Firma Colaborador', 'Firma Jefe Inmediato', 'Firma RRHH'].map(label => (
-              <div key={label} className="text-center">
-                <div className="border-t border-slate-700 pt-1 mt-10">
-                  <p className="text-xs font-semibold text-slate-800">{label}</p>
+              <div key={label} style={{ textAlign: 'center' }}>
+                <div style={{ borderTop: '1px solid #1e293b', paddingTop: '4px', marginTop: '24px' }}>
+                  <p style={{ fontSize: '10px', fontWeight: '600', color: '#1e293b' }}>{label}</p>
                 </div>
               </div>
             ))}
@@ -825,11 +870,15 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
                 </div>
               </div>
               <button
-                onClick={() => setShowDocViewer(true)}
+                onClick={async () => {
+                  const url = await generatePdfBlob();
+                  setDigitalPdfUrl(url);
+                  setShowDocViewer(true);
+                }}
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium"
               >
                 <Eye className="w-4 h-4" />
-                Ver Documento
+                Ver Ambos Documentos
               </button>
             </div>
           )}
@@ -895,7 +944,7 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
         </div>
       )}
 
-      {status === 'completed' && signedDocUrl && (
+      {(status === 'completed' || status === 'pending_signature') && signedDocUrl && (
         <div className="mt-6 bg-white border border-slate-200 rounded-xl shadow-sm p-6">
           <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-green-600" />
@@ -914,44 +963,30 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
               </div>
             </div>
             <button
-              onClick={() => setShowDocViewer(true)}
+              onClick={async () => {
+                const url = await generatePdfBlob();
+                setDigitalPdfUrl(url);
+                setShowDocViewer(true);
+              }}
               className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium"
             >
               <Eye className="w-4 h-4" />
-              Ver Documento
+              Ver Ambos Documentos
             </button>
           </div>
         </div>
       )}
 
       {showDocViewer && signedDocUrl && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col">
-            <div className="bg-[#1e3a5f] text-white px-6 py-4 flex items-center justify-between rounded-t-xl">
-              <div className="flex items-center gap-3">
-                <FileText className="w-6 h-6" />
-                <h2 className="text-lg font-bold">{signedDocFilename || 'Documento Firmado'}</h2>
-              </div>
-              <button onClick={() => setShowDocViewer(false)} className="p-2 hover:bg-blue-700 rounded-lg transition">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <div className="flex-1 bg-slate-100 p-4 overflow-hidden">
-              {signedDocMimeType === 'application/pdf' ? (
-                <iframe src={signedDocUrl} className="w-full h-full rounded-lg border-2 border-slate-300 bg-white" title="Documento Firmado" />
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <img src={signedDocUrl} alt="Documento Firmado" className="max-w-full max-h-full rounded-lg shadow-lg" />
-                </div>
-              )}
-            </div>
-            <div className="border-t border-slate-200 px-6 py-4 flex justify-end">
-              <button onClick={() => setShowDocViewer(false)} className="px-6 py-2.5 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition font-medium">
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
+        <SignedDocumentViewer
+          documentUrl={signedDocUrl}
+          filename={signedDocFilename || 'documento_firmado'}
+          mimeType={signedDocMimeType || 'application/pdf'}
+          uploadedAt={signedDocUploadedAt || undefined}
+          onClose={() => { setShowDocViewer(false); setDigitalPdfUrl(null); }}
+          originalDocumentUrl={digitalPdfUrl || undefined}
+          employeeName={selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : undefined}
+        />
       )}
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
