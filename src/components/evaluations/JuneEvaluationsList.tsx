@@ -21,6 +21,7 @@ interface JuneEvaluation {
 interface JuneEvaluationsListProps {
   type: 'administrative' | 'operative';
   statusFilter?: 'draft' | 'completed' | 'all';
+  mode?: 'default' | 'review';
   onBack: () => void;
   onNew: () => void;
   onEdit: (id: string) => void;
@@ -40,7 +41,7 @@ const REVIEW_STATUS_LABELS: Record<string, { label: string; color: string }> = {
   completed: { label: 'Revision Completa', color: 'bg-green-100 text-green-700 border border-green-200' },
 };
 
-export function JuneEvaluationsList({ type, statusFilter = 'all', onBack, onNew, onEdit, onReview }: JuneEvaluationsListProps) {
+export function JuneEvaluationsList({ type, statusFilter = 'all', mode = 'default', onBack, onNew, onEdit, onReview }: JuneEvaluationsListProps) {
   const { activeCompany } = useCompany();
   const [evaluations, setEvaluations] = useState<JuneEvaluation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,7 +106,10 @@ export function JuneEvaluationsList({ type, statusFilter = 'all', onBack, onNew,
     (e.department || '').toLowerCase().includes(search.toLowerCase())
   );
 
-  const title = statusFilter === 'draft' ? 'Borradores' : statusFilter === 'completed' ? 'Finalizados' : 'Todas las Evaluaciones';
+  const isReviewMode = mode === 'review';
+  const title = isReviewMode
+    ? 'Revision de Factores (Parte 2)'
+    : statusFilter === 'draft' ? 'Borradores' : statusFilter === 'completed' ? 'Finalizados' : 'Todas las Evaluaciones';
   const accent = isAdmin ? 'blue' : 'orange';
 
   return (
@@ -125,15 +129,17 @@ export function JuneEvaluationsList({ type, statusFilter = 'all', onBack, onNew,
             </h1>
             <p className="text-sm text-slate-500">2da Evaluacion - Junio 2026</p>
           </div>
-          <button
-            onClick={onNew}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-white font-semibold transition shadow-sm ${
-              isAdmin ? 'bg-blue-600 hover:bg-blue-700' : 'bg-orange-600 hover:bg-orange-700'
-            }`}
-          >
-            <Plus className="w-4 h-4" />
-            Nueva Evaluacion
-          </button>
+          {!isReviewMode && (
+            <button
+              onClick={onNew}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-white font-semibold transition shadow-sm ${
+                isAdmin ? 'bg-blue-600 hover:bg-blue-700' : 'bg-orange-600 hover:bg-orange-700'
+              }`}
+            >
+              <Plus className="w-4 h-4" />
+              Nueva Evaluacion
+            </button>
+          )}
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -219,25 +225,37 @@ export function JuneEvaluationsList({ type, statusFilter = 'all', onBack, onNew,
                       )}
                       <td className="px-5 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => onEdit(ev.id)}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                              isAdmin
-                                ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-                                : 'bg-orange-50 text-orange-700 hover:bg-orange-100'
-                            }`}
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            {ev.status === 'completed' ? 'Ver' : 'Editar'}
-                          </button>
-                          {isAdmin && onReview && (
+                          {isReviewMode && isAdmin && onReview ? (
                             <button
                               onClick={() => onReview(ev.id)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-teal-50 text-teal-700 hover:bg-teal-100"
+                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition bg-teal-600 text-white hover:bg-teal-700"
                             >
-                              <ClipboardCheck className="w-3.5 h-3.5" />
-                              Revision
+                              <ClipboardCheck className="w-4 h-4" />
+                              {ev.review_status === 'completed' ? 'Ver Revision' : ev.review_status === 'not_started' ? 'Iniciar Revision' : 'Continuar Revision'}
                             </button>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => onEdit(ev.id)}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                                  isAdmin
+                                    ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                                    : 'bg-orange-50 text-orange-700 hover:bg-orange-100'
+                                }`}
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                {ev.status === 'completed' ? 'Ver' : 'Editar'}
+                              </button>
+                              {isAdmin && onReview && (
+                                <button
+                                  onClick={() => onReview(ev.id)}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-teal-50 text-teal-700 hover:bg-teal-100"
+                                >
+                                  <ClipboardCheck className="w-3.5 h-3.5" />
+                                  Revision
+                                </button>
+                              )}
+                            </>
                           )}
                         </div>
                       </td>

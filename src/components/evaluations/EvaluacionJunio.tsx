@@ -13,6 +13,7 @@ type ViewType =
   | 'admin-form'
   | 'operative-form'
   | 'admin-review'
+  | 'admin-review-list'
   | 'admin-list'
   | 'operative-list'
   | 'admin-drafts'
@@ -48,7 +49,22 @@ export function EvaluacionJunio() {
     return (
       <JuneReviewForm
         evaluationId={editingId}
-        onCancel={() => { setEditingId(null); setCurrentView('admin-list'); }}
+        onCancel={() => { setEditingId(null); setCurrentView('admin-review-list'); }}
+        onSaved={() => { setEditingId(null); setCurrentView('admin-review-list'); }}
+      />
+    );
+  }
+
+  if (currentView === 'admin-review-list') {
+    return (
+      <JuneEvaluationsList
+        type="administrative"
+        statusFilter="all"
+        mode="review"
+        onBack={() => setCurrentView('home')}
+        onNew={() => { setEditingId(null); setCurrentView('admin-form'); }}
+        onEdit={handleEditAdmin}
+        onReview={handleReviewAdmin}
       />
     );
   }
@@ -238,7 +254,7 @@ export function EvaluacionJunio() {
 
                 <div className="mt-3 border-t border-blue-200 pt-3">
                   <button
-                    onClick={() => setCurrentView('admin-list')}
+                    onClick={() => setCurrentView('admin-review-list')}
                     className="group w-full bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300 border-2 border-transparent hover:border-teal-500 flex items-center gap-3"
                   >
                     <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
