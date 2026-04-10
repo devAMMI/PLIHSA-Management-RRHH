@@ -496,7 +496,7 @@ export default function NuevaEvaluacionAdministrativa() {
             departments:department_id(name)
           )
         `)
-        .in('role', ['admin', 'superadmin', 'manager', 'rrhh'])
+        .in('role', ['admin', 'superadmin', 'manager', 'jefe', 'rrhh'])
         .eq('is_active', true);
 
       if (usersError) throw usersError;

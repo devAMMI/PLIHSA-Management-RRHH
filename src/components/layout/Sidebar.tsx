@@ -14,10 +14,10 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'employees', label: 'Empleados', icon: Users },
-    { id: 'goal-definition-enero', label: 'Definición de Metas', icon: Target, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager'] },
-    { id: 'evaluacion-junio', label: '2da Evaluación - Junio', icon: ClipboardCheck, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager'] },
+    { id: 'goal-definition-enero', label: 'Definición de Metas', icon: Target, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
+    { id: 'evaluacion-junio', label: '2da Evaluación - Junio', icon: ClipboardCheck, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
     { id: 'evaluacion-administrativa-nueva', label: 'Nueva Evaluación Admin', icon: ClipboardCheck, requiredRoles: ['superadmin', 'admin', 'rrhh'] },
-    { id: 'evaluaciones-plihsa', label: 'Evaluaciones PLIHSA', icon: BarChart3, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager'] },
+    { id: 'evaluaciones-plihsa', label: 'Evaluaciones PLIHSA', icon: BarChart3, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
     { id: 'evaluations-list', label: 'Ver Evaluaciones', icon: FileText, requiredRoles: ['superadmin', 'admin', 'rrhh'] },
     { id: 'nueva-evaluacion-administrativa', label: 'Nueva Evaluación Completa', icon: ClipboardCheck, requiredRoles: ['superadmin', 'admin', 'rrhh'] },
     { id: 'system-users', label: 'Usuarios', icon: Shield, requiredRoles: ['superadmin', 'admin'] },
@@ -141,6 +141,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
             {systemUser?.role === 'admin' && 'Administrador'}
             {systemUser?.role === 'rrhh' && 'Recursos Humanos'}
             {systemUser?.role === 'manager' && 'Gerente'}
+            {systemUser?.role === 'jefe' && 'Jefe'}
             {systemUser?.role === 'employee' && 'Empleado'}
             {systemUser?.role === 'viewer' && 'Visor'}
           </div>

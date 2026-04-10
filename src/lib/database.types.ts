@@ -208,7 +208,7 @@ export interface Database {
           user_id: string
           employee_id: string | null
           company_id: string
-          role: 'admin' | 'rrhh' | 'manager' | 'employee' | 'viewer'
+          role: 'admin' | 'rrhh' | 'manager' | 'jefe' | 'employee' | 'viewer'
           is_active: boolean
           created_at: string
           updated_at: string
@@ -218,7 +218,7 @@ export interface Database {
           user_id: string
           employee_id?: string | null
           company_id: string
-          role: 'admin' | 'rrhh' | 'manager' | 'employee' | 'viewer'
+          role: 'admin' | 'rrhh' | 'manager' | 'jefe' | 'employee' | 'viewer'
           is_active?: boolean
           created_at?: string
           updated_at?: string

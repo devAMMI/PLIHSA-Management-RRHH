@@ -1,4 +1,4 @@
-export type UserRole = 'superadmin' | 'admin' | 'rrhh' | 'manager' | 'employee' | 'viewer';
+export type UserRole = 'superadmin' | 'admin' | 'rrhh' | 'manager' | 'jefe' | 'employee' | 'viewer';
 
 export type Permission =
   | 'users.create'
@@ -49,6 +49,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   admin: 'Administrador',
   rrhh: 'Recursos Humanos',
   manager: 'Gerente',
+  jefe: 'Jefe',
   employee: 'Empleado',
   viewer: 'Visitante'
 };
@@ -58,6 +59,7 @@ export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   admin: 'Administrador de empresa. Acceso completo a su empresa.',
   rrhh: 'Recursos Humanos. Gestión completa de empleados.',
   manager: 'Gerente. Acceso a sus empleados directos bajo su cargo.',
+  jefe: 'Jefe de área. Acceso a sus empleados directos bajo su cargo.',
   employee: 'Empleado. Acceso de solo lectura.',
   viewer: 'Visitante. Acceso muy limitado.'
 };
@@ -67,6 +69,7 @@ export const ROLE_HIERARCHY: Record<UserRole, number> = {
   admin: 5,
   rrhh: 4,
   manager: 3,
+  jefe: 3,
   employee: 2,
   viewer: 1
 };

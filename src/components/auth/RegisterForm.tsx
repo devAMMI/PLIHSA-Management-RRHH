@@ -11,7 +11,7 @@ export function RegisterForm({ onBackToLogin }: RegisterFormProps) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
-  const [role, setRole] = useState<'admin' | 'rrhh' | 'manager' | 'employee'>('employee');
+  const [role, setRole] = useState<'admin' | 'rrhh' | 'manager' | 'jefe' | 'employee'>('employee');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -169,7 +169,8 @@ export function RegisterForm({ onBackToLogin }: RegisterFormProps) {
               disabled={!selectedCompany}
             >
               <option value="employee">Empleado</option>
-              <option value="manager">Manager</option>
+              <option value="manager">Gerente</option>
+              <option value="jefe">Jefe</option>
               <option value="rrhh">RRHH</option>
               <option value="admin">Administrador</option>
             </select>

@@ -129,9 +129,11 @@ export function UserProfile() {
 
   const getRoleName = (role: string) => {
     const roles: Record<string, string> = {
+      superadmin: 'Super Administrador',
       admin: 'Administrador',
       rrhh: 'Recursos Humanos',
-      manager: 'Manager',
+      manager: 'Gerente',
+      jefe: 'Jefe',
       employee: 'Empleado',
       viewer: 'Visor',
     };

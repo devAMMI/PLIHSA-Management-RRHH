@@ -44,7 +44,7 @@ interface WorkLocation {
 export function EmployeeList() {
   const { activeCompany } = useCompany();
   const { systemUser } = useAuth();
-  const isManager = systemUser?.role === 'manager';
+  const isManager = systemUser?.role === 'manager' || systemUser?.role === 'jefe';
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);

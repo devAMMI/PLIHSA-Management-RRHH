@@ -154,6 +154,7 @@ export function UserList() {
       admin: 'bg-red-100 text-red-800 border-red-300',
       rrhh: 'bg-blue-100 text-blue-800 border-blue-300',
       manager: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+      jefe: 'bg-teal-100 text-teal-800 border-teal-300',
       employee: 'bg-slate-100 text-slate-700 border-slate-300',
       viewer: 'bg-gray-100 text-gray-600 border-gray-300',
     };
