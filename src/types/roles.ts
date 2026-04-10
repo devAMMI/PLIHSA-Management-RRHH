@@ -72,6 +72,8 @@ export const ROLE_HIERARCHY: Record<UserRole, number> = {
 };
 
 export function canManageUser(currentUserRole: UserRole, targetUserRole: UserRole): boolean {
+  if (currentUserRole === 'superadmin') return true;
+  if (currentUserRole === 'admin') return targetUserRole !== 'superadmin';
   const currentLevel = ROLE_HIERARCHY[currentUserRole];
   const targetLevel = ROLE_HIERARCHY[targetUserRole];
   return currentLevel > targetLevel;
