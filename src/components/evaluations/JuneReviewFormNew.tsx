@@ -69,6 +69,7 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [loadingDefinition, setLoadingDefinition] = useState(false);
 
   const [employees, setEmployees] = useState<any[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
@@ -102,6 +103,77 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
       loadReview(reviewId);
     }
   }, [reviewId]);
+
+  const loadDefinitionForEmployee = async (employeeId: string) => {
+    setLoadingDefinition(true);
+    try {
+      if (employeeType === 'administrativo') {
+        const { data: defs } = await supabase
+          .from('goal_definitions')
+          .select('id')
+          .eq('employee_id', employeeId)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (!defs || defs.length === 0) return;
+        const defId = defs[0].id;
+
+        const [{ data: goalsData }, { data: behaviorsData }] = await Promise.all([
+          supabase
+            .from('individual_goals')
+            .select('goal_number, goal_description, measurement_and_expected_results')
+            .eq('goal_definition_id', defId)
+            .order('goal_number'),
+          supabase
+            .from('competency_behaviors')
+            .select('behavior_number, behavior_description')
+            .eq('goal_definition_id', defId)
+            .order('behavior_number'),
+        ]);
+
+        if (goalsData && goalsData.length > 0) {
+          setGoals(emptyGoals().map(g => {
+            const found = goalsData.find(d => d.goal_number === g.goal_number);
+            return found ? { ...g, goal_description: found.goal_description || '' } : g;
+          }));
+        }
+
+        if (behaviorsData && behaviorsData.length > 0) {
+          setCompetencies(emptyCompetencies().map(c => {
+            const found = behaviorsData.find(d => d.behavior_number === c.competency_number);
+            return found ? { ...c, competency_description: found.behavior_description || '' } : c;
+          }));
+        }
+      } else {
+        const { data: defs } = await supabase
+          .from('operative_goal_definitions')
+          .select('id')
+          .eq('employee_id', employeeId)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (!defs || defs.length === 0) return;
+        const defId = defs[0].id;
+
+        const { data: goalsData } = await supabase
+          .from('operative_individual_goals')
+          .select('goal_number, goal_description, measurement_and_expected_results')
+          .eq('goal_definition_id', defId)
+          .order('goal_number');
+
+        if (goalsData && goalsData.length > 0) {
+          setGoals(emptyGoals().map(g => {
+            const found = goalsData.find(d => d.goal_number === g.goal_number);
+            return found ? { ...g, goal_description: found.goal_description || '' } : g;
+          }));
+        }
+      }
+    } catch (err) {
+      console.error('Error loading definition:', err);
+    } finally {
+      setLoadingDefinition(false);
+    }
+  };
 
   const loadEmployees = async () => {
     const { data } = await supabase
@@ -193,6 +265,7 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
     setPosition(emp.position || '');
     setDepartment(emp.departments?.name || '');
     setShowEmployeeDropdown(false);
+    loadDefinitionForEmployee(emp.id);
   };
 
   const filteredEmployees = employees.filter(e =>
@@ -468,6 +541,13 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
         </div>
       )}
 
+      {loadingDefinition && (
+        <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center gap-3">
+          <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+          <p className="text-sm text-blue-700 font-medium">Cargando datos de la Definicion de Metas...</p>
+        </div>
+      )}
+
       {!isEditing && (
         <div className="mb-6 bg-white rounded-xl border border-slate-200 shadow-sm p-5">
           <label className="block text-sm font-semibold text-slate-700 mb-2">
@@ -498,6 +578,16 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {!isEditing && selectedEmployee && goals.some(g => g.goal_description) && (
+        <div className="mb-4 bg-teal-50 border border-teal-200 rounded-xl p-4 flex items-start gap-3">
+          <div className="w-5 h-5 rounded-full bg-teal-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold">1</div>
+          <div>
+            <p className="text-sm font-semibold text-teal-800">Datos importados de la Definicion de Metas</p>
+            <p className="text-xs text-teal-700 mt-0.5">Las metas y competencias definidas en la Etapa 1 han sido cargadas automaticamente. Puede editarlas si es necesario. Los campos de calificacion y comentarios quedan en blanco para completar en esta revision.</p>
           </div>
         </div>
       )}
@@ -562,7 +652,11 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
                         disabled={isReadOnly}
                         rows={2}
                         placeholder="Meta individual..."
-                        className="w-full bg-transparent border-0 outline-none resize-none text-sm text-slate-800 placeholder-slate-300 disabled:text-slate-600 min-h-[40px]"
+                        className={`w-full border-0 outline-none resize-none text-sm min-h-[40px] ${
+                          goal.goal_description
+                            ? 'bg-blue-50 text-slate-800 font-medium'
+                            : 'bg-transparent text-slate-800 placeholder-slate-300'
+                        } disabled:text-slate-600`}
                       />
                     </td>
                     {RATING_COLS.map(r => (
@@ -635,7 +729,11 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
                       onChange={(e) => handleCompetencyChange(index, 'competency_description', e.target.value)}
                       disabled={isReadOnly}
                       placeholder="Conducta o habilidad tecnica..."
-                      className="w-full bg-transparent border-0 outline-none text-sm text-slate-800 placeholder-slate-300 disabled:text-slate-600"
+                      className={`w-full border-0 outline-none text-sm disabled:text-slate-600 ${
+                        comp.competency_description
+                          ? 'bg-blue-50 text-slate-800 font-medium'
+                          : 'bg-transparent text-slate-800 placeholder-slate-300'
+                      }`}
                     />
                   </td>
                   {RATING_COLS.map(r => (
