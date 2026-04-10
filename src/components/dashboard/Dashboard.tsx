@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Users, ClipboardCheck, Building2, TrendingUp } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useCompany } from '../../contexts/CompanyContext';
+import { DigitalClock } from '../ui/DigitalClock';
 
 interface Stats {
   totalEmployees: number;
@@ -126,7 +127,7 @@ export function Dashboard() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 relative">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((card) => {
           const Icon = card.icon;
@@ -185,6 +186,10 @@ export function Dashboard() {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="flex justify-end">
+        <DigitalClock />
       </div>
     </div>
   );
