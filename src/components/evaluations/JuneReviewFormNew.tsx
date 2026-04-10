@@ -95,6 +95,8 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showDocViewer, setShowDocViewer] = useState(false);
   const [digitalPdfUrl, setDigitalPdfUrl] = useState<string | null>(null);
+  const [embeddedPdfUrl, setEmbeddedPdfUrl] = useState<string | null>(null);
+  const [showEmbeddedPdf, setShowEmbeddedPdf] = useState(false);
 
   const isReadOnly = status === 'completed';
   const isEditing = reviewId !== null;
@@ -462,81 +464,83 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
     }
   };
 
-  const generatePdfBlob = async (): Promise<string | null> => {
+  const generatePdfUrl = async (): Promise<string | null> => {
     if (!formRef.current) return null;
-    const el = formRef.current;
-    const canvas = await html2canvas(el, {
-      scale: 3,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      backgroundColor: '#ffffff',
-      windowWidth: 900,
-      width: 900,
-      scrollX: 0,
-      scrollY: 0,
-    });
-    const PAGE_W = 215.9;
-    const PAGE_H = 279.4;
-    const MARGIN = 6;
-    const usableW = PAGE_W - MARGIN * 2;
-    const usableH = PAGE_H - MARGIN * 2;
-    const imgAspect = canvas.height / canvas.width;
-    const renderedH = usableW * imgAspect;
-    const pdf = new jsPDF('p', 'mm', 'letter');
-    if (renderedH <= usableH) {
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', MARGIN, MARGIN, usableW, renderedH);
-    } else {
-      const scale = usableH / renderedH;
-      const scaledW = usableW * scale;
-      const xOffset = MARGIN + (usableW - scaledW) / 2;
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', xOffset, MARGIN, scaledW, usableH);
+    try {
+      const canvas = await html2canvas(formRef.current, {
+        scale: 2.5,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: formRef.current.scrollWidth,
+        windowHeight: formRef.current.scrollHeight,
+        scrollX: 0,
+        scrollY: 0,
+      });
+      const imgWidth = 215.9;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const pdf = new jsPDF('p', 'mm', 'letter');
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
+      const pdfBlob = pdf.output('blob');
+      return URL.createObjectURL(pdfBlob);
+    } catch {
+      return null;
     }
-    return pdf.output('datauristring');
   };
 
   const handleDownloadPDF = async () => {
     if (!formRef.current) return;
     setGeneratingPDF(true);
     try {
+      const pdfUrl = await generatePdfUrl();
+      if (!pdfUrl) throw new Error('No se pudo generar el PDF');
       const empName = selectedEmployee
         ? `${selectedEmployee.first_name}_${selectedEmployee.last_name}`
         : 'Revision';
       const typeLabel = employeeType === 'operativo' ? 'Operativo' : 'Administrativo';
-      const el = formRef.current;
-      const canvas = await html2canvas(el, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        windowWidth: 900,
-        width: 900,
-        scrollX: 0,
-        scrollY: 0,
-      });
-      const PAGE_W = 215.9;
-      const PAGE_H = 279.4;
-      const MARGIN = 6;
-      const usableW = PAGE_W - MARGIN * 2;
-      const usableH = PAGE_H - MARGIN * 2;
-      const imgAspect = canvas.height / canvas.width;
-      const renderedH = usableW * imgAspect;
-      const pdf = new jsPDF('p', 'mm', 'letter');
-      if (renderedH <= usableH) {
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', MARGIN, MARGIN, usableW, renderedH);
-      } else {
-        const scale = usableH / renderedH;
-        const scaledW = usableW * scale;
-        const xOffset = MARGIN + (usableW - scaledW) / 2;
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', xOffset, MARGIN, scaledW, usableH);
-      }
-      pdf.save(`Revision_Junio_${typeLabel}_${empName}_${reviewDate || 'borrador'}.pdf`);
+      const fileName = `Revision_Junio_${typeLabel}_${empName}_${reviewDate || 'borrador'}.pdf`;
+      window.open(pdfUrl, '_blank');
+      const link = document.createElement('a');
+      link.href = pdfUrl;
+      link.download = fileName;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
       setToast({ message: 'PDF descargado correctamente', type: 'success' });
     } catch {
       setToast({ message: 'Error al generar el PDF', type: 'error' });
     } finally {
       setGeneratingPDF(false);
+    }
+  };
+
+  const handleViewPDF = async () => {
+    setGeneratingPDF(true);
+    try {
+      const url = await generatePdfUrl();
+      if (url) {
+        if (embeddedPdfUrl) URL.revokeObjectURL(embeddedPdfUrl);
+        setEmbeddedPdfUrl(url);
+        setShowEmbeddedPdf(true);
+      }
+    } catch {
+      setToast({ message: 'Error al generar la vista previa', type: 'error' });
+    } finally {
+      setGeneratingPDF(false);
+    }
+  };
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow && formRef.current) {
+      const styles = Array.from(document.styleSheets)
+        .map(ss => {
+          try { return Array.from(ss.cssRules).map(r => r.cssText).join('\n'); }
+          catch { return ''; }
+        }).join('\n');
+      printWindow.document.write(`<html><head><title>Revision Junio</title><style>${styles}body{margin:0;padding:20px}@media print{body{margin:0;padding:0}}</style></head><body>${formRef.current.innerHTML}</body></html>`);
+      printWindow.document.close();
+      setTimeout(() => printWindow.print(), 500);
     }
   };
 
@@ -560,15 +564,23 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
         </button>
         <div className="flex items-center gap-3">
           <button
+            onClick={handleViewPDF}
+            disabled={generatingPDF}
+            className="flex items-center gap-2 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition disabled:opacity-50"
+          >
+            <Eye className="w-4 h-4" />
+            {generatingPDF ? 'Generando...' : 'Ver PDF'}
+          </button>
+          <button
             onClick={handleDownloadPDF}
             disabled={generatingPDF}
             className="flex items-center gap-2 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition disabled:opacity-50"
           >
             <Download className="w-4 h-4" />
-            {generatingPDF ? 'Generando...' : 'Descargar PDF'}
+            Descargar PDF
           </button>
           <button
-            onClick={() => window.print()}
+            onClick={handlePrint}
             className="flex items-center gap-2 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition"
           >
             <Printer className="w-4 h-4" />
@@ -846,36 +858,99 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
         </div>
       </div>
 
-      {!isReadOnly && reviewId && (
+      {reviewId && (
         <div className="mt-6 bg-white border border-slate-200 rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-slate-800 mb-1 flex items-center gap-2">
-            <Upload className="w-5 h-5 text-teal-600" />
-            Paso Final: Subir Documento Firmado
-          </h3>
-          <p className="text-sm text-slate-500 mb-5">
-            Descarga el PDF, firmalo a mano, escanealo o tomale una foto y subelo aqui para finalizar la revision.
-          </p>
-
-          {signedDocUrl && (
-            <div className="mb-5 bg-green-50 border border-green-200 rounded-lg p-4 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-green-800">{signedDocFilename || 'Documento subido'}</p>
-                  {signedDocUploadedAt && (
-                    <p className="text-xs text-green-600">
-                      Subido el {new Date(signedDocUploadedAt).toLocaleString('es-HN')}
-                    </p>
-                  )}
-                </div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              {status === 'completed' ? (
+                <CheckCircle className="w-6 h-6 text-green-600" />
+              ) : status === 'pending_signature' ? (
+                <Upload className="w-6 h-6 text-amber-500" />
+              ) : (
+                <FileText className="w-6 h-6 text-slate-500" />
+              )}
+              <div>
+                <h3 className="font-semibold text-slate-800">Estado del Documento</h3>
+                <p className="text-sm text-slate-500">
+                  {status === 'completed' ? 'Firmado y finalizado' : status === 'pending_signature' ? 'Esperando firma manual' : 'En edicion'}
+                </p>
               </div>
+            </div>
+            <span className={`px-4 py-2 rounded-full border font-medium text-sm ${
+              status === 'completed' ? 'bg-green-100 text-green-700 border-green-300'
+              : status === 'pending_signature' ? 'bg-amber-100 text-amber-700 border-amber-300'
+              : 'bg-slate-100 text-slate-700 border-slate-300'
+            }`}>
+              {status === 'completed' ? 'Completado' : status === 'pending_signature' ? 'Pendiente Firma' : 'Borrador'}
+            </span>
+          </div>
+
+          {status !== 'completed' && (
+            <div className={`rounded-lg p-4 mb-4 ${signedDocUrl ? 'bg-amber-50 border border-amber-200' : 'bg-blue-50 border border-blue-200'}`}>
+              {!signedDocUrl ? (
+                <>
+                  <p className="text-sm text-blue-800 mb-3">
+                    <strong>Siguiente paso:</strong> Descarga el PDF, firmalo a mano, escanealo y subelo aqui.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={handleDownloadPDF} disabled={generatingPDF}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium disabled:opacity-50">
+                      <Download className="w-4 h-4" />
+                      Descargar PDF
+                    </button>
+                    <button onClick={handlePrint}
+                      className="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition text-sm font-medium">
+                      <Printer className="w-4 h-4" />
+                      Imprimir
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 p-3 rounded-lg border border-green-200">
+                    <CheckCircle className="w-4 h-4" />
+                    <span className="font-medium">Documento firmado subido. Presiona "Finalizar Revision" para completar el proceso.</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={async () => {
+                        const url = await generatePdfUrl();
+                        setDigitalPdfUrl(url);
+                        setShowDocViewer(true);
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition text-sm font-medium"
+                    >
+                      <Eye className="w-4 h-4" />
+                      Ver Ambos Documentos
+                    </button>
+                    {!isReadOnly && (
+                      <button
+                        onClick={handleFinalize}
+                        disabled={completing}
+                        className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-semibold shadow-sm disabled:opacity-50"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        {completing ? 'Finalizando...' : 'Finalizar Revision'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {status === 'completed' && signedDocUrl && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+              <p className="text-sm text-green-800 mb-3">
+                <strong>Proceso completado:</strong> El documento ha sido firmado y finalizado exitosamente.
+              </p>
               <button
                 onClick={async () => {
-                  const url = await generatePdfBlob();
+                  const url = await generatePdfUrl();
                   setDigitalPdfUrl(url);
                   setShowDocViewer(true);
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium"
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition text-sm font-medium"
               >
                 <Eye className="w-4 h-4" />
                 Ver Ambos Documentos
@@ -883,96 +958,103 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
             </div>
           )}
 
-          <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-teal-400 transition mb-5">
-            <input
-              type="file"
-              id="june-review-signed-doc"
-              accept=".pdf,.jpg,.jpeg,.png"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            <label htmlFor="june-review-signed-doc" className="cursor-pointer flex flex-col items-center gap-3">
-              {selectedFile ? (
-                <>
-                  <FileText className="w-10 h-10 text-teal-600" />
-                  <div className="text-sm text-slate-700">
-                    <p className="font-medium">{selectedFile.name}</p>
-                    <p className="text-slate-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+          {!isReadOnly && (
+            <>
+              {signedDocUrl && (
+                <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                  <FileText className="w-5 h-5 text-green-600 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-green-800 truncate">{signedDocFilename || 'Documento firmado'}</p>
+                    {signedDocUploadedAt && (
+                      <p className="text-xs text-green-600">Subido el {new Date(signedDocUploadedAt).toLocaleString('es-HN')}</p>
+                    )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.preventDefault(); setSelectedFile(null); }}
-                    className="text-sm text-red-600 hover:text-red-700"
-                  >
-                    Eliminar archivo
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Upload className="w-10 h-10 text-slate-400" />
-                  <div className="text-sm text-slate-600">
-                    <p className="font-medium">Haz clic para seleccionar el documento firmado</p>
-                    <p className="text-slate-500 mt-1">PDF, JPG o PNG (maximo 10MB)</p>
-                  </div>
-                </>
+                </div>
               )}
-            </label>
-          </div>
 
-          <div className="flex gap-3">
-            {selectedFile && (
-              <button
-                onClick={handleUploadSignedDoc}
-                disabled={uploadingDoc}
-                className="flex items-center gap-2 px-6 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-medium disabled:opacity-50"
-              >
-                <Upload className="w-4 h-4" />
-                {uploadingDoc ? 'Subiendo...' : 'Subir Documento'}
-              </button>
-            )}
-            {signedDocUrl && (
-              <button
-                onClick={handleFinalize}
-                disabled={completing}
-                className="flex items-center gap-2 px-8 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold disabled:opacity-50"
-              >
-                <CheckCircle className="w-5 h-5" />
-                {completing ? 'Finalizando...' : 'Finalizar Revision'}
-              </button>
-            )}
-          </div>
+              <div className="border-2 border-dashed border-slate-300 rounded-lg p-5 text-center hover:border-teal-400 transition">
+                <input type="file" id="june-review-signed-doc" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileSelect} className="hidden" />
+                <label htmlFor="june-review-signed-doc" className="cursor-pointer flex flex-col items-center gap-2">
+                  {selectedFile ? (
+                    <>
+                      <FileText className="w-9 h-9 text-teal-600" />
+                      <div className="text-sm text-slate-700">
+                        <p className="font-medium">{selectedFile.name}</p>
+                        <p className="text-slate-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                      </div>
+                      <button type="button" onClick={(e) => { e.preventDefault(); setSelectedFile(null); }}
+                        className="text-sm text-red-600 hover:text-red-700">Eliminar archivo</button>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-9 h-9 text-slate-400" />
+                      <div className="text-sm text-slate-600">
+                        <p className="font-medium">{signedDocUrl ? 'Reemplazar documento firmado' : 'Haz clic para seleccionar el documento firmado'}</p>
+                        <p className="text-slate-500 mt-1">PDF, JPG o PNG (maximo 10MB)</p>
+                      </div>
+                    </>
+                  )}
+                </label>
+              </div>
+
+              {selectedFile && (
+                <div className="mt-3">
+                  <button onClick={handleUploadSignedDoc} disabled={uploadingDoc}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-medium disabled:opacity-50">
+                    <Upload className="w-4 h-4" />
+                    {uploadingDoc ? 'Subiendo...' : 'Subir Documento Firmado'}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 
-      {(status === 'completed' || status === 'pending_signature') && signedDocUrl && (
-        <div className="mt-6 bg-white border border-slate-200 rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 text-green-600" />
-            Documentos de la Revision
-          </h3>
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <FileText className="w-5 h-5 text-green-600 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-green-800">{signedDocFilename || 'Documento firmado'}</p>
-                {signedDocUploadedAt && (
-                  <p className="text-xs text-green-600">
-                    Subido el {new Date(signedDocUploadedAt).toLocaleString('es-HN')}
+      {showEmbeddedPdf && embeddedPdfUrl && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[92vh] flex flex-col">
+            <div className="bg-[#1e3a5f] text-white px-6 py-4 flex items-center justify-between rounded-t-xl">
+              <div className="flex items-center gap-3">
+                <FileText className="w-6 h-6" />
+                <div>
+                  <h2 className="text-lg font-bold">Vista Previa del PDF</h2>
+                  <p className="text-sm text-blue-200">
+                    {selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : 'Revision de Junio'}
                   </p>
-                )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={generatingPDF}
+                  className="flex items-center gap-2 px-4 py-2 bg-white text-[#1e3a5f] rounded-lg hover:bg-blue-50 transition font-medium text-sm disabled:opacity-50"
+                >
+                  <Download className="w-4 h-4" />
+                  Descargar
+                </button>
+                <button
+                  onClick={handlePrint}
+                  className="flex items-center gap-2 px-4 py-2 bg-white text-[#1e3a5f] rounded-lg hover:bg-blue-50 transition font-medium text-sm"
+                >
+                  <Printer className="w-4 h-4" />
+                  Imprimir
+                </button>
+                <button
+                  onClick={() => { setShowEmbeddedPdf(false); URL.revokeObjectURL(embeddedPdfUrl); setEmbeddedPdfUrl(null); }}
+                  className="p-2 hover:bg-blue-800 rounded-lg transition"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
               </div>
             </div>
-            <button
-              onClick={async () => {
-                const url = await generatePdfBlob();
-                setDigitalPdfUrl(url);
-                setShowDocViewer(true);
-              }}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium"
-            >
-              <Eye className="w-4 h-4" />
-              Ver Ambos Documentos
-            </button>
+            <div className="flex-1 bg-slate-100 p-2 overflow-hidden">
+              <iframe
+                src={embeddedPdfUrl}
+                className="w-full h-full rounded border border-slate-300 bg-white"
+                title="Vista previa PDF"
+              />
+            </div>
           </div>
         </div>
       )}
