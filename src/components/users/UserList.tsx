@@ -47,10 +47,16 @@ export function UserList() {
 
   const isMe = (targetUser: SystemUser) => targetUser.user_id === systemUser?.user_id;
 
+  const isSelfManageable = (targetUser: SystemUser) => {
+    if (!isMe(targetUser)) return false;
+    return systemUser?.role === 'superadmin' || systemUser?.role === 'admin';
+  };
+
   const canAct = (targetUser: SystemUser) => {
     if (!systemUser) return false;
-    if (isSuperAdmin) return true;
+    if (isSelfManageable(targetUser)) return true;
     if (isMe(targetUser)) return false;
+    if (isSuperAdmin) return true;
     return canManageUser(systemUser.role, targetUser.role);
   };
 

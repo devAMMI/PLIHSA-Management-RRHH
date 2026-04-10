@@ -43,6 +43,7 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
   const [error, setError] = useState<string | null>(null);
 
   const isSuperAdmin = systemUser?.role === 'superadmin';
+  const isEditingSelf = !!user && user.user_id === systemUser?.user_id;
   const myLevel = systemUser ? ROLE_HIERARCHY[systemUser.role] : 0;
 
   const [formData, setFormData] = useState({
@@ -233,17 +234,24 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
                 <Shield className="w-4 h-4 inline mr-1.5" />
                 Rol *
               </label>
-              <select
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                required
-              >
-                {availableRoles.map(([roleKey, roleLabel]) => (
-                  <option key={roleKey} value={roleKey}>{roleLabel}</option>
-                ))}
-              </select>
-              {formData.role && ROLE_DESCRIPTIONS[formData.role] && (
+              {isEditingSelf ? (
+                <div className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 text-sm text-slate-600">
+                  {ROLE_LABELS[formData.role]}
+                  <p className="mt-1 text-xs text-slate-400">No puedes cambiar tu propio rol</p>
+                </div>
+              ) : (
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  required
+                >
+                  {availableRoles.map(([roleKey, roleLabel]) => (
+                    <option key={roleKey} value={roleKey}>{roleLabel}</option>
+                  ))}
+                </select>
+              )}
+              {!isEditingSelf && formData.role && ROLE_DESCRIPTIONS[formData.role] && (
                 <p className="mt-1 text-xs text-slate-500">{ROLE_DESCRIPTIONS[formData.role]}</p>
               )}
             </div>
