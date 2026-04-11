@@ -1,4 +1,4 @@
-import { Home, Users, ClipboardCheck, Building2, Settings, LogOut, User as UserIcon, Shield, FileText, Database, Terminal, Target, Archive } from 'lucide-react';
+import { Home, Users, ClipboardCheck, Building2, Settings, LogOut, User as UserIcon, Shield, FileText, Database, Terminal } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCompany } from '../../contexts/CompanyContext';
 
@@ -14,9 +14,9 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'employees', label: 'Empleados', icon: Users },
-    { id: 'goal-definition-enero', label: 'Definición de Metas', icon: Target, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
-    { id: 'evaluacion-junio', label: 'Revisión de Metas', icon: ClipboardCheck, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
-    { id: 'evaluacion-final', label: 'Evaluación Final', icon: Archive, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
+    { id: 'goal-definition-enero', label: 'Definición de Metas', icon: null, phaseNumber: 1, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
+    { id: 'evaluacion-junio', label: 'Revisión de Metas', icon: null, phaseNumber: 2, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
+    { id: 'evaluacion-final', label: 'Evaluación Final', icon: null, phaseNumber: 3, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
     { id: 'evaluacion-administrativa-nueva', label: 'Nueva Evaluación Admin', icon: ClipboardCheck, requiredRoles: ['superadmin', 'admin', 'rrhh'] },
     { id: 'evaluations-list', label: 'Ver Evaluaciones', icon: FileText, requiredRoles: ['superadmin', 'admin', 'rrhh'] },
     { id: 'nueva-evaluacion-administrativa', label: 'Nueva Evaluación Completa', icon: ClipboardCheck, requiredRoles: ['superadmin', 'admin', 'rrhh'] },
@@ -85,6 +85,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
         {filteredItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentView === item.id;
+          const isPhase = 'phaseNumber' in item && item.phaseNumber != null;
 
           return (
             <button
@@ -96,7 +97,20 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
                   : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
               }`}
             >
-              <Icon className="w-5 h-5 flex-shrink-0" />
+              {isPhase ? (
+                <div className="relative w-5 h-5 flex-shrink-0 flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" fill="none" className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-400'}`} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="8" y="2" width="8" height="3" rx="1" ry="1"/>
+                    <path d="M16 2h2a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h2"/>
+                    <path d="m9 12 2 2 4-4"/>
+                  </svg>
+                  <span className={`absolute -bottom-1.5 -right-1.5 text-[8px] font-bold leading-none w-3.5 h-3.5 rounded-full flex items-center justify-center ${isActive ? 'bg-white text-blue-600' : 'bg-slate-600 text-slate-200'}`}>
+                    {(item as any).phaseNumber}
+                  </span>
+                </div>
+              ) : Icon ? (
+                <Icon className="w-5 h-5 flex-shrink-0" />
+              ) : null}
               <span className="font-medium text-sm">{item.label}</span>
             </button>
           );
