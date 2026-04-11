@@ -25,6 +25,7 @@ interface AdministrativeGoalDefinition {
   definition_date: string;
   employee_comments: string;
   manager_comments: string;
+  sub_department?: string | null;
   status: string;
   workflow_status?: string;
   signed_document_url?: string;
@@ -90,6 +91,9 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
   const [managerComments, setManagerComments] = useState(definition.manager_comments || '');
   const [employeeComments, setEmployeeComments] = useState(definition.employee_comments || '');
   const [definitionDate, setDefinitionDate] = useState(definition.definition_date);
+  const [subDepartment, setSubDepartment] = useState(
+    definition.sub_department ?? definition.employee?.sub_department?.name ?? ''
+  );
 
   const handleGoalChange = (index: number, field: 'description' | 'measurement', value: string) => {
     const newGoals = [...goals];
@@ -113,7 +117,8 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
         .update({
           definition_date: definitionDate,
           employee_comments: employeeComments,
-          manager_comments: managerComments
+          manager_comments: managerComments,
+          sub_department: subDepartment.trim() || null
         })
         .eq('id', definition.id);
 
@@ -522,7 +527,16 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                   </div>
                   <div className="flex gap-2">
                     <span className="font-bold text-slate-700 min-w-[100px]">Sub Depto:</span>
-                    <span className="text-slate-600">{definition.employee.sub_department?.name || ''}</span>
+                    {mode === 'edit' ? (
+                      <input
+                        type="text"
+                        value={subDepartment}
+                        onChange={(e) => setSubDepartment(e.target.value)}
+                        className="text-slate-600 border border-slate-300 rounded px-2 py-0.5 text-sm flex-1"
+                      />
+                    ) : (
+                      <span className="text-slate-600">{subDepartment || ''}</span>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-1.5">

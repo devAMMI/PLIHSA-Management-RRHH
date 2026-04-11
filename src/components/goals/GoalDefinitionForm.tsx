@@ -166,6 +166,7 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
           definition_date: definitionDate,
           employee_comments: employeeComments,
           manager_comments: managerComments,
+          sub_department: subDepartment.trim() || null,
           status: 'draft',
           created_by: user.id
         })
