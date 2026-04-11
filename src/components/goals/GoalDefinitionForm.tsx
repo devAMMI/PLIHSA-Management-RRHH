@@ -58,7 +58,7 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
     if (selectedEmployeeId) {
       const employee = employees.find(e => e.id === selectedEmployeeId);
       setSelectedEmployee(employee || null);
-      setSubDepartment('');
+      setSubDepartment((employee?.sub_department as any)?.name || '');
     } else {
       setSelectedEmployee(null);
       setSubDepartment('');
