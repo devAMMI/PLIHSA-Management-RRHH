@@ -16,7 +16,6 @@ import { EvaluationsList } from './components/evaluations/EvaluationsList';
 import { NewEvaluationsPLIHSA } from './components/evaluations/NewEvaluationsPLIHSA';
 import NuevaEvaluacionAdministrativa from './components/evaluations/NuevaEvaluacionAdministrativa';
 import EvaluacionAdministrativa from './components/evaluations/EvaluacionAdministrativa';
-import EvaluacionesPLIHSA from './components/evaluations/EvaluacionesPLIHSA';
 import { RawEvaluations } from './components/debug/RawEvaluations';
 import { SQLExecutor } from './components/debug/SQLExecutor';
 import { GoalDefinitionsHome } from './components/goals/GoalDefinitionsHome';
@@ -109,8 +108,6 @@ function AppContent() {
         return <EmployeeList />;
       case 'evaluacion-administrativa-nueva':
         return <EvaluacionAdministrativa />;
-      case 'evaluaciones-plihsa':
-        return <EvaluacionesPLIHSA />;
       case 'evaluations-list':
         return <EvaluationsList onEditEvaluation={handleEditEvaluation} />;
       case 'nueva-evaluacion-administrativa':
@@ -171,13 +168,12 @@ function AppContent() {
           'employees',
           'evaluation-admin-enero',
           'evaluation-operative-enero',
-          'evaluaciones-plihsa',
           'evaluacion-administrativa-nueva',
           'nueva-evaluacion-administrativa',
         ].includes(currentView) ? 'overflow-hidden' : [
           'evaluacion-junio',
           'goal-definition-enero',
-        ].includes(currentView) ? 'overflow-y-auto' : 'overflow-y-auto p-8'}`}>
+        ].includes(currentView) ? 'overflow-y-auto' : ['dashboard'].includes(currentView) ? 'overflow-y-auto' : 'overflow-y-auto p-8'}`}>
           {renderView()}
         </main>
       </div>

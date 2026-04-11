@@ -1,4 +1,4 @@
-import { Home, Users, ClipboardCheck, Building2, Settings, LogOut, User as UserIcon, Shield, FileText, Database, Terminal, BarChart3, Target, Archive } from 'lucide-react';
+import { Home, Users, ClipboardCheck, Building2, Settings, LogOut, User as UserIcon, Shield, FileText, Database, Terminal, Target, Archive } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCompany } from '../../contexts/CompanyContext';
 
@@ -18,7 +18,6 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
     { id: 'evaluacion-junio', label: 'Revisión de Metas', icon: ClipboardCheck, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
     { id: 'evaluacion-final', label: 'Evaluación Final', icon: Archive, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
     { id: 'evaluacion-administrativa-nueva', label: 'Nueva Evaluación Admin', icon: ClipboardCheck, requiredRoles: ['superadmin', 'admin', 'rrhh'] },
-    { id: 'evaluaciones-plihsa', label: 'Evaluaciones PLIHSA', icon: BarChart3, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
     { id: 'evaluations-list', label: 'Ver Evaluaciones', icon: FileText, requiredRoles: ['superadmin', 'admin', 'rrhh'] },
     { id: 'nueva-evaluacion-administrativa', label: 'Nueva Evaluación Completa', icon: ClipboardCheck, requiredRoles: ['superadmin', 'admin', 'rrhh'] },
     { id: 'system-users', label: 'Usuarios', icon: Shield, requiredRoles: ['superadmin', 'admin'] },
