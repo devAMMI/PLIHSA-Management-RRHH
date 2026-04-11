@@ -1092,164 +1092,203 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
           position: 'fixed',
           top: '-9999px',
           left: '-9999px',
-          width: '794px',
-          fontFamily: 'Arial, sans-serif',
+          width: '860px',
+          fontFamily: 'Arial, Helvetica, sans-serif',
           fontSize: '11px',
           background: 'white',
-          padding: '20px',
+          padding: '24px',
+          boxSizing: 'border-box',
         }}
         aria-hidden="true"
       >
-        <div style={{ background: '#1e3a5f', color: 'white', padding: '7px 12px', fontWeight: 'bold', fontSize: '12px', textAlign: 'center' }}>
+        {/* Header */}
+        <div style={{ background: '#1e3a5f', color: 'white', padding: '8px 14px', fontWeight: 'bold', fontSize: '13px', textAlign: 'center', letterSpacing: '0.5px' }}>
           REVISION DE METAS INDIVIDUALES
         </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #1e3a5f' }}>
-          <tbody>
-            <tr>
-              <td style={{ background: '#1e3a5f', color: 'white', fontWeight: '600', fontSize: '11px', padding: '5px 10px', width: '140px', border: '1px solid #1e3a5f', whiteSpace: 'nowrap' }}>
-                Fecha de Revision
-              </td>
-              <td style={{ background: '#f1f5f9', padding: '5px 10px', border: '1px solid #cbd5e1', fontSize: '11px', color: '#374151' }}>
-                {reviewDate ? new Date(reviewDate + 'T00:00:00').toLocaleDateString('es-HN') : ''}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        {/* Date row */}
+        <div style={{ display: 'table', width: '100%', borderCollapse: 'collapse', border: '1px solid #1e3a5f', borderTop: 'none' }}>
+          <div style={{ display: 'table-row' }}>
+            <div style={{ display: 'table-cell', background: '#1e3a5f', color: 'white', fontWeight: '700', fontSize: '11px', padding: '6px 12px', width: '160px', whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
+              Fecha de Revision
+            </div>
+            <div style={{ display: 'table-cell', background: '#f1f5f9', padding: '6px 12px', fontSize: '11px', color: '#374151', verticalAlign: 'middle' }}>
+              {reviewDate ? new Date(reviewDate + 'T00:00:00').toLocaleDateString('es-HN') : '\u00A0'}
+            </div>
+          </div>
+        </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '8px', tableLayout: 'fixed' }}>
-          <colgroup>
-            <col style={{ width: '36px' }} />
-            <col />
-            <col style={{ width: '12%' }} />
-            <col style={{ width: '12%' }} />
-            <col style={{ width: '12%' }} />
-            <col style={{ width: '12%' }} />
-          </colgroup>
-          <thead>
-            <tr style={{ background: '#1e3a5f', color: 'white' }}>
-              <th style={{ border: '1px solid #94a3b8', padding: '5px 4px', textAlign: 'center', fontSize: '11px', fontWeight: 'bold' }} rowSpan={2}>No.</th>
-              <th style={{ border: '1px solid #94a3b8', padding: '5px', textAlign: 'left', fontSize: '11px', fontWeight: 'bold' }} rowSpan={2}>
+        {/* Goals table - NO rowSpan/colSpan */}
+        <div style={{ marginTop: '10px', border: '1px solid #94a3b8' }}>
+          {/* Header row 1 */}
+          <div style={{ display: 'table', width: '100%', background: '#1e3a5f', color: 'white' }}>
+            <div style={{ display: 'table-row' }}>
+              <div style={{ display: 'table-cell', width: '46px', padding: '6px 4px', textAlign: 'center', fontWeight: 'bold', fontSize: '11px', borderRight: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
+                No.
+              </div>
+              <div style={{ display: 'table-cell', padding: '6px 8px', fontWeight: 'bold', fontSize: '11px', borderRight: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
                 Metas Individuales/Resultados
-              </th>
-              <th style={{ border: '1px solid #94a3b8', padding: '4px', textAlign: 'center', fontSize: '10px', fontWeight: 'bold' }} colSpan={4}>
-                Calificacion<br /><span style={{ fontWeight: 'normal', fontSize: '9px' }}>(Marque una X en la opcion que corresponda)</span>
-              </th>
-            </tr>
-            <tr style={{ background: '#1e3a5f', color: 'white' }}>
+              </div>
+              <div style={{ display: 'table-cell', textAlign: 'center', fontWeight: 'bold', fontSize: '10px', padding: '4px', verticalAlign: 'middle' }}>
+                Calificacion<br />
+                <span style={{ fontWeight: 'normal', fontSize: '9px' }}>(Marque una X en la opcion que corresponda)</span>
+              </div>
+            </div>
+          </div>
+          {/* Header row 2 - rating labels */}
+          <div style={{ display: 'table', width: '100%', background: '#1e3a5f', color: 'white', borderTop: '1px solid #4a6fa5' }}>
+            <div style={{ display: 'table-row' }}>
+              <div style={{ display: 'table-cell', width: '46px', borderRight: '1px solid #4a6fa5' }}></div>
+              <div style={{ display: 'table-cell', borderRight: '1px solid #4a6fa5' }}></div>
               {RATING_COLS.map(r => (
-                <th key={r} style={{ border: '1px solid #94a3b8', padding: '4px 2px', textAlign: 'center', fontSize: '9px', fontWeight: '600' }}>
+                <div key={r} style={{ display: 'table-cell', width: '13%', padding: '5px 3px', textAlign: 'center', fontSize: '9px', fontWeight: '600', borderLeft: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
                   {RATING_LABELS[r]}
-                </th>
+                </div>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {goals.map((goal) => (
-              <>
-                <tr key={`pdf-goal-${goal.goal_number}`} style={{ background: 'white' }}>
-                  <td style={{ border: '1px solid #94a3b8', padding: '6px 4px', textAlign: 'center', fontWeight: 'bold', fontSize: '11px', verticalAlign: 'middle' }} rowSpan={2}>
+            </div>
+          </div>
+          {/* Goal rows */}
+          {goals.map((goal) => (
+            <div key={`pdf-goal-block-${goal.goal_number}`}>
+              {/* Main goal row */}
+              <div style={{ display: 'table', width: '100%', background: 'white', borderTop: '1px solid #cbd5e1' }}>
+                <div style={{ display: 'table-row' }}>
+                  <div style={{ display: 'table-cell', width: '46px', textAlign: 'center', fontWeight: 'bold', fontSize: '12px', color: '#1e3a5f', verticalAlign: 'middle', padding: '8px 4px', borderRight: '1px solid #cbd5e1' }}>
                     {goal.goal_number}
-                  </td>
-                  <td style={{ border: '1px solid #94a3b8', padding: '5px 6px', fontSize: '11px', verticalAlign: 'top', background: goal.goal_description ? '#eff6ff' : 'white', fontWeight: goal.goal_description ? '600' : 'normal', wordBreak: 'break-word' }}>
-                    {goal.goal_description || '\u00A0'}
-                  </td>
+                  </div>
+                  <div style={{ display: 'table-cell', padding: '7px 8px', fontSize: '11px', fontWeight: goal.goal_description ? '600' : '400', color: goal.goal_description ? '#1e293b' : '#94a3b8', background: goal.goal_description ? '#eff6ff' : 'white', borderRight: '1px solid #cbd5e1', verticalAlign: 'middle', wordBreak: 'break-word' }}>
+                    {goal.goal_description || 'Meta individual...'}
+                  </div>
                   {RATING_COLS.map(r => (
-                    <td key={r} style={{ border: '1px solid #94a3b8', padding: '6px 4px', textAlign: 'center', verticalAlign: 'middle' }}>
-                      <div style={{ width: '16px', height: '16px', border: `2px solid ${goal.rating === r ? '#1e293b' : '#94a3b8'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', fontSize: '10px', fontWeight: 'bold', color: '#1e293b', background: 'white' }}>
+                    <div key={r} style={{ display: 'table-cell', width: '13%', textAlign: 'center', verticalAlign: 'middle', padding: '6px 4px', borderLeft: '1px solid #cbd5e1' }}>
+                      <div style={{
+                        width: '18px', height: '18px',
+                        border: `2px solid ${goal.rating === r ? '#1e293b' : '#94a3b8'}`,
+                        background: 'white',
+                        margin: '0 auto',
+                        lineHeight: '14px',
+                        textAlign: 'center',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        color: '#1e293b',
+                      }}>
                         {goal.rating === r ? 'X' : ''}
                       </div>
-                    </td>
+                    </div>
                   ))}
-                </tr>
-                <tr key={`pdf-goal-res-${goal.goal_number}`} style={{ background: '#f8fafc' }}>
-                  <td style={{ border: '1px solid #94a3b8', padding: '4px 6px' }} colSpan={5}>
-                    <div style={{ fontSize: '9px', fontWeight: '600', color: '#475569', marginBottom: '2px' }}>Resultados a la fecha de revision</div>
-                    <div style={{ fontSize: '11px', color: '#374151', minHeight: '18px', wordBreak: 'break-word' }}>{goal.results_description || '\u00A0'}</div>
-                  </td>
-                </tr>
-              </>
-            ))}
-          </tbody>
-        </table>
+                </div>
+              </div>
+              {/* Results row */}
+              <div style={{ display: 'table', width: '100%', background: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'table-row' }}>
+                  <div style={{ display: 'table-cell', width: '46px', borderRight: '1px solid #cbd5e1' }}></div>
+                  <div style={{ display: 'table-cell', padding: '5px 8px', colSpan: 5 } as React.CSSProperties}>
+                    <div style={{ fontSize: '9px', fontWeight: '700', color: '#64748b', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Resultados a la fecha de revision</div>
+                    <div style={{ fontSize: '11px', color: '#374151', minHeight: '22px', wordBreak: 'break-word' }}>
+                      {goal.results_description || '\u00A0'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
 
-        <div style={{ background: '#1e3a5f', color: 'white', padding: '7px 12px', fontWeight: 'bold', fontSize: '12px', textAlign: 'center', marginTop: '10px' }}>
+        {/* Competencies section */}
+        <div style={{ background: '#1e3a5f', color: 'white', padding: '8px 14px', fontWeight: 'bold', fontSize: '13px', textAlign: 'center', marginTop: '12px', letterSpacing: '0.5px' }}>
           REVISION DE FACTORES CONDUCTUALES Y HABILIDADES TECNICAS
         </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #94a3b8', tableLayout: 'fixed' }}>
-          <colgroup>
-            <col style={{ width: '36px' }} />
-            <col />
-            <col style={{ width: '12%' }} />
-            <col style={{ width: '12%' }} />
-            <col style={{ width: '12%' }} />
-            <col style={{ width: '12%' }} />
-          </colgroup>
-          <thead>
-            <tr style={{ background: '#1e3a5f', color: 'white' }}>
-              <th style={{ border: '1px solid #94a3b8', padding: '5px 4px', textAlign: 'center', fontSize: '11px', fontWeight: 'bold' }} rowSpan={2}>No.</th>
-              <th style={{ border: '1px solid #94a3b8', padding: '5px', textAlign: 'center', fontSize: '11px', fontWeight: 'bold' }} rowSpan={2}>
-                Conductas y Habilidades Tecnicas<br /><span style={{ fontSize: '9px', fontWeight: 'normal' }}>(Evaluar las 5 Definidas)</span>
-              </th>
-              <th style={{ border: '1px solid #94a3b8', padding: '4px', textAlign: 'center', fontSize: '10px', fontWeight: 'bold' }} colSpan={4}>
-                Calificacion<br /><span style={{ fontWeight: 'normal', fontSize: '9px' }}>(Marque una X en la opcion que corresponda)</span>
-              </th>
-            </tr>
-            <tr style={{ background: '#1e3a5f', color: 'white' }}>
+        <div style={{ border: '1px solid #94a3b8' }}>
+          {/* Header row 1 */}
+          <div style={{ display: 'table', width: '100%', background: '#1e3a5f', color: 'white' }}>
+            <div style={{ display: 'table-row' }}>
+              <div style={{ display: 'table-cell', width: '46px', padding: '6px 4px', textAlign: 'center', fontWeight: 'bold', fontSize: '11px', borderRight: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
+                No.
+              </div>
+              <div style={{ display: 'table-cell', padding: '6px 8px', textAlign: 'center', fontWeight: 'bold', fontSize: '11px', borderRight: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
+                Conductas y Habilidades Tecnicas<br />
+                <span style={{ fontSize: '9px', fontWeight: 'normal' }}>(Evaluar las 5 Definidas)</span>
+              </div>
+              <div style={{ display: 'table-cell', textAlign: 'center', fontWeight: 'bold', fontSize: '10px', padding: '4px', verticalAlign: 'middle' }}>
+                Calificacion<br />
+                <span style={{ fontWeight: 'normal', fontSize: '9px' }}>(Marque una X en la opcion que corresponda)</span>
+              </div>
+            </div>
+          </div>
+          {/* Header row 2 - rating labels */}
+          <div style={{ display: 'table', width: '100%', background: '#1e3a5f', color: 'white', borderTop: '1px solid #4a6fa5' }}>
+            <div style={{ display: 'table-row' }}>
+              <div style={{ display: 'table-cell', width: '46px', borderRight: '1px solid #4a6fa5' }}></div>
+              <div style={{ display: 'table-cell', borderRight: '1px solid #4a6fa5' }}></div>
               {RATING_COLS.map(r => (
-                <th key={r} style={{ border: '1px solid #94a3b8', padding: '4px 2px', textAlign: 'center', fontSize: '9px', fontWeight: '600' }}>
+                <div key={r} style={{ display: 'table-cell', width: '13%', padding: '5px 3px', textAlign: 'center', fontSize: '9px', fontWeight: '600', borderLeft: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
                   {RATING_LABELS[r]}
-                </th>
+                </div>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {competencies.map((comp) => (
-              <tr key={`pdf-comp-${comp.competency_number}`} style={{ background: 'white' }}>
-                <td style={{ border: '1px solid #94a3b8', padding: '6px 4px', textAlign: 'center', fontWeight: 'bold', fontSize: '11px' }}>
+            </div>
+          </div>
+          {/* Competency rows */}
+          {competencies.map((comp) => (
+            <div key={`pdf-comp-${comp.competency_number}`} style={{ display: 'table', width: '100%', background: 'white', borderTop: '1px solid #cbd5e1' }}>
+              <div style={{ display: 'table-row' }}>
+                <div style={{ display: 'table-cell', width: '46px', textAlign: 'center', fontWeight: 'bold', fontSize: '12px', color: '#1e3a5f', verticalAlign: 'middle', padding: '8px 4px', borderRight: '1px solid #cbd5e1' }}>
                   {comp.competency_number}
-                </td>
-                <td style={{ border: '1px solid #94a3b8', padding: '5px 6px', background: comp.competency_description ? '#eff6ff' : 'white', fontSize: '11px', fontWeight: comp.competency_description ? '600' : 'normal', wordBreak: 'break-word' }}>
-                  {comp.competency_description || '\u00A0'}
-                </td>
+                </div>
+                <div style={{ display: 'table-cell', padding: '7px 8px', fontSize: '11px', fontWeight: comp.competency_description ? '600' : '400', color: comp.competency_description ? '#1e293b' : '#94a3b8', background: comp.competency_description ? '#eff6ff' : 'white', borderRight: '1px solid #cbd5e1', verticalAlign: 'middle', wordBreak: 'break-word' }}>
+                  {comp.competency_description || 'Conducta o habilidad tecnica...'}
+                </div>
                 {RATING_COLS.map(r => (
-                  <td key={r} style={{ border: '1px solid #94a3b8', padding: '6px 4px', textAlign: 'center' }}>
-                    <div style={{ width: '16px', height: '16px', border: `2px solid ${comp.rating === r ? '#1e293b' : '#94a3b8'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', fontSize: '10px', fontWeight: 'bold', color: '#1e293b', background: 'white' }}>
+                  <div key={r} style={{ display: 'table-cell', width: '13%', textAlign: 'center', verticalAlign: 'middle', padding: '6px 4px', borderLeft: '1px solid #cbd5e1' }}>
+                    <div style={{
+                      width: '18px', height: '18px',
+                      border: `2px solid ${comp.rating === r ? '#1e293b' : '#94a3b8'}`,
+                      background: 'white',
+                      margin: '0 auto',
+                      lineHeight: '14px',
+                      textAlign: 'center',
+                      fontSize: '11px',
+                      fontWeight: 'bold',
+                      color: '#1e293b',
+                    }}>
                       {comp.rating === r ? 'X' : ''}
                     </div>
-                  </td>
+                  </div>
                 ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+              </div>
+            </div>
+          ))}
+        </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #94a3b8', marginTop: '8px' }}>
-          <tbody>
-            <tr>
-              <td style={{ background: '#1e3a5f', color: 'white', fontWeight: 'bold', fontSize: '11px', padding: '6px 10px', width: '160px', verticalAlign: 'top', border: '1px solid #94a3b8' }}>
+        {/* Comments */}
+        <div style={{ border: '1px solid #94a3b8', marginTop: '10px' }}>
+          <div style={{ display: 'table', width: '100%', borderBottom: '1px solid #94a3b8' }}>
+            <div style={{ display: 'table-row' }}>
+              <div style={{ display: 'table-cell', background: '#1e3a5f', color: 'white', fontWeight: 'bold', fontSize: '11px', padding: '7px 10px', width: '180px', verticalAlign: 'top', whiteSpace: 'nowrap' }}>
                 Comentarios Jefe Inmediato
-              </td>
-              <td style={{ background: 'white', padding: '5px 8px', border: '1px solid #94a3b8', fontSize: '11px', color: '#374151', minHeight: '40px', wordBreak: 'break-word' }}>
-                {managerComments || '\u00A0\u00A0\u00A0'}
-              </td>
-            </tr>
-            <tr>
-              <td style={{ background: '#1e3a5f', color: 'white', fontWeight: 'bold', fontSize: '11px', padding: '6px 10px', verticalAlign: 'top', border: '1px solid #94a3b8' }}>
+              </div>
+              <div style={{ display: 'table-cell', background: 'white', padding: '7px 10px', fontSize: '11px', color: '#374151', minHeight: '44px', wordBreak: 'break-word', borderLeft: '1px solid #94a3b8' }}>
+                {managerComments || '\u00A0'}
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'table', width: '100%' }}>
+            <div style={{ display: 'table-row' }}>
+              <div style={{ display: 'table-cell', background: '#1e3a5f', color: 'white', fontWeight: 'bold', fontSize: '11px', padding: '7px 10px', width: '180px', verticalAlign: 'top', whiteSpace: 'nowrap' }}>
                 Comentarios del Colaborador
-              </td>
-              <td style={{ background: 'white', padding: '5px 8px', border: '1px solid #94a3b8', fontSize: '11px', color: '#374151', minHeight: '40px', wordBreak: 'break-word' }}>
-                {employeeComments || '\u00A0\u00A0\u00A0'}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+              <div style={{ display: 'table-cell', background: 'white', padding: '7px 10px', fontSize: '11px', color: '#374151', minHeight: '44px', wordBreak: 'break-word', borderLeft: '1px solid #94a3b8' }}>
+                {employeeComments || '\u00A0'}
+              </div>
+            </div>
+          </div>
+        </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', padding: '36px 20px 16px', gap: '32px', marginTop: '4px' }}>
+        {/* Signature lines */}
+        <div style={{ display: 'flex', justifyContent: 'space-around', padding: '40px 24px 16px', gap: '24px', marginTop: '8px' }}>
           {['Firma Colaborador', 'Firma Jefe Inmediato', 'Firma RRHH'].map(label => (
-            <div key={label} style={{ textAlign: 'center' }}>
-              <div style={{ borderTop: '1px solid #1e293b', paddingTop: '4px', marginTop: '28px' }}>
+            <div key={label} style={{ flex: 1, textAlign: 'center' }}>
+              <div style={{ borderTop: '1.5px solid #1e293b', paddingTop: '5px', marginTop: '0' }}>
                 <span style={{ fontSize: '10px', fontWeight: '600', color: '#1e293b' }}>{label}</span>
               </div>
             </div>
