@@ -136,7 +136,7 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
           role: formData.role,
           isActive: formData.is_active,
         });
-        if (!result.success) throw new Error(result.error || 'Error al crear usuario');
+        if (!result.success) throw new Error(result.error || 'Error desconocido al crear usuario');
       }
 
       onSuccess();

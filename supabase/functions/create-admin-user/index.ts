@@ -111,10 +111,19 @@ Deno.serve(async (req: Request) => {
       email_confirm: true,
     });
 
-    if (authError) throw authError;
+    if (authError) {
+      console.error("Auth createUser error:", JSON.stringify(authError));
+      return new Response(JSON.stringify({ error: authError.message || JSON.stringify(authError) }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (!authData.user) {
-      throw new Error("Failed to create user");
+      return new Response(JSON.stringify({ error: "No se pudo crear el usuario en Auth" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const { error: userInsertError } = await supabaseAdmin
@@ -130,8 +139,12 @@ Deno.serve(async (req: Request) => {
       });
 
     if (userInsertError) {
+      console.error("system_users insert error:", JSON.stringify(userInsertError));
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-      throw userInsertError;
+      return new Response(JSON.stringify({ error: "Error al guardar usuario: " + userInsertError.message }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     return new Response(JSON.stringify({ success: true, message: "Usuario creado exitosamente", userId: authData.user.id }), {
