@@ -137,26 +137,6 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      const dbUrl = Deno.env.get("SUPABASE_DB_URL");
-      if (dbUrl) {
-        const { Client } = await import("npm:pg@8.11.3");
-        const client = new Client({ connectionString: dbUrl });
-        await client.connect();
-        try {
-          await client.query(
-            `UPDATE auth.users SET encrypted_password = crypt($1, gen_salt('bf')), updated_at = now() WHERE id = $2`,
-            [newPassword, userId]
-          );
-          await client.end();
-          return new Response(JSON.stringify({ success: true }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        } catch (dbErr: any) {
-          await client.end();
-          throw dbErr;
-        }
-      }
-
       const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, { password: newPassword });
       if (authError) {
         console.error("Auth admin updateUserById error:", authError);
