@@ -48,7 +48,7 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
 
   const [formData, setFormData] = useState({
     email: '',
-    password: '',
+    password: 'Temporal2026',
     employee_id: '',
     company_id: '',
     accessible_company_ids: [] as string[],
@@ -195,7 +195,7 @@ export function UserModal({ user, onClose, onSuccess }: UserModalProps) {
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   required
                   minLength={6}
-                  placeholder="Minimo 6 caracteres"
+                  placeholder="Temporal2026"
                 />
               </div>
             </div>
