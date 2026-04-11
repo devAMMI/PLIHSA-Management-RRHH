@@ -12,9 +12,9 @@ const ROLE_HIERARCHY: Record<string, number> = {
   admin: 5,
   rrhh: 4,
   manager: 3,
-  jefe: 2,
-  employee: 1,
-  viewer: 0,
+  jefe: 3,
+  employee: 2,
+  viewer: 1,
 };
 
 Deno.serve(async (req: Request) => {

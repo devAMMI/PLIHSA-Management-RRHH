@@ -12,6 +12,7 @@ const ROLE_HIERARCHY: Record<string, number> = {
   admin: 5,
   rrhh: 4,
   manager: 3,
+  jefe: 3,
   employee: 2,
   viewer: 1,
 };
