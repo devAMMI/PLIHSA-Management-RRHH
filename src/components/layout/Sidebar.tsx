@@ -1,4 +1,4 @@
-import { Home, Users, ClipboardCheck, Building2, Settings, LogOut, User as UserIcon, Shield, FileText, Database, Terminal, Activity } from 'lucide-react';
+import { Home, Users, ClipboardCheck, BarChart2, Settings, LogOut, User as UserIcon, Shield, FileText, Database, Terminal, Activity } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCompany } from '../../contexts/CompanyContext';
 
@@ -21,7 +21,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
     { id: 'evaluations-list', label: 'Ver Evaluaciones', icon: FileText, requiredRoles: ['superadmin', 'rrhh'] },
     { id: 'nueva-evaluacion-administrativa', label: 'Nueva Evaluación Completa', icon: ClipboardCheck, requiredRoles: ['superadmin', 'rrhh'] },
     { id: 'system-users', label: 'Usuarios', icon: Shield, requiredRoles: ['superadmin', 'admin'] },
-    { id: 'companies', label: 'Empresas', icon: Building2, requiredRoles: ['superadmin'] },
+    { id: 'reportes', label: 'Reportes', icon: BarChart2, requiredRoles: ['superadmin'] },
     { id: 'settings', label: 'Configuración', icon: Settings, requiredRoles: ['superadmin'] },
     { id: 'raw-evaluations', label: 'Evaluaciones Hechas', icon: Database, requiredRoles: ['superadmin'] },
     { id: 'sql-executor', label: 'SQL Evaluaciones', icon: Terminal, requiredRoles: ['superadmin'] },

@@ -22,6 +22,7 @@ import { GoalDefinitionsHome } from './components/goals/GoalDefinitionsHome';
 import { GoalDefinitionsList } from './components/goals/GoalDefinitionsList';
 import { EvaluacionJunio } from './components/evaluations/EvaluacionJunio';
 import { EvaluationAuditLog } from './components/audit/EvaluationAuditLog';
+import { ReportesView } from './components/reports/ReportesView';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -64,8 +65,8 @@ function AppContent() {
         return 'Evaluación Operativo - Marzo 2026';
       case 'system-users':
         return 'Usuarios del Sistema';
-      case 'companies':
-        return 'Empresas';
+      case 'reportes':
+        return 'Reportes';
       case 'settings':
         return 'Configuración';
       case 'profile':
@@ -127,12 +128,8 @@ function AppContent() {
         return <RawEvaluations />;
       case 'sql-executor':
         return <SQLExecutor />;
-      case 'companies':
-        return (
-          <div className="text-center py-12">
-            <p className="text-slate-600">Módulo de empresas en desarrollo</p>
-          </div>
-        );
+      case 'reportes':
+        return <ReportesView />;
       case 'settings':
         return (
           <div className="text-center py-12">
