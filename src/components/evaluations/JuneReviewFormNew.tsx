@@ -1183,19 +1183,20 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
                     return (
                       <div key={r} style={{ display: 'table-cell', width: '13%', textAlign: 'center', verticalAlign: 'middle', padding: '6px 4px', borderLeft: '1px solid #cbd5e1' }}>
                         <div style={{
-                          width: '20px', height: '20px',
+                          width: '18px', height: '18px',
                           border: `2px solid ${checked ? '#1e3a5f' : '#94a3b8'}`,
                           background: checked ? '#1e3a5f' : 'white',
                           margin: '0 auto',
-                          textAlign: 'center',
-                          fontSize: '14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '11px',
                           fontWeight: '900',
                           color: 'white',
                           fontFamily: 'Arial, Helvetica, sans-serif',
-                          lineHeight: '16px',
-                          overflow: 'hidden',
+                          boxSizing: 'border-box',
                         }}>
-                          {checked ? 'X' : '\u00A0'}
+                          {checked ? 'X' : ''}
                         </div>
                       </div>
                     );
