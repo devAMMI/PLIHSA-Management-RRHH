@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Users, Plus, Search, Shield, Trash2, CreditCard as Edit2, Eye, EyeOff, Key, UserCheck, UserX, RefreshCw } from 'lucide-react';
+import { Users, Plus, Search, Shield, Trash2, CreditCard as Edit2, Eye, EyeOff, Key, UserCheck, UserX, RefreshCw, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { UserModal } from './UserModal';
 import { ChangePasswordModal } from './ChangePasswordModal';
+import { UserPermissionsModal } from './UserPermissionsModal';
 import { SystemUser, ROLE_LABELS, canManageUser, canSeeUser } from '../../types/roles';
 import { userService } from '../../services/userService';
 
@@ -13,6 +14,7 @@ export function UserList() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showPermissionsModal, setShowPermissionsModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<SystemUser | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -116,6 +118,11 @@ export function UserList() {
   const handleResetPassword = (user: SystemUser) => {
     setSelectedUser(user);
     setShowPasswordModal(true);
+  };
+
+  const handleManagePermissions = (user: SystemUser) => {
+    setSelectedUser(user);
+    setShowPermissionsModal(true);
   };
 
   const handleModalSuccess = async () => {
@@ -332,6 +339,15 @@ export function UserList() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center justify-end gap-1">
+                        {isSuperAdmin && (
+                          <button
+                            onClick={() => handleManagePermissions(user)}
+                            className="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg transition"
+                            title="Configurar permisos de menú"
+                          >
+                            <LayoutDashboard className="w-4 h-4" />
+                          </button>
+                        )}
                         {canEdit && (
                           <>
                             <button
@@ -360,7 +376,7 @@ export function UserList() {
                             {isDeleting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                           </button>
                         )}
-                        {!canEdit && !canDel && !isMeRow && (
+                        {!isSuperAdmin && !canEdit && !canDel && !isMeRow && (
                           <span className="text-xs text-slate-400 px-2 py-1 bg-slate-50 rounded-lg">Sin permisos</span>
                         )}
                       </div>
@@ -399,6 +415,16 @@ export function UserList() {
           isOwnPassword={false}
           onClose={() => { setShowPasswordModal(false); setSelectedUser(null); }}
           onSuccess={handlePasswordSuccess}
+        />
+      )}
+
+      {showPermissionsModal && selectedUser && (
+        <UserPermissionsModal
+          targetUser={selectedUser}
+          onClose={() => { setShowPermissionsModal(false); setSelectedUser(null); }}
+          onSaved={() => {
+            showToast('success', 'Permisos de menú actualizados correctamente');
+          }}
         />
       )}
     </div>

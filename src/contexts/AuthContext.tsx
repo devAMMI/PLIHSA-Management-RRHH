@@ -26,24 +26,44 @@ interface Employee {
   } | null;
 }
 
+export interface SidebarPermission {
+  menu_item_id: string;
+  granted: boolean;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   systemUser: SystemUser | null;
   employee: Employee | null;
+  sidebarPermissions: SidebarPermission[];
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  reloadSidebarPermissions: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+async function loadSidebarPerms(systemUserId: string): Promise<SidebarPermission[]> {
+  try {
+    const { data } = await supabase
+      .from('user_sidebar_permissions' as any)
+      .select('menu_item_id, granted')
+      .eq('system_user_id', systemUserId);
+    return (data as SidebarPermission[]) || [];
+  } catch {
+    return [];
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [systemUser, setSystemUser] = useState<SystemUser | null>(null);
   const [employee, setEmployee] = useState<Employee | null>(null);
+  const [sidebarPermissions, setSidebarPermissions] = useState<SidebarPermission[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -60,6 +80,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .maybeSingle();
 
           setSystemUser(systemUserData);
+
+          if (systemUserData?.id) {
+            const perms = await loadSidebarPerms(systemUserData.id);
+            setSidebarPermissions(perms);
+          }
 
           if (systemUserData?.employee_id) {
             const { data: employeeData } = await supabase
@@ -92,6 +117,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           setSystemUser(systemUserData);
 
+          if (systemUserData?.id) {
+            const perms = await loadSidebarPerms(systemUserData.id);
+            setSidebarPermissions(perms);
+          }
+
           if (systemUserData?.employee_id) {
             const { data: employeeData } = await supabase
               .from('employees')
@@ -106,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setSystemUser(null);
           setEmployee(null);
+          setSidebarPermissions([]);
         }
       })();
     });
@@ -113,12 +144,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  const reloadSidebarPermissions = async () => {
+    if (!systemUser?.id) return;
+    const perms = await loadSidebarPerms(systemUser.id);
+    setSidebarPermissions(perms);
+  };
+
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       return { error };
     } catch (error) {
       return { error: error as Error };
@@ -127,10 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+      const { error } = await supabase.auth.signUp({ email, password });
       return { error };
     } catch (error) {
       return { error: error as Error };
@@ -141,6 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setSystemUser(null);
     setEmployee(null);
+    setSidebarPermissions([]);
   };
 
   const value = {
@@ -148,10 +180,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session,
     systemUser,
     employee,
+    sidebarPermissions,
     loading,
     signIn,
     signUp,
     signOut,
+    reloadSidebarPermissions,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

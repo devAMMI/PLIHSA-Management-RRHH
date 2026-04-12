@@ -1,6 +1,7 @@
 import { Home, Users, ClipboardCheck, BarChart2, Settings, LogOut, User as UserIcon, Shield, FileText, Database, Terminal, Activity } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCompany } from '../../contexts/CompanyContext';
+import { useMemo } from 'react';
 
 interface SidebarProps {
   currentView: string;
@@ -8,7 +9,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ currentView, onViewChange }: SidebarProps) {
-  const { signOut, systemUser, employee, user } = useAuth();
+  const { signOut, systemUser, employee, user, sidebarPermissions } = useAuth();
   const { activeCompany } = useCompany();
 
   const menuItems = [
@@ -28,9 +29,24 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
     { id: 'audit-log', label: 'Registro de Actividad', icon: Activity, requiredRoles: ['superadmin', 'rrhh'] },
   ];
 
+  const isSuperAdmin = systemUser?.role === 'superadmin';
+
+  const permMap = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    sidebarPermissions.forEach(p => { map[p.menu_item_id] = p.granted; });
+    return map;
+  }, [sidebarPermissions]);
+
   const filteredItems = menuItems.filter(item => {
-    if (!item.requiredRoles) return true;
-    return item.requiredRoles.includes(systemUser?.role || '');
+    if (isSuperAdmin) return true;
+
+    const hasRoleAccess = !item.requiredRoles || item.requiredRoles.includes(systemUser?.role || '');
+
+    if (item.id in permMap) {
+      return permMap[item.id];
+    }
+
+    return hasRoleAccess;
   });
 
   const getBrandingConfig = () => {
@@ -112,7 +128,10 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
               ) : Icon ? (
                 <Icon className="w-5 h-5 flex-shrink-0" />
               ) : null}
-              <span className="font-medium text-sm">{item.label}</span>
+              <span className="font-medium text-sm flex-1 text-left">{item.label}</span>
+              {!isSuperAdmin && permMap[item.id] === true && !(item.requiredRoles?.includes(systemUser?.role || '')) && (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" title="Acceso extra otorgado" />
+              )}
             </button>
           );
         })}
