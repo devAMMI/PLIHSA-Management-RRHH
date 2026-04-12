@@ -52,9 +52,8 @@ class UserService {
 
   async createUser(userData: CreateUserData): Promise<{ success: boolean; error?: string; userId?: string }> {
     try {
-      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-      const session = refreshData?.session;
-      if (refreshError || !session) throw new Error('No hay sesion activa. Por favor recarga la pagina.');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No hay sesion activa. Por favor recarga la pagina.');
 
       const CREATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-admin-user`;
       const response = await fetch(CREATE_URL, {
