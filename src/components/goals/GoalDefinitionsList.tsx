@@ -76,8 +76,23 @@ interface GoalDefinitionsListProps {
   workflowFilter?: 'draft-pending' | 'completed' | 'all';
 }
 
+interface AuditInfo {
+  evaluator_name: string;
+  performed_at: string;
+}
+
+const formatGMT6 = (iso: string) => {
+  const d = new Date(iso);
+  const offset = -6 * 60;
+  const local = new Date(d.getTime() + offset * 60 * 1000);
+  const date = local.toLocaleDateString('es-HN', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+  const time = local.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC' });
+  return { date, time };
+};
+
 export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterStatus, workflowFilter }: GoalDefinitionsListProps) {
   const [definitions, setDefinitions] = useState<(AdministrativeGoalDefinition | OperativeGoalDefinition)[]>([]);
+  const [auditMap, setAuditMap] = useState<Record<string, AuditInfo>>({});
   const [loading, setLoading] = useState(true);
   const [selectedDefinition, setSelectedDefinition] = useState<AdministrativeGoalDefinition | OperativeGoalDefinition | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -130,7 +145,40 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
 
         const { data, error } = await query;
         if (error) throw error;
-        setDefinitions(data || []);
+        const loadedAdm = data || [];
+        setDefinitions(loadedAdm);
+
+        if (loadedAdm.length > 0) {
+          const ids = loadedAdm.map((d: any) => d.id);
+          const { data: auditData } = await supabase
+            .from('evaluation_audit_logs')
+            .select(`
+              evaluation_id,
+              performed_at,
+              evaluator:evaluator_system_user_id (first_name, last_name),
+              evaluator_employee:evaluator_employee_id (first_name, last_name)
+            `)
+            .in('evaluation_id', ids)
+            .eq('action_type', 'created')
+            .order('performed_at', { ascending: true });
+
+          if (auditData) {
+            const map: Record<string, AuditInfo> = {};
+            auditData.forEach((a: any) => {
+              if (!map[a.evaluation_id]) {
+                const emp = a.evaluator_employee;
+                const sys = a.evaluator;
+                const name = emp
+                  ? `${emp.first_name} ${emp.last_name}`
+                  : sys
+                  ? `${sys.first_name} ${sys.last_name}`
+                  : 'Usuario desconocido';
+                map[a.evaluation_id] = { evaluator_name: name, performed_at: a.performed_at };
+              }
+            });
+            setAuditMap(map);
+          }
+        }
       } else {
         let query = supabase
           .from('operative_goal_definitions')
@@ -168,7 +216,40 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
 
         const { data, error } = await query;
         if (error) throw error;
-        setDefinitions(data || []);
+        const loaded = data || [];
+        setDefinitions(loaded);
+
+        if (loaded.length > 0) {
+          const ids = loaded.map((d: any) => d.id);
+          const { data: auditData } = await supabase
+            .from('evaluation_audit_logs')
+            .select(`
+              evaluation_id,
+              performed_at,
+              evaluator:evaluator_system_user_id (first_name, last_name),
+              evaluator_employee:evaluator_employee_id (first_name, last_name)
+            `)
+            .in('evaluation_id', ids)
+            .eq('action_type', 'created')
+            .order('performed_at', { ascending: true });
+
+          if (auditData) {
+            const map: Record<string, AuditInfo> = {};
+            auditData.forEach((a: any) => {
+              if (!map[a.evaluation_id]) {
+                const emp = a.evaluator_employee;
+                const sys = a.evaluator;
+                const name = emp
+                  ? `${emp.first_name} ${emp.last_name}`
+                  : sys
+                  ? `${sys.first_name} ${sys.last_name}`
+                  : 'Usuario desconocido';
+                map[a.evaluation_id] = { evaluator_name: name, performed_at: a.performed_at };
+              }
+            });
+            setAuditMap(map);
+          }
+        }
       }
     } catch (error) {
       console.error('Error fetching goal definitions:', error);
@@ -326,6 +407,20 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
                           )}
                           <span>Código: {definition.employee.employee_code}</span>
                         </div>
+                        {auditMap[definition.id] && (
+                          <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
+                            <User className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                            <span>
+                              Evaluado por:{' '}
+                              <span className="font-semibold text-slate-700">{auditMap[definition.id].evaluator_name}</span>
+                              {' — '}
+                              {(() => {
+                                const { date, time } = formatGMT6(auditMap[definition.id].performed_at);
+                                return <span>{date}, {time} (GMT-6)</span>;
+                              })()}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <div className="flex gap-2">
                         <button

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import {
   FileText, CheckCircle, Clock, Upload, Eye, Calendar, Target,
-  ChevronDown, ChevronUp, ClipboardCheck, X,
+  ChevronDown, ChevronUp, ClipboardCheck, X, User,
 } from 'lucide-react';
 import { GoalDefinitionViewer } from '../goals/GoalDefinitionViewer';
 import { OperativeGoalDefinitionViewer } from '../goals/OperativeGoalDefinitionViewer';
@@ -114,10 +114,15 @@ interface JuneReviewRecord {
   }>;
 }
 
+interface AuditInfo {
+  evaluator_name: string;
+  performed_at: string;
+}
+
 type EvaluationEntry =
-  | { kind: 'definition-admin'; data: GoalDefinitionRecord }
-  | { kind: 'definition-operative'; data: OperativeGoalDefinitionRecord }
-  | { kind: 'june-review'; data: JuneReviewRecord };
+  | { kind: 'definition-admin'; data: GoalDefinitionRecord; audit?: AuditInfo }
+  | { kind: 'definition-operative'; data: OperativeGoalDefinitionRecord; audit?: AuditInfo }
+  | { kind: 'june-review'; data: JuneReviewRecord; audit?: AuditInfo };
 
 interface EmployeeEvaluationsHistoryProps {
   employeeId: string;
@@ -408,6 +413,44 @@ export function EmployeeEvaluationsHistory({ employeeId, employeeType }: Employe
           });
         });
       }
+      const allIds = result.map(e => e.data.id);
+      if (allIds.length > 0) {
+        const { data: auditData } = await supabase
+          .from('evaluation_audit_logs')
+          .select(`
+            evaluation_id,
+            action_type,
+            performed_at,
+            evaluator:evaluator_system_user_id (first_name, last_name),
+            evaluator_employee:evaluator_employee_id (first_name, last_name)
+          `)
+          .in('evaluation_id', allIds)
+          .eq('action_type', 'created')
+          .order('performed_at', { ascending: true });
+
+        if (auditData) {
+          const auditMap: Record<string, AuditInfo> = {};
+          auditData.forEach((a: any) => {
+            if (!auditMap[a.evaluation_id]) {
+              const emp = a.evaluator_employee;
+              const sys = a.evaluator;
+              const name = emp
+                ? `${emp.first_name} ${emp.last_name}`
+                : sys
+                ? `${sys.first_name} ${sys.last_name}`
+                : 'Usuario desconocido';
+              auditMap[a.evaluation_id] = {
+                evaluator_name: name,
+                performed_at: a.performed_at,
+              };
+            }
+          });
+          result.forEach((entry, i) => {
+            const info = auditMap[entry.data.id];
+            if (info) (result[i] as any).audit = info;
+          });
+        }
+      }
     } catch (error) {
       console.error('Error fetching evaluations:', error);
     } finally {
@@ -436,6 +479,15 @@ export function EmployeeEvaluationsHistory({ employeeId, employeeType }: Employe
       </div>
     );
   }
+
+  const formatGMT6 = (iso: string) => {
+    const d = new Date(iso);
+    const offset = -6 * 60;
+    const local = new Date(d.getTime() + offset * 60 * 1000);
+    const date = local.toLocaleDateString('es-HN', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+    const time = local.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC' });
+    return { date, time };
+  };
 
   const getEntryMeta = (entry: EvaluationEntry) => {
     if (entry.kind === 'definition-admin') {
@@ -586,6 +638,21 @@ export function EmployeeEvaluationsHistory({ employeeId, employeeType }: Employe
                                     </span>
                                   )}
                                 </div>
+
+                                {entry.audit && (
+                                  <div className="mt-2.5 flex items-center gap-2 text-xs text-slate-500">
+                                    <User className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                                    <span>
+                                      Evaluado por:{' '}
+                                      <span className="font-semibold text-slate-700">{entry.audit.evaluator_name}</span>
+                                      {' — '}
+                                      {(() => {
+                                        const { date, time } = formatGMT6(entry.audit.performed_at);
+                                        return <span>{date}, {time} (GMT-6)</span>;
+                                      })()}
+                                    </span>
+                                  </div>
+                                )}
                               </div>
 
                               <button
