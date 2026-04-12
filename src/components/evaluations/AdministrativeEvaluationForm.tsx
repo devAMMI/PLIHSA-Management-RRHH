@@ -86,7 +86,7 @@ export function AdministrativeEvaluationForm({ editingEvaluationId, onCancel, pe
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [systemUser?.role, employee?.id]);
 
   useEffect(() => {
     if (editingEvaluationId) {
@@ -192,7 +192,7 @@ export function AdministrativeEvaluationForm({ editingEvaluationId, onCancel, pe
         setPeriod(periodData);
       }
 
-      const { data: employeesData, error: empError } = await supabase
+      let empQuery = supabase
         .from('employees')
         .select(`
           id,
@@ -212,6 +212,12 @@ export function AdministrativeEvaluationForm({ editingEvaluationId, onCancel, pe
         .eq('employee_type', 'administrativo')
         .eq('status', 'active')
         .order('first_name');
+
+      if (systemUser?.role === 'jefe' && employee?.id) {
+        empQuery = empQuery.neq('id', employee.id);
+      }
+
+      const { data: employeesData, error: empError } = await empQuery;
 
       if (empError) {
         console.error('Error loading employees:', empError);

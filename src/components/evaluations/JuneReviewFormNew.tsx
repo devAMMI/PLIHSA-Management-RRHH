@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Save, Download, Printer, Upload, CheckCircle, Eye, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 import { Toast } from '../ui/Toast';
 import { SignedDocumentViewer } from '../goals/SignedDocumentViewer';
 import html2canvas from 'html2canvas';
@@ -64,6 +65,7 @@ const emptyCompetencies = (): CompetencyRow[] =>
 
 export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', onCancel, onSaved }: JuneReviewFormNewProps) {
   const formRef = useRef<HTMLDivElement>(null);
+  const { employee, systemUser } = useAuth();
   const pdfRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -107,7 +109,7 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
     if (reviewId) {
       loadReview(reviewId);
     }
-  }, [reviewId]);
+  }, [reviewId, systemUser?.role, employee?.id]);
 
   const loadDefinitionForEmployee = async (employeeId: string) => {
     setLoadingDefinition(true);
@@ -181,12 +183,18 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
   };
 
   const loadEmployees = async () => {
-    const { data } = await supabase
+    let query = supabase
       .from('employees')
       .select('id, first_name, last_name, position, departments(name)')
       .eq('employee_type', employeeType)
       .eq('status', 'active')
       .order('first_name');
+
+    if (systemUser?.role === 'jefe' && employee?.id) {
+      query = query.neq('id', employee.id);
+    }
+
+    const { data } = await query;
     setEmployees(data || []);
   };
 

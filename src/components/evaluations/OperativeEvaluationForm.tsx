@@ -86,7 +86,7 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel, periodI
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [systemUser?.role, employee?.id]);
 
   useEffect(() => {
     if (editingEvaluationId) {
@@ -192,7 +192,7 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel, periodI
         setPeriod(periodData);
       }
 
-      const { data: employeesData, error: empError } = await supabase
+      let empQuery = supabase
         .from('employees')
         .select(`
           id,
@@ -212,6 +212,12 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel, periodI
         .eq('employee_type', 'operativo')
         .eq('status', 'active')
         .order('first_name');
+
+      if (systemUser?.role === 'jefe' && employee?.id) {
+        empQuery = empQuery.neq('id', employee.id);
+      }
+
+      const { data: employeesData, error: empError } = await empQuery;
 
       if (empError) {
         console.error('Error loading employees:', empError);
