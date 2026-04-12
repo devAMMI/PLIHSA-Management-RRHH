@@ -189,31 +189,78 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
     setMessage(null);
   };
 
-  const handleDownloadPDF = async () => {
-    if (!formRef.current) return;
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow && formRef.current) {
+      const styles = Array.from(document.styleSheets)
+        .map(styleSheet => {
+          try {
+            return Array.from(styleSheet.cssRules).map(rule => rule.cssText).join('\n');
+          } catch {
+            return '';
+          }
+        })
+        .join('\n');
 
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Imprimir Definicion de Factores Operativo</title>
+            <style>${styles}body { margin: 0; padding: 20px; }@media print { body { margin: 0; padding: 0; } }</style>
+          </head>
+          <body>${formRef.current.innerHTML}</body>
+        </html>
+      `);
+      printWindow.document.close();
+      setTimeout(() => printWindow.print(), 500);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!formRef.current || !selectedEmployee) return;
+
+    setLoading(true);
     try {
       const canvas = await html2canvas(formRef.current, {
-        scale: 2,
+        scale: 2.5,
         useCORS: true,
+        allowTaint: true,
         logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: formRef.current.scrollWidth,
+        windowHeight: formRef.current.scrollHeight,
+        scrollX: 0,
+        scrollY: 0
       });
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'letter');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 0;
+      const imgWidth = 215.9;
+      const pageHeight = 279.4;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-      pdf.save(`Definicion-Factores-Operativo-${selectedEmployee?.employee_code || 'empleado'}.pdf`);
+      const pdf = new jsPDF('p', 'mm', 'letter');
+
+      if (imgHeight <= pageHeight) {
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
+      } else {
+        let position = 0;
+        let remainingHeight = imgHeight;
+        let firstPage = true;
+        while (remainingHeight > 0) {
+          if (!firstPage) pdf.addPage();
+          pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, -position, imgWidth, imgHeight);
+          position += pageHeight;
+          remainingHeight -= pageHeight;
+          firstPage = false;
+        }
+      }
+
+      const fileName = `Definicion_Factores_Op_${selectedEmployee.first_name}_${selectedEmployee.last_name}_${definitionDate}.pdf`;
+      pdf.save(fileName);
     } catch (error) {
       console.error('Error generating PDF:', error);
       setMessage({ type: 'error', text: 'Error al generar PDF' });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -329,14 +376,14 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
               </button>
               <button
                 onClick={handleDownloadPDF}
-                disabled={!selectedEmployeeId}
+                disabled={loading || !selectedEmployeeId}
                 className="flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
               >
                 <Download className="w-4 h-4" />
-                Descargar PDF
+                {loading ? 'Generando...' : 'Descargar PDF'}
               </button>
               <button
-                onClick={() => window.print()}
+                onClick={handlePrint}
                 disabled={!selectedEmployeeId}
                 className="flex items-center justify-center gap-2 bg-slate-600 text-white px-4 py-2 rounded-md hover:bg-slate-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
               >

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { FileText, Eye, Trash2, Calendar, User, Building2, CheckCircle, Clock, ArrowLeft, Upload } from 'lucide-react';
+import { FileText, Eye, Trash2, Calendar, User, Building2, CheckCircle, Clock, ArrowLeft, Upload, Search, X } from 'lucide-react';
 import { GoalDefinitionViewer } from './GoalDefinitionViewer';
 import { OperativeGoalDefinitionViewer } from './OperativeGoalDefinitionViewer';
 
@@ -14,7 +14,6 @@ interface Employee {
   sub_department: { name: string } | null;
   manager: { first_name: string; last_name: string; position: string } | null;
 }
-
 
 interface AdministrativeGoalDefinition {
   id: string;
@@ -91,17 +90,39 @@ const formatGMT6 = (iso: string) => {
 };
 
 export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterStatus, workflowFilter }: GoalDefinitionsListProps) {
+  const [allDefinitions, setAllDefinitions] = useState<(AdministrativeGoalDefinition | OperativeGoalDefinition)[]>([]);
   const [definitions, setDefinitions] = useState<(AdministrativeGoalDefinition | OperativeGoalDefinition)[]>([]);
   const [auditMap, setAuditMap] = useState<Record<string, AuditInfo>>({});
   const [loading, setLoading] = useState(true);
   const [selectedDefinition, setSelectedDefinition] = useState<AdministrativeGoalDefinition | OperativeGoalDefinition | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [filterPeriod, setFilterPeriod] = useState('Q1-2026');
   const [filterStatus, setFilterStatus] = useState<string>(initialFilterStatus || 'all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchDefinitions();
-  }, [filterPeriod, filterStatus, type]);
+  }, [filterStatus, type]);
+
+  useEffect(() => {
+    applySearch();
+  }, [allDefinitions, searchTerm]);
+
+  const applySearch = () => {
+    if (!searchTerm.trim()) {
+      setDefinitions(allDefinitions);
+      return;
+    }
+    const term = searchTerm.toLowerCase();
+    setDefinitions(
+      allDefinitions.filter(d =>
+        d.employee.first_name.toLowerCase().includes(term) ||
+        d.employee.last_name.toLowerCase().includes(term) ||
+        d.employee.employee_code.toLowerCase().includes(term) ||
+        d.employee.position.toLowerCase().includes(term) ||
+        (d.employee.department?.name || '').toLowerCase().includes(term)
+      )
+    );
+  };
 
   const fetchDefinitions = async () => {
     setLoading(true);
@@ -136,7 +157,7 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
           .order('created_at', { ascending: false });
 
         if (workflowFilter === 'draft-pending') {
-          query = query.in('workflow_status', ['draft', 'pending_signature', null]);
+          query = query.or('workflow_status.is.null,workflow_status.eq.draft,workflow_status.eq.pending_signature');
         } else if (workflowFilter === 'completed') {
           query = query.eq('workflow_status', 'completed');
         } else if (filterStatus !== 'all') {
@@ -146,6 +167,7 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
         const { data, error } = await query;
         if (error) throw error;
         const loadedAdm = data || [];
+        setAllDefinitions(loadedAdm);
         setDefinitions(loadedAdm);
 
         if (loadedAdm.length > 0) {
@@ -207,7 +229,7 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
           .order('created_at', { ascending: false });
 
         if (workflowFilter === 'draft-pending') {
-          query = query.in('workflow_status', ['draft', 'pending_signature', null]);
+          query = query.or('workflow_status.is.null,workflow_status.eq.draft,workflow_status.eq.pending_signature');
         } else if (workflowFilter === 'completed') {
           query = query.eq('workflow_status', 'completed');
         } else if (filterStatus !== 'all') {
@@ -217,6 +239,7 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
         const { data, error } = await query;
         if (error) throw error;
         const loaded = data || [];
+        setAllDefinitions(loaded);
         setDefinitions(loaded);
 
         if (loaded.length > 0) {
@@ -303,6 +326,8 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
     return 'operative_individual_goals' in def;
   };
 
+  const accentColor = type === 'administrative' ? 'blue' : 'orange';
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="max-w-7xl mx-auto p-6">
@@ -317,51 +342,71 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className={`${type === 'administrative' ? 'bg-gradient-to-r from-blue-600 to-blue-700' : 'bg-gradient-to-r from-orange-600 to-orange-700'} px-8 py-6`}>
+          <div className={`${accentColor === 'blue' ? 'bg-gradient-to-r from-blue-600 to-blue-700' : 'bg-gradient-to-r from-orange-600 to-orange-700'} px-8 py-6`}>
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-white flex items-center gap-3">
                   <FileText className="w-8 h-8" />
-                  Definiciones de Metas - {type === 'administrative' ? 'Administrativo' : 'Operativo'}
+                  Definición de Metas — {type === 'administrative' ? 'Administrativo' : 'Operativo'}
                 </h1>
-                <p className="text-white text-opacity-90 mt-1">
-                  Visualiza y gestiona las definiciones realizadas
+                <p className="text-white/80 mt-1">
+                  {allDefinitions.length} definicion{allDefinitions.length !== 1 ? 'es' : ''} registrada{allDefinitions.length !== 1 ? 's' : ''}
                 </p>
               </div>
             </div>
           </div>
 
           <div className="p-6">
-            {!initialFilterStatus && (
-              <div className="flex gap-4 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Estado
-                  </label>
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                  >
-                    <option value="all">Todos</option>
-                    <option value="draft">Borrador</option>
-                    <option value="pending_signature">Pendiente Firma</option>
-                    <option value="completed">Finalizado</option>
-                  </select>
-                </div>
+            <div className="flex flex-wrap gap-3 mb-6">
+              <div className="relative flex-1 min-w-[220px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre, código, posición o departamento..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 bg-white"
+                />
               </div>
-            )}
+
+              {!initialFilterStatus && (
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 bg-white"
+                >
+                  <option value="all">Todos los estados</option>
+                  <option value="draft">Borrador</option>
+                  <option value="pending_signature">Pendiente Firma</option>
+                  <option value="completed">Finalizado</option>
+                </select>
+              )}
+
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm text-slate-500 hover:text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Limpiar
+                </button>
+              )}
+            </div>
 
             {loading ? (
               <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+                <div className={`inline-block animate-spin rounded-full h-12 w-12 border-4 ${accentColor === 'blue' ? 'border-blue-500' : 'border-orange-500'} border-t-transparent`}></div>
                 <p className="mt-4 text-slate-600">Cargando definiciones...</p>
               </div>
             ) : definitions.length === 0 ? (
               <div className="text-center py-12 bg-slate-50 rounded-lg">
                 <FileText className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-                <p className="text-slate-600 text-lg font-medium">No hay definiciones de metas registradas</p>
-                <p className="text-slate-500 mt-2">Las definiciones aparecerán aquí una vez sean guardadas</p>
+                <p className="text-slate-600 text-lg font-medium">
+                  {searchTerm ? 'No se encontraron resultados' : 'No hay definiciones de metas registradas'}
+                </p>
+                <p className="text-slate-500 mt-2">
+                  {searchTerm ? 'Intenta con otro término de búsqueda' : 'Las definiciones aparecerán aquí una vez sean guardadas'}
+                </p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -389,7 +434,7 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
                           </div>
                           <div className="flex items-center gap-2">
                             <Calendar className="w-4 h-4 text-slate-400" />
-                            <span>{new Date(definition.definition_date).toLocaleDateString('es-HN')}</span>
+                            <span>{new Date(definition.definition_date + 'T00:00:00').toLocaleDateString('es-HN')}</span>
                           </div>
                         </div>
                         <div className="flex gap-4 text-xs text-slate-500">
@@ -401,7 +446,7 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
                           )}
                           {isOperative(definition) && (
                             <>
-                              <span>Metas: {definition.operative_individual_goals.length}</span>
+                              <span>Factores: {definition.operative_individual_goals.length}</span>
                               <span>Estándares: {definition.operative_safety_standards.length}</span>
                             </>
                           )}
@@ -411,7 +456,7 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
                           <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
                             <User className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
                             <span>
-                              Evaluado por:{' '}
+                              Creado por:{' '}
                               <span className="font-semibold text-slate-700">{auditMap[definition.id].evaluator_name}</span>
                               {' — '}
                               {(() => {
@@ -428,17 +473,23 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
                             setSelectedDefinition(definition);
                             setShowModal(true);
                           }}
-                          className={`p-2 ${type === 'administrative' ? 'text-blue-600 hover:bg-blue-50' : 'text-orange-600 hover:bg-orange-50'} rounded-lg transition`}
+                          className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition ${
+                            accentColor === 'blue'
+                              ? 'text-blue-700 bg-blue-50 hover:bg-blue-100'
+                              : 'text-orange-700 bg-orange-50 hover:bg-orange-100'
+                          }`}
                           title="Ver detalles"
                         >
-                          <Eye className="w-5 h-5" />
+                          <Eye className="w-4 h-4" />
+                          Ver
                         </button>
                         <button
                           onClick={() => handleDelete(definition.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                          className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition"
                           title="Eliminar"
                         >
-                          <Trash2 className="w-5 h-5" />
+                          <Trash2 className="w-4 h-4" />
+                          Eliminar
                         </button>
                       </div>
                     </div>
