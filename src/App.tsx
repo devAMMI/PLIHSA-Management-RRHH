@@ -21,6 +21,7 @@ import { SQLExecutor } from './components/debug/SQLExecutor';
 import { GoalDefinitionsHome } from './components/goals/GoalDefinitionsHome';
 import { GoalDefinitionsList } from './components/goals/GoalDefinitionsList';
 import { EvaluacionJunio } from './components/evaluations/EvaluacionJunio';
+import { EvaluationAuditLog } from './components/audit/EvaluationAuditLog';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -81,6 +82,8 @@ function AppContent() {
         return 'Revisión de Metas';
       case 'evaluacion-final':
         return 'Evaluación Final';
+      case 'audit-log':
+        return 'Registro de Actividad';
       default:
         return 'Dashboard';
     }
@@ -142,6 +145,8 @@ function AppContent() {
         return <GoalDefinitionsList />;
       case 'evaluacion-junio':
         return <EvaluacionJunio />;
+      case 'audit-log':
+        return <EvaluationAuditLog />;
       case 'evaluacion-final':
         return (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
@@ -173,7 +178,7 @@ function AppContent() {
         ].includes(currentView) ? 'overflow-hidden' : [
           'evaluacion-junio',
           'goal-definition-enero',
-        ].includes(currentView) ? 'overflow-y-auto' : ['dashboard'].includes(currentView) ? 'overflow-y-auto' : 'overflow-y-auto p-8'}`}>
+        ].includes(currentView) ? 'overflow-y-auto' : ['dashboard', 'audit-log'].includes(currentView) ? 'overflow-y-auto' : 'overflow-y-auto p-8'}`}>
           {renderView()}
         </main>
       </div>

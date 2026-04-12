@@ -1,4 +1,4 @@
-import { Home, Users, ClipboardCheck, Building2, Settings, LogOut, User as UserIcon, Shield, FileText, Database, Terminal } from 'lucide-react';
+import { Home, Users, ClipboardCheck, Building2, Settings, LogOut, User as UserIcon, Shield, FileText, Database, Terminal, Activity } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCompany } from '../../contexts/CompanyContext';
 
@@ -25,6 +25,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
     { id: 'settings', label: 'Configuración', icon: Settings, requiredRoles: ['superadmin'] },
     { id: 'raw-evaluations', label: 'Evaluaciones Hechas', icon: Database, requiredRoles: ['superadmin', 'admin'] },
     { id: 'sql-executor', label: 'SQL Evaluaciones', icon: Terminal, requiredRoles: ['superadmin'] },
+    { id: 'audit-log', label: 'Registro de Actividad', icon: Activity, requiredRoles: ['superadmin', 'admin', 'rrhh'] },
   ];
 
   const filteredItems = menuItems.filter(item => {

@@ -373,6 +373,17 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
         }
       }
 
+      if (systemUser?.id) {
+        await supabase.from('evaluation_audit_logs').insert({
+          action_type: reviewId ? 'updated' : 'created',
+          evaluation_type: employeeType === 'administrativo' ? 'revision_junio_administrativa' : 'revision_junio_operativa',
+          evaluation_id: currentReviewId,
+          evaluator_system_user_id: systemUser.id,
+          evaluator_employee_id: employee?.id || null,
+          evaluated_employee_id: selectedEmployee.id,
+        });
+      }
+
       setToast({ message: 'Revision guardada correctamente', type: 'success' });
       setTimeout(() => onSaved(), 800);
     } catch (err: any) {

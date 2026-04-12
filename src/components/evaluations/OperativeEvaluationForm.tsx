@@ -320,6 +320,18 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel, periodI
       }
 
       setSavedEvaluationId(evaluation.id);
+
+      if (systemUser?.id) {
+        await supabase.from('evaluation_audit_logs').insert({
+          action_type: savedEvaluationId ? 'updated' : 'created',
+          evaluation_type: 'operativa',
+          evaluation_id: evaluation.id,
+          evaluator_system_user_id: systemUser.id,
+          evaluator_employee_id: employee?.id || null,
+          evaluated_employee_id: selectedEmployeeId,
+        });
+      }
+
       setToast({ message: 'Formulario guardado correctamente', type: 'success' });
     } catch (error) {
       console.error('Error saving evaluation:', error);
