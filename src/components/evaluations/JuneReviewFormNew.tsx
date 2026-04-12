@@ -1178,23 +1178,28 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
                   <div style={{ display: 'table-cell', padding: '7px 8px', fontSize: '11px', fontWeight: goal.goal_description ? '600' : '400', color: goal.goal_description ? '#1e293b' : '#94a3b8', background: goal.goal_description ? '#eff6ff' : 'white', borderRight: '1px solid #cbd5e1', verticalAlign: 'middle', wordBreak: 'break-word' }}>
                     {goal.goal_description || 'Meta individual...'}
                   </div>
-                  {RATING_COLS.map(r => (
-                    <div key={r} style={{ display: 'table-cell', width: '13%', textAlign: 'center', verticalAlign: 'middle', padding: '6px 4px', borderLeft: '1px solid #cbd5e1' }}>
-                      <div style={{
-                        width: '18px', height: '18px',
-                        border: `2px solid ${goal.rating === r ? '#1e293b' : '#94a3b8'}`,
-                        background: 'white',
-                        margin: '0 auto',
-                        lineHeight: '14px',
-                        textAlign: 'center',
-                        fontSize: '11px',
-                        fontWeight: 'bold',
-                        color: '#1e293b',
-                      }}>
-                        {goal.rating === r ? 'X' : ''}
+                  {RATING_COLS.map(r => {
+                    const checked = goal.rating === r;
+                    return (
+                      <div key={r} style={{ display: 'table-cell', width: '13%', textAlign: 'center', verticalAlign: 'middle', padding: '6px 4px', borderLeft: '1px solid #cbd5e1' }}>
+                        <div style={{
+                          width: '20px', height: '20px',
+                          border: `2px solid ${checked ? '#1e3a5f' : '#94a3b8'}`,
+                          background: checked ? '#1e3a5f' : 'white',
+                          margin: '0 auto',
+                          textAlign: 'center',
+                          fontSize: '14px',
+                          fontWeight: '900',
+                          color: 'white',
+                          fontFamily: 'Arial, Helvetica, sans-serif',
+                          lineHeight: '16px',
+                          overflow: 'hidden',
+                        }}>
+                          {checked ? 'X' : '\u00A0'}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
               {/* Results row */}
@@ -1257,23 +1262,28 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
                 <div style={{ display: 'table-cell', padding: '7px 8px', fontSize: '11px', fontWeight: comp.competency_description ? '600' : '400', color: comp.competency_description ? '#1e293b' : '#94a3b8', background: comp.competency_description ? '#eff6ff' : 'white', borderRight: '1px solid #cbd5e1', verticalAlign: 'middle', wordBreak: 'break-word' }}>
                   {comp.competency_description || 'Conducta o habilidad tecnica...'}
                 </div>
-                {RATING_COLS.map(r => (
-                  <div key={r} style={{ display: 'table-cell', width: '13%', textAlign: 'center', verticalAlign: 'middle', padding: '6px 4px', borderLeft: '1px solid #cbd5e1' }}>
-                    <div style={{
-                      width: '18px', height: '18px',
-                      border: `2px solid ${comp.rating === r ? '#1e293b' : '#94a3b8'}`,
-                      background: 'white',
-                      margin: '0 auto',
-                      lineHeight: '14px',
-                      textAlign: 'center',
-                      fontSize: '11px',
-                      fontWeight: 'bold',
-                      color: '#1e293b',
-                    }}>
-                      {comp.rating === r ? 'X' : ''}
+                {RATING_COLS.map(r => {
+                  const checked = comp.rating === r;
+                  return (
+                    <div key={r} style={{ display: 'table-cell', width: '13%', textAlign: 'center', verticalAlign: 'middle', padding: '6px 4px', borderLeft: '1px solid #cbd5e1' }}>
+                      <div style={{
+                        width: '20px', height: '20px',
+                        border: `2px solid ${checked ? '#1e3a5f' : '#94a3b8'}`,
+                        background: checked ? '#1e3a5f' : 'white',
+                        margin: '0 auto',
+                        textAlign: 'center',
+                        fontSize: '14px',
+                        fontWeight: '900',
+                        color: 'white',
+                        fontFamily: 'Arial, Helvetica, sans-serif',
+                        lineHeight: '16px',
+                        overflow: 'hidden',
+                      }}>
+                        {checked ? 'X' : '\u00A0'}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}
