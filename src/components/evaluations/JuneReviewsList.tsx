@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, User, Building2, Calendar, Clock, CheckCircle, AlertCircle, Eye, FileText } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { ArrowLeft, Plus, User, Building2, Calendar, Clock, CheckCircle, AlertCircle, Eye, FileText, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface JuneReview {
@@ -40,7 +40,13 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
   },
 };
 
-export function JuneReviewsList({ employeeType = 'administrativo', statusFilter = 'all', onBack, onNew, onEdit }: JuneReviewsListProps) {
+export function JuneReviewsList({
+  employeeType = 'administrativo',
+  statusFilter = 'all',
+  onBack,
+  onNew,
+  onEdit,
+}: JuneReviewsListProps) {
   const [reviews, setReviews] = useState<JuneReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -52,11 +58,7 @@ export function JuneReviewsList({ employeeType = 'administrativo', statusFilter 
     completed: 'Finalizadas',
   };
 
-  useEffect(() => {
-    loadReviews();
-  }, [statusFilter, employeeType]);
-
-  const loadReviews = async () => {
+  const loadReviews = useCallback(async () => {
     setLoading(true);
     try {
       let query = supabase
@@ -82,30 +84,48 @@ export function JuneReviewsList({ employeeType = 'administrativo', statusFilter 
       const { data, error } = await query;
       if (error) throw error;
 
-      const formatted = (data || []).map((r: any) => ({
-        id: r.id,
-        review_code: r.review_code,
-        review_date: r.review_date,
-        department: r.department,
-        position: r.position,
-        status: r.status,
-        created_at: r.created_at,
-        employee_id: r.employee_id,
-        employee_name: r.employee ? `${r.employee.first_name} ${r.employee.last_name}` : 'Sin nombre',
-      }));
-
-      setReviews(formatted);
-    } catch (error) {
-      console.error('Error loading june reviews:', error);
+      setReviews(
+        (data || []).map((r: { id: string; review_code: string | null; review_date: string | null; department: string | null; position: string | null; status: string; created_at: string; employee_id: string; employee: { first_name: string; last_name: string } | null }) => ({
+          id: r.id,
+          review_code: r.review_code,
+          review_date: r.review_date,
+          department: r.department,
+          position: r.position,
+          status: r.status,
+          created_at: r.created_at,
+          employee_id: r.employee_id,
+          employee_name: r.employee
+            ? `${r.employee.first_name} ${r.employee.last_name}`
+            : 'Sin nombre',
+        }))
+      );
+    } catch (err) {
+      console.error('Error loading june reviews:', err);
     } finally {
       setLoading(false);
     }
+  }, [employeeType, statusFilter]);
+
+  useEffect(() => {
+    loadReviews();
+  }, [loadReviews]);
+
+  const handleDelete = async (id: string, employeeName: string) => {
+    if (!window.confirm(`\u00BFEst\u00E1 seguro de eliminar la revisi\u00F3n de ${employeeName}?`)) return;
+    try {
+      const { error } = await supabase.from('june_reviews').delete().eq('id', id);
+      if (error) throw error;
+      await loadReviews();
+    } catch (err) {
+      console.error('Error deleting review:', err);
+    }
   };
 
-  const filtered = reviews.filter(r =>
-    r.employee_name.toLowerCase().includes(search.toLowerCase()) ||
-    (r.review_code || '').toLowerCase().includes(search.toLowerCase()) ||
-    (r.department || '').toLowerCase().includes(search.toLowerCase())
+  const filtered = reviews.filter(
+    (r) =>
+      r.employee_name.toLowerCase().includes(search.toLowerCase()) ||
+      (r.review_code || '').toLowerCase().includes(search.toLowerCase()) ||
+      (r.department || '').toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -121,14 +141,17 @@ export function JuneReviewsList({ employeeType = 'administrativo', statusFilter 
           </button>
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-slate-800">
-              {titleMap[statusFilter]} &mdash; {employeeType === 'operativo' ? 'Operativo' : 'Administrativo'}
+              {titleMap[statusFilter]} &mdash;{' '}
+              {employeeType === 'operativo' ? 'Operativo' : 'Administrativo'}
             </h1>
             <p className="text-sm text-slate-500">2da Evaluacion &mdash; Revision Junio 2026</p>
           </div>
           <button
             onClick={onNew}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-white font-semibold transition shadow-sm ${
-              employeeType === 'operativo' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-teal-600 hover:bg-teal-700'
+              employeeType === 'operativo'
+                ? 'bg-orange-600 hover:bg-orange-700'
+                : 'bg-teal-600 hover:bg-teal-700'
             }`}
           >
             <Plus className="w-4 h-4" />
@@ -154,19 +177,33 @@ export function JuneReviewsList({ employeeType = 'administrativo', statusFilter 
               <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
               <p className="text-slate-500 font-medium">No se encontraron revisiones</p>
               <p className="text-slate-400 text-sm mt-1">
-                {search ? 'Intenta con otro termino de busqueda' : 'Crea una nueva revision para comenzar'}
+                {search
+                  ? 'Intenta con otro termino de busqueda'
+                  : 'Crea una nueva revision para comenzar'}
               </p>
             </div>
           ) : (
             <table className="w-full">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Colaborador</th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Codigo</th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Departamento</th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Fecha Revision</th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Estado</th>
-                  <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Acciones</th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Colaborador
+                  </th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Codigo
+                  </th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Departamento
+                  </th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Fecha Revision
+                  </th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Estado
+                  </th>
+                  <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -176,22 +213,34 @@ export function JuneReviewsList({ employeeType = 'administrativo', statusFilter 
                     <tr key={review.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${employeeType === 'operativo' ? 'bg-orange-100' : 'bg-teal-100'}`}>
-                            <User className={`w-4 h-4 ${employeeType === 'operativo' ? 'text-orange-600' : 'text-teal-600'}`} />
+                          <div
+                            className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
+                              employeeType === 'operativo' ? 'bg-orange-100' : 'bg-teal-100'
+                            }`}
+                          >
+                            <User
+                              className={`w-4 h-4 ${
+                                employeeType === 'operativo' ? 'text-orange-600' : 'text-teal-600'
+                              }`}
+                            />
                           </div>
                           <div>
-                            <p className="text-sm font-semibold text-slate-800">{review.employee_name}</p>
-                            <p className="text-xs text-slate-500">{review.position || '—'}</p>
+                            <p className="text-sm font-semibold text-slate-800">
+                              {review.employee_name}
+                            </p>
+                            <p className="text-xs text-slate-500">{review.position || '\u2014'}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-5 py-4">
-                        <span className="text-sm text-slate-600 font-mono">{review.review_code || '—'}</span>
+                        <span className="text-sm text-slate-600 font-mono">
+                          {review.review_code || '\u2014'}
+                        </span>
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-1.5 text-sm text-slate-600">
                           <Building2 className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-                          {review.department || '—'}
+                          {review.department || '\u2014'}
                         </div>
                       </td>
                       <td className="px-5 py-4">
@@ -203,19 +252,34 @@ export function JuneReviewsList({ employeeType = 'administrativo', statusFilter 
                         </div>
                       </td>
                       <td className="px-5 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${statusInfo.color}`}>
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${statusInfo.color}`}
+                        >
                           {statusInfo.icon}
                           {statusInfo.label}
                         </span>
                       </td>
                       <td className="px-5 py-4 text-right">
-                        <button
-                          onClick={() => onEdit(review.id)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${employeeType === 'operativo' ? 'bg-orange-50 text-orange-700 hover:bg-orange-100' : 'bg-teal-50 text-teal-700 hover:bg-teal-100'}`}
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          {review.status === 'completed' ? 'Ver' : 'Editar'}
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => onEdit(review.id)}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                              employeeType === 'operativo'
+                                ? 'bg-orange-50 text-orange-700 hover:bg-orange-100'
+                                : 'bg-teal-50 text-teal-700 hover:bg-teal-100'
+                            }`}
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            {review.status === 'completed' ? 'Ver' : 'Editar'}
+                          </button>
+                          <button
+                            onClick={() => handleDelete(review.id, review.employee_name)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-red-50 text-red-600 hover:bg-red-100"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Eliminar
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -226,7 +290,8 @@ export function JuneReviewsList({ employeeType = 'administrativo', statusFilter 
 
           <div className="px-5 py-3 border-t border-slate-100 bg-slate-50">
             <p className="text-xs text-slate-500">
-              {filtered.length} registro{filtered.length !== 1 ? 's' : ''} encontrado{filtered.length !== 1 ? 's' : ''}
+              {filtered.length} registro{filtered.length !== 1 ? 's' : ''} encontrado
+              {filtered.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
