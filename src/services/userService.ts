@@ -5,11 +5,33 @@ const MANAGE_USERS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mana
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error('No hay sesion activa');
+  if (!session) throw new Error('No hay sesion activa. Por favor recarga la pagina.');
   return {
     'Authorization': `Bearer ${session.access_token}`,
     'Content-Type': 'application/json',
   };
+}
+
+async function callManageUsers(body: Record<string, any>): Promise<{ success: boolean; error?: string; [key: string]: any }> {
+  const headers = await getAuthHeaders();
+  const response = await fetch(MANAGE_USERS_URL, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  let result: any;
+  try {
+    result = await response.json();
+  } catch {
+    throw new Error('Respuesta invalida del servidor (no es JSON). Status: ' + response.status);
+  }
+
+  if (!response.ok || result.error) {
+    throw new Error(result.error || 'Error del servidor: ' + response.status);
+  }
+
+  return result;
 }
 
 export interface CreateUserData {
@@ -28,6 +50,7 @@ export interface UpdateUserData {
   isActive?: boolean;
   companyId?: string;
   accessibleCompanyIds?: string[] | null;
+  email?: string;
 }
 
 class UserService {
@@ -84,21 +107,19 @@ class UserService {
 
   async updateUser(systemUserId: string, updates: UpdateUserData): Promise<{ success: boolean; error?: string }> {
     try {
-      const updateData: Record<string, any> = { updated_at: new Date().toISOString() };
-      if (updates.employeeId !== undefined) updateData.employee_id = updates.employeeId;
-      if (updates.role !== undefined) updateData.role = updates.role;
-      if (updates.isActive !== undefined) updateData.is_active = updates.isActive;
-      if (updates.companyId !== undefined) updateData.company_id = updates.companyId;
+      const updatesPayload: Record<string, any> = {};
+      if (updates.employeeId !== undefined) updatesPayload.employee_id = updates.employeeId;
+      if (updates.role !== undefined) updatesPayload.role = updates.role;
+      if (updates.isActive !== undefined) updatesPayload.is_active = updates.isActive;
+      if (updates.companyId !== undefined) updatesPayload.company_id = updates.companyId;
+      if (updates.email !== undefined) updatesPayload.email = updates.email;
       if (updates.accessibleCompanyIds !== undefined) {
-        updateData.accessible_company_ids = updates.accessibleCompanyIds?.length ? updates.accessibleCompanyIds : null;
+        updatesPayload.accessible_company_ids = updates.accessibleCompanyIds?.length
+          ? updates.accessibleCompanyIds
+          : null;
       }
 
-      const { error } = await supabase
-        .from('system_users')
-        .update(updateData)
-        .eq('id', systemUserId);
-
-      if (error) throw error;
+      await callManageUsers({ action: 'update_user', systemUserId, updates: updatesPayload });
       return { success: true };
     } catch (error: any) {
       console.error('Error updating user:', error);
@@ -108,15 +129,7 @@ class UserService {
 
   async deleteUser(userId: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const headers = await getAuthHeaders();
-      const response = await fetch(MANAGE_USERS_URL, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ action: 'delete_user', userId }),
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Error al eliminar el usuario');
+      await callManageUsers({ action: 'delete_user', userId });
       return { success: true };
     } catch (error: any) {
       console.error('Error deleting user:', error);
@@ -126,15 +139,7 @@ class UserService {
 
   async resetPassword(userId: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const headers = await getAuthHeaders();
-      const response = await fetch(MANAGE_USERS_URL, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ action: 'reset_password', userId, newPassword }),
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Error al cambiar la contrasena');
+      await callManageUsers({ action: 'reset_password', userId, newPassword });
       return { success: true };
     } catch (error: any) {
       console.error('Error resetting password:', error);
