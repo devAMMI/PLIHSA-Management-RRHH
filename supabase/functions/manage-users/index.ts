@@ -31,17 +31,25 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+    if (!supabaseUrl || !serviceKey) {
+      return new Response(JSON.stringify({ error: "Server configuration error: missing env vars" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
 
     const token = authHeader.replace("Bearer ", "");
     const { data: { user: requestUser }, error: userError } = await supabaseAdmin.auth.getUser(token);
 
     if (userError || !requestUser) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
+      return new Response(JSON.stringify({ error: "Invalid or expired token: " + (userError?.message ?? "no user") }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -53,8 +61,15 @@ Deno.serve(async (req: Request) => {
       .eq("user_id", requestUser.id)
       .maybeSingle();
 
-    if (systemUserError || !systemUser) {
-      return new Response(JSON.stringify({ error: "User not found in system" }), {
+    if (systemUserError) {
+      return new Response(JSON.stringify({ error: "DB error finding system user: " + systemUserError.message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!systemUser) {
+      return new Response(JSON.stringify({ error: "User not found in system_users. uid=" + requestUser.id }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -62,7 +77,7 @@ Deno.serve(async (req: Request) => {
 
     const ALLOWED_MANAGER_ROLES = ["superadmin", "admin", "rrhh"];
     if (!systemUser.is_active || !ALLOWED_MANAGER_ROLES.includes(systemUser.role)) {
-      return new Response(JSON.stringify({ error: "No tienes permisos para gestionar usuarios" }), {
+      return new Response(JSON.stringify({ error: "Sin permisos. Role=" + systemUser.role + " active=" + systemUser.is_active }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -84,7 +99,6 @@ Deno.serve(async (req: Request) => {
         .order("created_at", { ascending: false });
 
       if (listError) {
-        console.error("Error listing system_users:", listError);
         return new Response(JSON.stringify({ error: "Database error finding users: " + listError.message }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -107,15 +121,16 @@ Deno.serve(async (req: Request) => {
 
     if (req.method === "POST" && body.action === "reset_password") {
       const { userId, newPassword } = body;
+
       if (!userId || !newPassword) {
-        return new Response(JSON.stringify({ error: "userId and newPassword required" }), {
+        return new Response(JSON.stringify({ error: "userId and newPassword son requeridos" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       if (newPassword.length < 6) {
-        return new Response(JSON.stringify({ error: "Password must be at least 6 characters" }), {
+        return new Response(JSON.stringify({ error: "La contrasena debe tener al menos 6 caracteres" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -137,7 +152,10 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, { password: newPassword });
+      const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+        password: newPassword,
+      });
+
       if (authError) {
         console.error("Auth admin updateUserById error:", authError);
         return new Response(JSON.stringify({ error: "Error al cambiar contrasena: " + authError.message }), {
@@ -146,15 +164,15 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      return new Response(JSON.stringify({ success: true }), {
+      return new Response(JSON.stringify({ success: true, message: "Contrasena actualizada correctamente" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    if (req.method === "DELETE" || body.action === "delete_user") {
-      const userId = body.userId || url.searchParams.get("userId");
+    if (req.method === "POST" && (body.action === "delete_user")) {
+      const { userId } = body;
       if (!userId) {
-        return new Response(JSON.stringify({ error: "userId required" }), {
+        return new Response(JSON.stringify({ error: "userId requerido" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -174,7 +192,6 @@ Deno.serve(async (req: Request) => {
         .maybeSingle();
 
       const targetLevel = ROLE_HIERARCHY[targetUser?.role ?? ""] ?? 0;
-
       if (!isSuperAdmin && targetLevel > requesterLevel) {
         return new Response(JSON.stringify({ error: "No tienes permiso para eliminar este usuario" }), {
           status: 403,
@@ -187,16 +204,24 @@ Deno.serve(async (req: Request) => {
         .delete()
         .eq("user_id", userId);
 
-      if (deleteSystemError) throw deleteSystemError;
+      if (deleteSystemError) {
+        return new Response(JSON.stringify({ error: "Error eliminando de system_users: " + deleteSystemError.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
-      await supabaseAdmin.auth.admin.deleteUser(userId);
+      const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+      if (authDeleteError) {
+        console.error("Auth admin deleteUser error:", authDeleteError);
+      }
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(JSON.stringify({ error: "Unknown action" }), {
+    return new Response(JSON.stringify({ error: "Accion desconocida. method=" + req.method + " action=" + (body?.action ?? "none") }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
