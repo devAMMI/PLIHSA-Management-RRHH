@@ -229,6 +229,13 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel, periodI
       }));
 
       setEmployees(formattedEmployees);
+
+      if (!editingEvaluationId && employee?.id) {
+        const selfInList = formattedEmployees.find(emp => emp.id === employee.id);
+        if (selfInList) {
+          setSelectedEmployeeId(employee.id);
+        }
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -593,7 +600,7 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel, periodI
                 <option value="">Seleccione un colaborador</option>
                 {employees.map(emp => (
                   <option key={emp.id} value={emp.id}>
-                    {emp.first_name} {emp.last_name} - {emp.position}
+                    {emp.first_name} {emp.last_name} - {emp.position}{emp.id === employee?.id ? ' (Yo)' : ''}
                   </option>
                 ))}
               </select>
