@@ -18,15 +18,15 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
     { id: 'goal-definition-enero', label: 'Definición de Metas', icon: null, phaseNumber: 1, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
     { id: 'evaluacion-junio', label: 'Revisión de Metas', icon: null, phaseNumber: 2, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
     { id: 'evaluacion-final', label: 'Evaluación Final', icon: null, phaseNumber: 3, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
-    { id: 'evaluation-admin-enero', label: 'Evaluación Administrativa', icon: ClipboardCheck, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
-    { id: 'evaluation-operative-enero', label: 'Evaluación Operativa', icon: ClipboardCheck, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
-    { id: 'evaluations-list', label: 'Ver Evaluaciones', icon: FileText, requiredRoles: ['superadmin', 'admin', 'rrhh'] },
+    { id: 'evaluation-admin-enero', label: 'Evaluación Administrativa', icon: ClipboardCheck, requiredRoles: ['superadmin', 'rrhh', 'manager', 'jefe'] },
+    { id: 'evaluation-operative-enero', label: 'Evaluación Operativa', icon: ClipboardCheck, requiredRoles: ['superadmin', 'rrhh', 'manager', 'jefe'] },
+    { id: 'evaluations-list', label: 'Ver Evaluaciones', icon: FileText, requiredRoles: ['superadmin', 'rrhh'] },
     { id: 'system-users', label: 'Usuarios', icon: Shield, requiredRoles: ['superadmin', 'admin'] },
     { id: 'reportes', label: 'Reportes', icon: BarChart2, requiredRoles: ['superadmin', 'admin', 'rrhh'] },
     { id: 'settings', label: 'Configuración', icon: Settings, requiredRoles: ['superadmin'] },
-    { id: 'raw-evaluations', label: 'Evaluaciones Hechas', icon: Database, requiredRoles: ['superadmin', 'admin'] },
+    { id: 'raw-evaluations', label: 'Evaluaciones Hechas', icon: Database, requiredRoles: ['superadmin'] },
     { id: 'sql-executor', label: 'SQL Evaluaciones', icon: Terminal, requiredRoles: ['superadmin'] },
-    { id: 'audit-log', label: 'Registro de Actividad', icon: Activity, requiredRoles: ['superadmin', 'admin', 'rrhh'] },
+    { id: 'audit-log', label: 'Registro de Actividad', icon: Activity, requiredRoles: ['superadmin', 'rrhh'] },
   ];
 
   const isSuperAdmin = systemUser?.role === 'superadmin';
