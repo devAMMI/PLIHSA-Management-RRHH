@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 import { Save, FileText, Users, Calendar, Building2, MapPin, User, Download, Printer, X, ArrowLeft, FilePlus } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -21,9 +22,13 @@ interface GoalDefinitionFormProps {
 }
 
 export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
+  const { systemUser } = useAuth();
   const formRef = useRef<HTMLDivElement>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
+
+  const restrictedRoles = ['jefe', 'manager'];
+  const canSelfEvaluate = systemUser?.role && !restrictedRoles.includes(systemUser.role);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -309,14 +314,26 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
               </label>
               <select
                 value={selectedEmployeeId}
-                onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (!canSelfEvaluate && val === systemUser?.employee_id) {
+                    setMessage({ type: 'error', text: 'Usted no se puede evaluar usted mismo.' });
+                    return;
+                  }
+                  setSelectedEmployeeId(val);
+                }}
                 className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 required
               >
                 <option value="">-- Seleccionar empleado --</option>
                 {employees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
+                  <option
+                    key={emp.id}
+                    value={emp.id}
+                    disabled={!canSelfEvaluate && emp.id === systemUser?.employee_id}
+                  >
                     {emp.first_name} {emp.last_name}
+                    {!canSelfEvaluate && emp.id === systemUser?.employee_id ? ' (no permitido)' : ''}
                   </option>
                 ))}
               </select>
