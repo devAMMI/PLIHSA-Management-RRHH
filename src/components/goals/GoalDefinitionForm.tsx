@@ -247,6 +247,17 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
         if (behaviorsError) throw behaviorsError;
       }
 
+      if (systemUser?.id) {
+        await supabase.from('evaluation_audit_logs').insert({
+          action_type: 'created',
+          evaluation_type: 'definicion_metas_administrativa',
+          evaluation_id: goalDef.id,
+          evaluator_system_user_id: systemUser.id,
+          evaluator_employee_id: systemUser.employee_id || null,
+          evaluated_employee_id: selectedEmployeeId,
+        });
+      }
+
       setMessage({ type: 'success', text: 'Definición de metas guardada exitosamente' });
 
     } catch (error: any) {
