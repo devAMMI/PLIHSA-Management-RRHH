@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { FileText, Eye, Trash2, Calendar, User, Building2, CheckCircle, Clock, ArrowLeft, Upload, Search, X } from 'lucide-react';
 import { GoalDefinitionViewer } from './GoalDefinitionViewer';
 import { OperativeGoalDefinitionViewer } from './OperativeGoalDefinitionViewer';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Employee {
   first_name: string;
@@ -90,6 +91,7 @@ const formatGMT6 = (iso: string) => {
 };
 
 export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterStatus, workflowFilter }: GoalDefinitionsListProps) {
+  const { systemUser } = useAuth();
   const [allDefinitions, setAllDefinitions] = useState<(AdministrativeGoalDefinition | OperativeGoalDefinition)[]>([]);
   const [definitions, setDefinitions] = useState<(AdministrativeGoalDefinition | OperativeGoalDefinition)[]>([]);
   const [auditMap, setAuditMap] = useState<Record<string, AuditInfo>>({});
@@ -127,6 +129,22 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
   const fetchDefinitions = async () => {
     setLoading(true);
     try {
+      // For jefe role, get their subordinate employee IDs first
+      let subordinateIds: string[] | null = null;
+      if (systemUser?.role === 'jefe' && systemUser.employee_id) {
+        const { data: subs } = await supabase
+          .from('employees')
+          .select('id')
+          .eq('manager_id', systemUser.employee_id);
+        subordinateIds = (subs || []).map((s: { id: string }) => s.id);
+        if (subordinateIds.length === 0) {
+          setAllDefinitions([]);
+          setDefinitions([]);
+          setLoading(false);
+          return;
+        }
+      }
+
       if (type === 'administrative') {
         let query = supabase
           .from('goal_definitions')
@@ -155,6 +173,10 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
             )
           `)
           .order('created_at', { ascending: false });
+
+        if (subordinateIds) {
+          query = query.in('employee_id', subordinateIds);
+        }
 
         if (workflowFilter === 'draft-pending') {
           query = query.or('workflow_status.is.null,workflow_status.eq.draft,workflow_status.eq.pending_signature');
@@ -227,6 +249,10 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
             )
           `)
           .order('created_at', { ascending: false });
+
+        if (subordinateIds) {
+          query = query.in('employee_id', subordinateIds);
+        }
 
         if (workflowFilter === 'draft-pending') {
           query = query.or('workflow_status.is.null,workflow_status.eq.draft,workflow_status.eq.pending_signature');

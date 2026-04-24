@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, Plus, User, Building2, Calendar, Clock, CheckCircle, AlertCircle, Eye, FileText, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface JuneReview {
   id: string;
@@ -47,6 +48,7 @@ export function JuneReviewsList({
   onNew,
   onEdit,
 }: JuneReviewsListProps) {
+  const { systemUser } = useAuth();
   const [reviews, setReviews] = useState<JuneReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -61,6 +63,21 @@ export function JuneReviewsList({
   const loadReviews = useCallback(async () => {
     setLoading(true);
     try {
+      // For jefe role, restrict to their subordinates
+      let subordinateIds: string[] | null = null;
+      if (systemUser?.role === 'jefe' && systemUser.employee_id) {
+        const { data: subs } = await supabase
+          .from('employees')
+          .select('id')
+          .eq('manager_id', systemUser.employee_id);
+        subordinateIds = (subs || []).map((s: { id: string }) => s.id);
+        if (subordinateIds.length === 0) {
+          setReviews([]);
+          setLoading(false);
+          return;
+        }
+      }
+
       let query = supabase
         .from('june_reviews')
         .select(`
@@ -76,6 +93,10 @@ export function JuneReviewsList({
         `)
         .eq('employee_type', employeeType)
         .order('created_at', { ascending: false });
+
+      if (subordinateIds) {
+        query = query.in('employee_id', subordinateIds);
+      }
 
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
@@ -104,7 +125,7 @@ export function JuneReviewsList({
     } finally {
       setLoading(false);
     }
-  }, [employeeType, statusFilter]);
+  }, [employeeType, statusFilter, systemUser]);
 
   useEffect(() => {
     loadReviews();
