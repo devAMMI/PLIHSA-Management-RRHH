@@ -417,7 +417,7 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
                 <div className="col-span-1 border-r-2 border-slate-300">
                   <div className="bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">Fecha de Ingreso:</div>
                   <div className="bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
-                    {new Date(definition.employee.hire_date).toLocaleDateString('es-HN')}
+                    {new Date(definition.employee.hire_date + 'T00:00:00').toLocaleDateString('es-HN')}
                   </div>
                 </div>
                 <div className="col-span-1">
@@ -431,7 +431,7 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
                         className="w-full bg-transparent border-0 outline-none text-sm"
                       />
                     ) : (
-                      new Date(definitionDate).toLocaleDateString('es-HN')
+                      new Date(definitionDate + 'T00:00:00').toLocaleDateString('es-HN')
                     )}
                   </div>
                 </div>

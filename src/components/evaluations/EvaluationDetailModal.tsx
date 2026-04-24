@@ -250,7 +250,7 @@ export function EvaluationDetailModal({ evaluationId, evaluationType, onClose }:
               <div>
                 <p className="text-sm text-slate-600 mb-1">Fecha de Contratación</p>
                 <p className="font-medium text-slate-800">
-                  {new Date(evaluation.employee.hire_date).toLocaleDateString('es-HN')}
+                  {new Date(evaluation.employee.hire_date + 'T00:00:00').toLocaleDateString('es-HN')}
                 </p>
               </div>
             </div>

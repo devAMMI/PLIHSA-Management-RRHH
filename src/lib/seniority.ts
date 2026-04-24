@@ -9,7 +9,7 @@ export function calculateWorkSeniority(hireDate: string | null | undefined): Sen
     return { years: 0, months: 0, days: 0 };
   }
 
-  const hire = new Date(hireDate);
+  const hire = new Date(hireDate + 'T00:00:00');
   const today = new Date();
 
   if (hire > today) {

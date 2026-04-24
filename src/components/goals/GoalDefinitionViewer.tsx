@@ -558,7 +558,7 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                 <div className="space-y-1.5">
                   <div className="flex gap-2">
                     <span className="font-bold text-slate-700 min-w-[120px]">Fecha de Ingreso:</span>
-                    <span className="text-slate-600">{new Date(definition.employee.hire_date).toLocaleDateString('es-HN')}</span>
+                    <span className="text-slate-600">{new Date(definition.employee.hire_date + 'T00:00:00').toLocaleDateString('es-HN')}</span>
                   </div>
                   <div className="flex gap-2">
                     <span className="font-bold text-slate-700 min-w-[120px]">Jefe Inmediato:</span>
@@ -578,7 +578,7 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                         className="border border-slate-300 rounded px-1 py-0.5 text-slate-600 text-[11px]"
                       />
                     ) : (
-                      <span className="text-slate-600">{new Date(definitionDate).toLocaleDateString('es-HN')}</span>
+                      <span className="text-slate-600">{new Date(definitionDate + 'T00:00:00').toLocaleDateString('es-HN')}</span>
                     )}
                   </div>
                 </div>

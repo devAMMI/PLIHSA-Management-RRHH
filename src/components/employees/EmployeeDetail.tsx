@@ -11,7 +11,7 @@ interface EmployeeDetailProps {
 export function EmployeeDetail({ employee, onClose, onEdit, onDelete }: EmployeeDetailProps) {
   const formatDate = (date: string | null) => {
     if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('es-HN', {
+    return new Date(date + 'T00:00:00').toLocaleDateString('es-HN', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -21,7 +21,7 @@ export function EmployeeDetail({ employee, onClose, onEdit, onDelete }: Employee
   const calculateAge = (birthDate: string | null) => {
     if (!birthDate) return null;
     const today = new Date();
-    const birth = new Date(birthDate);
+    const birth = new Date(birthDate + 'T00:00:00');
     let age = today.getFullYear() - birth.getFullYear();
     const monthDiff = today.getMonth() - birth.getMonth();
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
