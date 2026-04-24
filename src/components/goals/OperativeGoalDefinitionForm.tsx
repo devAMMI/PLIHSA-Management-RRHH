@@ -165,7 +165,7 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
       if (systemUser?.id) {
         await supabase.from('evaluation_audit_logs').insert({
           action_type: 'created',
-          evaluation_type: 'definicion_metas_operativa',
+          evaluation_type: 'operativa',
           evaluation_id: goalDefinition.id,
           evaluator_system_user_id: systemUser.id,
           evaluator_employee_id: systemUser.employee_id || null,

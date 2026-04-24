@@ -456,7 +456,7 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
                           <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
                             <User className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
                             <span>
-                              Creado por:{' '}
+                              Evaluado por:{' '}
                               <span className="font-semibold text-slate-700">{auditMap[definition.id].evaluator_name}</span>
                               {' — '}
                               {(() => {

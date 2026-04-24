@@ -250,7 +250,7 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
       if (systemUser?.id) {
         await supabase.from('evaluation_audit_logs').insert({
           action_type: 'created',
-          evaluation_type: 'definicion_metas_administrativa',
+          evaluation_type: 'administrativa',
           evaluation_id: goalDef.id,
           evaluator_system_user_id: systemUser.id,
           evaluator_employee_id: systemUser.employee_id || null,
