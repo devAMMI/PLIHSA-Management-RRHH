@@ -15,6 +15,20 @@ interface JuneReview {
   employee_name: string;
 }
 
+interface AuditInfo {
+  evaluator_name: string;
+  performed_at: string;
+}
+
+const formatGMT6 = (iso: string) => {
+  const d = new Date(iso);
+  const offset = -6 * 60;
+  const local = new Date(d.getTime() + offset * 60 * 1000);
+  const date = local.toLocaleDateString('es-HN', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+  const time = local.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC' });
+  return { date, time };
+};
+
 interface JuneReviewsListProps {
   employeeType?: 'administrativo' | 'operativo';
   statusFilter?: 'draft' | 'pending_signature' | 'completed' | 'all';
@@ -50,6 +64,7 @@ export function JuneReviewsList({
 }: JuneReviewsListProps) {
   const { systemUser } = useAuth();
   const [reviews, setReviews] = useState<JuneReview[]>([]);
+  const [auditMap, setAuditMap] = useState<Record<string, AuditInfo>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
@@ -105,21 +120,52 @@ export function JuneReviewsList({
       const { data, error } = await query;
       if (error) throw error;
 
-      setReviews(
-        (data || []).map((r: { id: string; review_code: string | null; review_date: string | null; department: string | null; position: string | null; status: string; created_at: string; employee_id: string; employee: { first_name: string; last_name: string } | null }) => ({
-          id: r.id,
-          review_code: r.review_code,
-          review_date: r.review_date,
-          department: r.department,
-          position: r.position,
-          status: r.status,
-          created_at: r.created_at,
-          employee_id: r.employee_id,
-          employee_name: r.employee
-            ? `${r.employee.first_name} ${r.employee.last_name}`
-            : 'Sin nombre',
-        }))
-      );
+      const mapped = (data || []).map((r: { id: string; review_code: string | null; review_date: string | null; department: string | null; position: string | null; status: string; created_at: string; employee_id: string; employee: { first_name: string; last_name: string } | null }) => ({
+        id: r.id,
+        review_code: r.review_code,
+        review_date: r.review_date,
+        department: r.department,
+        position: r.position,
+        status: r.status,
+        created_at: r.created_at,
+        employee_id: r.employee_id,
+        employee_name: r.employee
+          ? `${r.employee.first_name} ${r.employee.last_name}`
+          : 'Sin nombre',
+      }));
+      setReviews(mapped);
+
+      if (mapped.length > 0) {
+        const ids = mapped.map((r) => r.id);
+        const { data: auditData } = await supabase
+          .from('evaluation_audit_logs')
+          .select(`
+            evaluation_id,
+            performed_at,
+            evaluator:evaluator_system_user_id (first_name, last_name),
+            evaluator_employee:evaluator_employee_id (first_name, last_name)
+          `)
+          .in('evaluation_id', ids)
+          .eq('action_type', 'created')
+          .order('performed_at', { ascending: true });
+
+        if (auditData) {
+          const map: Record<string, AuditInfo> = {};
+          auditData.forEach((a: any) => {
+            if (!map[a.evaluation_id]) {
+              const emp = a.evaluator_employee;
+              const sys = a.evaluator;
+              const name = emp
+                ? `${emp.first_name} ${emp.last_name}`
+                : sys
+                ? `${sys.first_name} ${sys.last_name}`
+                : 'Usuario desconocido';
+              map[a.evaluation_id] = { evaluator_name: name, performed_at: a.performed_at };
+            }
+          });
+          setAuditMap(map);
+        }
+      }
     } catch (err) {
       console.error('Error loading june reviews:', err);
     } finally {
@@ -250,6 +296,20 @@ export function JuneReviewsList({
                               {review.employee_name}
                             </p>
                             <p className="text-xs text-slate-500">{review.position || '\u2014'}</p>
+                            {auditMap[review.id] && (
+                              <div className="flex items-center gap-1 mt-1">
+                                <User className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                                <span className="text-xs text-slate-500">
+                                  Evaluado por:{' '}
+                                  <span className="font-semibold text-slate-700">{auditMap[review.id].evaluator_name}</span>
+                                  {' \u2014 '}
+                                  {(() => {
+                                    const { date, time } = formatGMT6(auditMap[review.id].performed_at);
+                                    return <span>{date}, {time} (GMT-6)</span>;
+                                  })()}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
