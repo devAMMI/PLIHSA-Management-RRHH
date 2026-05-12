@@ -179,6 +179,26 @@ function AppContent() {
           {renderView()}
         </main>
       </div>
+
+      {/* WhatsApp IT Support Button */}
+      <a
+        href="https://api.whatsapp.com/send?phone=50488196106&text=Hola%20Kenneth%2C%20solicito%20apoyo%20con%20la%20plataforma%20del%20sistema%20de%20evaluacion%20de%20desempe%C3%B1o%20de%20PLIHSA."
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 group flex items-center gap-3"
+        title="Chat Support - Soporte IT"
+      >
+        <span className="hidden group-hover:flex items-center bg-white text-slate-700 text-sm font-medium px-3 py-2 rounded-xl shadow-lg border border-slate-200 whitespace-nowrap transition-all duration-200">
+          Soporte IT
+        </span>
+        <div className="w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 flex items-center justify-center bg-white ring-2 ring-green-400 ring-offset-2">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/WhatsApp_Logo_green.svg/960px-WhatsApp_Logo_green.svg.png"
+            alt="WhatsApp Soporte IT"
+            className="w-10 h-10"
+          />
+        </div>
+      </a>
     </div>
   );
 }
