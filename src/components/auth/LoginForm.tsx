@@ -242,6 +242,28 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
         </div>
       </div>
 
+      {/* WhatsApp IT Support - floating button */}
+      <a
+        href="https://api.whatsapp.com/send?phone=50488196106&text=Hola%20Kenneth%2C%20solicito%20apoyo%20con%20la%20plataforma%20del%20sistema%20de%20evaluacion%20de%20desempe%C3%B1o%20de%20PLIHSA."
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 group flex items-center gap-3"
+        title="Soporte IT - Kenneth"
+      >
+        <span className="hidden group-hover:flex items-center bg-white text-slate-700 text-sm font-medium px-3 py-2 rounded-xl shadow-lg border border-slate-200 whitespace-nowrap">
+          <span className="font-semibold text-slate-800">Kenneth</span>
+          <span className="mx-1.5 text-slate-400">·</span>
+          <span className="text-slate-500">+504 8819-6106</span>
+        </span>
+        <div className="w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 flex items-center justify-center bg-white ring-2 ring-green-400 ring-offset-2">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/WhatsApp_Logo_green.svg/960px-WhatsApp_Logo_green.svg.png"
+            alt="WhatsApp Soporte IT"
+            className="w-10 h-10"
+          />
+        </div>
+      </a>
+
       <style>{`
         @keyframes fade-in {
           from {
