@@ -189,13 +189,16 @@ function AppContent() {
         title="Chat Support - Soporte IT"
       >
         <span className="hidden group-hover:flex items-center bg-white text-slate-700 text-sm font-medium px-3 py-2 rounded-xl shadow-lg border border-slate-200 whitespace-nowrap transition-all duration-200">
-          Soporte IT
+          <span className="font-semibold text-slate-800">Kenneth</span>
+          <span className="mx-1.5 text-slate-400">·</span>
+          <span className="text-slate-500">Soporte IT</span>
         </span>
-        <div className="w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 flex items-center justify-center bg-white ring-2 ring-green-400 ring-offset-2">
+        <div className="w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 flex items-center justify-center"
+          style={{ background: 'linear-gradient(180deg, #57d163 0%, #23b33a 100%)' }}>
           <img
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/WhatsApp_Logo_green.svg/960px-WhatsApp_Logo_green.svg.png"
+            src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
             alt="WhatsApp Soporte IT"
-            className="w-10 h-10"
+            className="w-9 h-9"
           />
         </div>
       </a>
