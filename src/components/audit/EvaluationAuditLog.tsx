@@ -5,13 +5,13 @@ import { useCompany } from '../../contexts/CompanyContext';
 
 interface AuditLogEntry {
   id: string;
-  action_type: 'created' | 'updated';
+  action_type: 'created' | 'updated' | 'deleted';
   evaluation_type: string;
   evaluation_id: string;
   performed_at: string;
+  target_name: string | null;
+  details: string | null;
   evaluator: {
-    first_name: string;
-    last_name: string;
     role: string;
   } | null;
   evaluator_employee: {
@@ -32,6 +32,7 @@ const TYPE_LABELS: Record<string, string> = {
   operativa: 'Definicion de Metas — Operativo',
   revision_junio_administrativa: 'Revision de Metas — Administrativo',
   revision_junio_operativa: 'Revision de Metas — Operativo',
+  empleado: 'Empleado',
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -39,16 +40,19 @@ const TYPE_COLORS: Record<string, string> = {
   operativa: 'bg-emerald-100 text-emerald-700 border-emerald-200',
   revision_junio_administrativa: 'bg-amber-100 text-amber-700 border-amber-200',
   revision_junio_operativa: 'bg-orange-100 text-orange-700 border-orange-200',
+  empleado: 'bg-slate-100 text-slate-600 border-slate-200',
 };
 
 const ACTION_COLORS: Record<string, string> = {
   created: 'bg-green-100 text-green-700 border-green-200',
-  updated: 'bg-slate-100 text-slate-600 border-slate-200',
+  updated: 'bg-blue-100 text-blue-700 border-blue-200',
+  deleted: 'bg-red-100 text-red-700 border-red-200',
 };
 
 const ACTION_LABELS: Record<string, string> = {
   created: 'Creado',
   updated: 'Actualizado',
+  deleted: 'Eliminado',
 };
 
 const ROLE_LABELS: Record<string, string> = {
@@ -85,9 +89,9 @@ export function EvaluationAuditLog() {
           evaluation_type,
           evaluation_id,
           performed_at,
+          target_name,
+          details,
           evaluator:evaluator_system_user_id (
-            first_name,
-            last_name,
             role
           ),
           evaluator_employee:evaluator_employee_id (
@@ -134,18 +138,20 @@ export function EvaluationAuditLog() {
   };
 
   const filteredLogs = logs.filter(log => {
-    const evaluatorName = log.evaluator
-      ? `${log.evaluator.first_name} ${log.evaluator.last_name}`.toLowerCase()
+    const evaluatorEmployeeName = log.evaluator_employee
+      ? `${log.evaluator_employee.first_name} ${log.evaluator_employee.last_name}`.toLowerCase()
       : '';
     const evaluatedName = log.evaluated_employee
       ? `${log.evaluated_employee.first_name} ${log.evaluated_employee.last_name}`.toLowerCase()
       : '';
+    const targetName = log.target_name?.toLowerCase() || '';
     const searchLower = search.toLowerCase();
 
     const matchesSearch =
       !search ||
-      evaluatorName.includes(searchLower) ||
-      evaluatedName.includes(searchLower);
+      evaluatorEmployeeName.includes(searchLower) ||
+      evaluatedName.includes(searchLower) ||
+      targetName.includes(searchLower);
 
     const matchesType = filterType === 'all' || log.evaluation_type === filterType;
     const matchesAction = filterAction === 'all' || log.action_type === filterAction;
@@ -219,6 +225,7 @@ export function EvaluationAuditLog() {
                 <option value="operativa">Definicion de Metas — Operativo</option>
                 <option value="revision_junio_administrativa">Revision de Metas — Admin</option>
                 <option value="revision_junio_operativa">Revision de Metas — Operativo</option>
+                <option value="empleado">Empleado</option>
               </select>
             </div>
             <div className="flex flex-col gap-1">
@@ -231,6 +238,7 @@ export function EvaluationAuditLog() {
                 <option value="all">Todas las acciones</option>
                 <option value="created">Creado</option>
                 <option value="updated">Actualizado</option>
+                <option value="deleted">Eliminado</option>
               </select>
             </div>
           </div>
@@ -265,9 +273,6 @@ export function EvaluationAuditLog() {
 
                 <div className="space-y-3">
                   {entries.map(log => {
-                    const evaluatorName = log.evaluator
-                      ? `${log.evaluator.first_name} ${log.evaluator.last_name}`
-                      : 'Usuario desconocido';
                     const evaluatorRole = log.evaluator
                       ? ROLE_LABELS[log.evaluator.role] || log.evaluator.role
                       : '';
@@ -276,41 +281,60 @@ export function EvaluationAuditLog() {
                       : null;
                     const evaluatedName = log.evaluated_employee
                       ? `${log.evaluated_employee.first_name} ${log.evaluated_employee.last_name}`
-                      : 'Empleado desconocido';
+                      : log.target_name || 'Registro desconocido';
                     const evaluatedPosition = log.evaluated_employee?.position || '';
                     const evaluatedDept = log.evaluated_employee?.departments?.name || '';
+
+                    const actionVerb =
+                      log.action_type === 'created' ? 'creo' :
+                      log.action_type === 'updated' ? 'actualizo' :
+                      'elimino';
+                    const actionObject =
+                      log.action_type === 'deleted' && log.evaluation_type === 'empleado'
+                        ? 'el registro de'
+                        : log.action_type === 'deleted'
+                        ? 'la definicion de metas de'
+                        : 'la evaluacion de';
 
                     return (
                       <div
                         key={log.id}
-                        className="bg-white rounded-xl border border-slate-200 px-5 py-4 shadow-sm hover:shadow-md transition-shadow"
+                        className={`bg-white rounded-xl border px-5 py-4 shadow-sm hover:shadow-md transition-shadow ${
+                          log.action_type === 'deleted' ? 'border-red-100' : 'border-slate-200'
+                        }`}
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-start gap-4 flex-1 min-w-0">
-                            <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <User className="w-4 h-4 text-slate-500" />
+                            <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                              log.action_type === 'deleted' ? 'bg-red-50' : 'bg-slate-100'
+                            }`}>
+                              <User className={`w-4 h-4 ${log.action_type === 'deleted' ? 'text-red-400' : 'text-slate-500'}`} />
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex flex-wrap items-center gap-2 mb-2">
-                                <span className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full border ${ACTION_COLORS[log.action_type]}`}>
-                                  {ACTION_LABELS[log.action_type]}
+                                <span className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full border ${ACTION_COLORS[log.action_type] || 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                                  {ACTION_LABELS[log.action_type] || log.action_type}
                                 </span>
-                                <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${TYPE_COLORS[log.evaluation_type]}`}>
+                                <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${TYPE_COLORS[log.evaluation_type] || 'bg-slate-100 text-slate-600 border-slate-200'}`}>
                                   <Tag className="w-3 h-3" />
                                   {TYPE_LABELS[log.evaluation_type] || log.evaluation_type}
                                 </span>
                               </div>
 
                               <p className="text-sm text-slate-800 leading-relaxed">
-                                <span className="font-semibold text-blue-700">{evaluatorEmployee || evaluatorName}</span>
+                                <span className="font-semibold text-blue-700">{evaluatorEmployee || 'Usuario del sistema'}</span>
+                                {evaluatorRole && (
+                                  <>
+                                    {' '}
+                                    <span className="text-slate-500">({evaluatorRole})</span>
+                                  </>
+                                )}
                                 {' '}
-                                <span className="text-slate-500">({evaluatorRole})</span>
+                                <span className="text-slate-600">{actionVerb} {actionObject}</span>
                                 {' '}
-                                <span className="text-slate-600">
-                                  {log.action_type === 'created' ? 'creo la evaluacion de' : 'actualizo la evaluacion de'}
+                                <span className={`font-semibold ${log.action_type === 'deleted' ? 'text-red-700' : 'text-slate-800'}`}>
+                                  {evaluatedName}
                                 </span>
-                                {' '}
-                                <span className="font-semibold text-slate-800">{evaluatedName}</span>
                               </p>
 
                               {(evaluatedPosition || evaluatedDept) && (
@@ -319,10 +343,8 @@ export function EvaluationAuditLog() {
                                 </p>
                               )}
 
-                              {evaluatorEmployee && evaluatorEmployee !== evaluatorName && (
-                                <p className="text-xs text-slate-400 mt-0.5">
-                                  Usuario del sistema: {evaluatorName}
-                                </p>
+                              {log.details && (
+                                <p className="text-xs text-slate-400 mt-0.5">{log.details}</p>
                               )}
                             </div>
                           </div>

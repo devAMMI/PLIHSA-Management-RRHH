@@ -4,6 +4,7 @@ import { FileText, Eye, Trash2, Calendar, User, Building2, CheckCircle, Clock, A
 import { GoalDefinitionViewer } from './GoalDefinitionViewer';
 import { OperativeGoalDefinitionViewer } from './OperativeGoalDefinitionViewer';
 import { useAuth } from '../../contexts/AuthContext';
+import { logAuditEvent } from '../../lib/auditLog';
 
 interface Employee {
   first_name: string;
@@ -91,7 +92,7 @@ const formatGMT6 = (iso: string) => {
 };
 
 export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterStatus, workflowFilter }: GoalDefinitionsListProps) {
-  const { systemUser } = useAuth();
+  const { systemUser, employee } = useAuth();
   const [allDefinitions, setAllDefinitions] = useState<(AdministrativeGoalDefinition | OperativeGoalDefinition)[]>([]);
   const [definitions, setDefinitions] = useState<(AdministrativeGoalDefinition | OperativeGoalDefinition)[]>([]);
   const [auditMap, setAuditMap] = useState<Record<string, AuditInfo>>({});
@@ -310,6 +311,12 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
   const handleDelete = async (id: string) => {
     if (!confirm('¿Está seguro de eliminar esta definición de metas?')) return;
 
+    const definition = allDefinitions.find(d => d.id === id);
+    const definitionEmployeeName = definition
+      ? `${definition.employee.first_name} ${definition.employee.last_name}`
+      : undefined;
+    const definitionEmployeeId = definition?.employee_id;
+
     try {
       const table = type === 'administrative' ? 'goal_definitions' : 'operative_goal_definitions';
       const { error } = await supabase
@@ -318,6 +325,17 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
         .eq('id', id);
 
       if (error) throw error;
+
+      await logAuditEvent({
+        actionType: 'deleted',
+        evaluationType: type === 'administrative' ? 'administrativa' : 'operativa',
+        evaluationId: id,
+        evaluatorSystemUserId: systemUser?.id,
+        evaluatorEmployeeId: employee?.id,
+        evaluatedEmployeeId: definitionEmployeeId,
+        targetName: definitionEmployeeName,
+        details: `Definicion de metas eliminada (${type === 'administrative' ? 'Administrativo' : 'Operativo'})`,
+      });
 
       fetchDefinitions();
     } catch (error) {

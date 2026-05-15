@@ -7,6 +7,7 @@ import { EmployeeProfilePage } from './EmployeeProfilePage';
 import { EmployeeFilterSidebar } from './EmployeeFilterSidebar';
 import { useCompany } from '../../contexts/CompanyContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { logAuditEvent } from '../../lib/auditLog';
 
 interface Employee {
   id: string;
@@ -43,7 +44,7 @@ interface WorkLocation {
 
 export function EmployeeList() {
   const { activeCompany } = useCompany();
-  const { systemUser } = useAuth();
+  const { systemUser, employee } = useAuth();
   const isManager = systemUser?.role === 'manager' || systemUser?.role === 'jefe';
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -181,12 +182,23 @@ export function EmployeeList() {
     }
 
     try {
+      const employeeName = `${selectedEmployee.first_name} ${selectedEmployee.last_name}`;
+
       const { error } = await supabase
         .from('employees')
         .delete()
         .eq('id', selectedEmployee.id);
 
       if (error) throw error;
+
+      await logAuditEvent({
+        actionType: 'deleted',
+        evaluationType: 'empleado',
+        evaluatorSystemUserId: systemUser?.id,
+        evaluatorEmployeeId: employee?.id,
+        targetName: employeeName,
+        details: `Empleado eliminado: ${employeeName} — ${selectedEmployee.position}`,
+      });
 
       setShowDetail(false);
       setSelectedEmployee(null);
