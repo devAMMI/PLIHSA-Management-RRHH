@@ -158,7 +158,7 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
     if (!formRef.current) return null;
     try {
       const canvas = await html2canvas(formRef.current, {
-        scale: 2.5,
+        scale: 2,
         useCORS: true,
         allowTaint: true,
         logging: false,
@@ -169,27 +169,12 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
         scrollY: 0
       });
 
-      const imgWidth = 215.9;
-      const pageHeight = 279.4;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
       const pdf = new jsPDF('p', 'mm', 'letter');
+      const pageWidth = 215.9;
+      const pageHeight = 279.4;
 
-      if (imgHeight <= pageHeight) {
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
-      } else {
-        let position = 0;
-        let remainingHeight = imgHeight;
-        let firstPage = true;
-
-        while (remainingHeight > 0) {
-          if (!firstPage) pdf.addPage();
-          pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, -position, imgWidth, imgHeight);
-          position += pageHeight;
-          remainingHeight -= pageHeight;
-          firstPage = false;
-        }
-      }
+      // Always fit to single page by scaling image to page dimensions
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pageWidth, pageHeight);
 
       const pdfBlob = pdf.output('blob');
       return URL.createObjectURL(pdfBlob);
