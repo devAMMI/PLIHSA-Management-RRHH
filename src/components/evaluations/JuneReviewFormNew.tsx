@@ -217,7 +217,7 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
     try {
       const { data: rev, error } = await supabase
         .from('june_reviews')
-        .select(`*, employee:employees(id, first_name, last_name, position, employee_code, hire_date, departments(name), manager:direct_manager_id(first_name, last_name))`)
+        .select(`*, employee:employees(id, first_name, last_name, position, employee_code, hire_date, departments(name), manager:manager_id(first_name, last_name))`)
         .eq('id', id)
         .single();
 
