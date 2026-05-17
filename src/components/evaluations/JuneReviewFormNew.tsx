@@ -690,7 +690,7 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
           <div className="w-5 h-5 rounded-full bg-teal-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold">1</div>
           <div>
             <p className="text-sm font-semibold text-teal-800">Datos importados de la Definicion de Metas</p>
-            <p className="text-xs text-teal-700 mt-0.5">Las metas y competencias definidas en la Etapa 1 han sido cargadas automaticamente. Puede editarlas si es necesario. Los campos de calificacion y comentarios quedan en blanco para completar en esta revision.</p>
+            <p className="text-xs text-teal-700 mt-0.5">Las metas y competencias definidas en la Etapa 1 han sido cargadas automaticamente y no son editables. Complete las calificaciones, resultados y comentarios en esta revision.</p>
           </div>
         </div>
       )}
@@ -765,14 +765,15 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
                       {goal.goal_number}
                     </td>
                     <td style={{ border: '1px solid #94a3b8', padding: '4px 6px', fontSize: '11px', verticalAlign: 'top', background: goal.goal_description ? '#eff6ff' : 'white' }}>
-                      <textarea
-                        value={goal.goal_description}
-                        onChange={(e) => handleGoalChange(index, 'goal_description', e.target.value)}
-                        disabled={isReadOnly}
-                        rows={1}
-                        placeholder="Meta individual..."
-                        style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', resize: 'none', fontSize: '11px', color: '#1e293b', fontWeight: goal.goal_description ? '600' : 'normal', minHeight: '22px' }}
-                      />
+                      {goal.goal_description ? (
+                        <span style={{ fontSize: '11px', color: '#1e293b', fontWeight: '600', display: 'block', padding: '2px 0' }}>
+                          {goal.goal_description}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '11px', color: '#94a3b8', fontStyle: 'italic', display: 'block', padding: '2px 0' }}>
+                          Sin meta definida
+                        </span>
+                      )}
                     </td>
                     {RATING_COLS.map(r => (
                       <td key={r} style={{ border: '1px solid #94a3b8', padding: '4px', textAlign: 'center', verticalAlign: 'middle' }}>
@@ -834,14 +835,15 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
                     {comp.competency_number}
                   </td>
                   <td style={{ border: '1px solid #94a3b8', padding: '4px 6px', background: comp.competency_description ? '#eff6ff' : 'white' }}>
-                    <input
-                      type="text"
-                      value={comp.competency_description}
-                      onChange={(e) => handleCompetencyChange(index, 'competency_description', e.target.value)}
-                      disabled={isReadOnly}
-                      placeholder="Conducta o habilidad tecnica..."
-                      style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', fontSize: '11px', color: '#1e293b', fontWeight: comp.competency_description ? '600' : 'normal' }}
-                    />
+                    {comp.competency_description ? (
+                      <span style={{ fontSize: '11px', color: '#1e293b', fontWeight: '600', display: 'block', padding: '2px 0' }}>
+                        {comp.competency_description}
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: '11px', color: '#94a3b8', fontStyle: 'italic', display: 'block', padding: '2px 0' }}>
+                        Sin conducta definida
+                      </span>
+                    )}
                   </td>
                   {RATING_COLS.map(r => (
                     <td key={r} style={{ border: '1px solid #94a3b8', padding: '4px', textAlign: 'center' }}>
