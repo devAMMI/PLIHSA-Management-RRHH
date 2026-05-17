@@ -53,6 +53,7 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
 
   const [managerComments, setManagerComments] = useState('');
   const [employeeComments, setEmployeeComments] = useState('');
+  const [subDepartment, setSubDepartment] = useState('');
 
   useEffect(() => {
     loadEmployees();
@@ -62,8 +63,10 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
     if (selectedEmployeeId) {
       const employee = employees.find(e => e.id === selectedEmployeeId);
       setSelectedEmployee(employee || null);
+      setSubDepartment(employee?.sub_department?.name || '');
     } else {
       setSelectedEmployee(null);
+      setSubDepartment('');
     }
   }, [selectedEmployeeId, employees]);
 
@@ -119,7 +122,8 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
           employee_id: selectedEmployeeId,
           evaluation_period: 'ENERO 2026',
           definition_date: definitionDate,
-          work_area: selectedEmployee?.sub_department?.name || '',
+          work_area: subDepartment.trim() || selectedEmployee?.sub_department?.name || '',
+          sub_department: subDepartment.trim() || null,
           manager_comments: managerComments,
           employee_comments: employeeComments,
           status: 'draft'
@@ -498,12 +502,13 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
               <div className="bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">
                 Sub-departamento:
               </div>
-              <div className="bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
+              <div className="bg-white px-4 py-2 text-sm border-b-2 border-slate-300">
                 <input
                   type="text"
-                  value={selectedEmployee?.sub_department?.name || ''}
-                  readOnly
+                  value={subDepartment}
+                  onChange={(e) => setSubDepartment(e.target.value)}
                   className="w-full bg-transparent border-0 outline-none print:p-0"
+                  placeholder="Sub-departamento..."
                 />
               </div>
             </div>
