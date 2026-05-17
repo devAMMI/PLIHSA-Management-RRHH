@@ -1157,8 +1157,8 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
               <div style={{ display: 'table-cell', padding: '4px 8px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
                 <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#1e293b' }}>
                   {employeeType === 'operativo'
-                    ? 'Revision del Desempeno Operativo'
-                    : 'Revision del Desempeno Administrativo'}
+                    ? 'Revisión del Desempeño Operativo'
+                    : 'Revisión del Desempeño Administrativo'}
                 </span>
               </div>
               <div style={{ display: 'table-cell', width: '150px', verticalAlign: 'middle', fontSize: '8px' }}>
