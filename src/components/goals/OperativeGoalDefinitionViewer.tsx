@@ -194,11 +194,12 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
     }
   };
 
-  const generatePdfUrl = async (): Promise<string | null> => {
+  const generatePdfBlob = async (): Promise<{ url: string; fileName: string } | null> => {
     if (!formRef.current) return null;
+
     try {
       const canvas = await html2canvas(formRef.current, {
-        scale: 2,
+        scale: 2.5,
         useCORS: true,
         allowTaint: true,
         logging: false,
@@ -209,35 +210,60 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
         scrollY: 0
       });
 
-      const pdf = new jsPDF('p', 'mm', 'letter');
-      const pageWidth = 215.9;
+      const imgWidth = 215.9;
       const pageHeight = 279.4;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const imgData = canvas.toDataURL('image/png');
 
-      // Always fit to single page by scaling image to page dimensions
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pageWidth, pageHeight);
+      const pdf = new jsPDF('p', 'mm', 'letter');
+
+      if (imgHeight <= pageHeight) {
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      } else {
+        let position = 0;
+        let remainingHeight = imgHeight;
+        let firstPage = true;
+        while (remainingHeight > 0) {
+          if (!firstPage) pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, -position, imgWidth, imgHeight);
+          position += pageHeight;
+          remainingHeight -= pageHeight;
+          firstPage = false;
+        }
+      }
 
       const pdfBlob = pdf.output('blob');
-      return URL.createObjectURL(pdfBlob);
+      const url = URL.createObjectURL(pdfBlob);
+      const fileName = `Definicion_Factores_Operativo_${definition.employee.first_name}_${definition.employee.last_name}_${new Date().toISOString().split('T')[0]}.pdf`;
+      return { url, fileName };
     } catch (error) {
       console.error('Error generating PDF:', error);
       return null;
     }
   };
 
+  const generatePdfUrl = async (): Promise<string | null> => {
+    const result = await generatePdfBlob();
+    return result ? result.url : null;
+  };
+
   const handleDownloadPDF = async () => {
+    if (!formRef.current) return;
+
     setLoading(true);
     try {
-      const pdfUrl = await generatePdfUrl();
-      if (!pdfUrl) throw new Error('No se pudo generar el PDF');
+      const result = await generatePdfBlob();
+      if (!result) throw new Error('No se pudo generar el PDF');
 
-      const fileName = `Definicion_Factores_Operativo_${definition.employee.first_name}_${definition.employee.last_name}_${new Date().toISOString().split('T')[0]}.pdf`;
       const link = document.createElement('a');
-      link.href = pdfUrl;
-      link.download = fileName;
+      link.href = result.url;
+      link.download = result.fileName;
+      document.body.appendChild(link);
       link.click();
-
-      setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(result.url), 100);
     } catch (error) {
+      console.error('Error generating PDF:', error);
       setMessage({ type: 'error', text: 'Error al generar el PDF' });
     } finally {
       setLoading(false);

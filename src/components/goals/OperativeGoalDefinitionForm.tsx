@@ -205,6 +205,7 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
     ]);
     setManagerComments('');
     setEmployeeComments('');
+    setSubDepartment('');
     setDefinitionDate(new Date().toISOString().split('T')[0]);
     setMessage(null);
   };
