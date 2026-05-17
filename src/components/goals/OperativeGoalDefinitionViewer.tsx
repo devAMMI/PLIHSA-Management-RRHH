@@ -439,14 +439,14 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
                     Definición de Factores y Revisión del Desempeño Operativo
                   </h1>
                 </div>
-                <div className="col-span-3 p-1 text-[8px]">
-                  <div className="border-b border-slate-300 px-1 py-0.5">
+                <div className="col-span-3 flex flex-col justify-center text-[8px]">
+                  <div className="border-b border-slate-300 py-1.5 text-center">
                     <span className="font-semibold">Código:</span> PL-RH-P-002-F04
                   </div>
-                  <div className="border-b border-slate-300 px-1 py-0.5">
+                  <div className="border-b border-slate-300 py-1.5 text-center">
                     <span className="font-semibold">Versión:</span> 01
                   </div>
-                  <div className="px-1 py-0.5">
+                  <div className="py-1.5 text-center">
                     <span className="font-semibold">Fecha de Revisión:</span> 09/07/2025
                   </div>
                 </div>
