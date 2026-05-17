@@ -777,14 +777,12 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
                     </td>
                     {RATING_COLS.map(r => (
                       <td key={r} style={{ border: '1px solid #94a3b8', padding: '4px', textAlign: 'center', verticalAlign: 'middle' }}>
-                        <button
-                          type="button"
+                        <div
                           onClick={() => !isReadOnly && handleGoalRating(index, r)}
-                          disabled={isReadOnly}
-                          style={{ width: '16px', height: '16px', border: `2px solid ${goal.rating === r ? '#1e293b' : '#94a3b8'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', fontSize: '10px', fontWeight: 'bold', cursor: isReadOnly ? 'default' : 'pointer', background: 'white', color: '#1e293b' }}
+                          style={{ width: '16px', height: '16px', border: `2px solid #1e293b`, margin: '0 auto', background: 'white', cursor: isReadOnly ? 'default' : 'pointer', textAlign: 'center', lineHeight: '12px', fontSize: '12px', fontWeight: 'bold', color: '#1e293b', userSelect: 'none' }}
                         >
                           {goal.rating === r ? 'X' : ''}
-                        </button>
+                        </div>
                       </td>
                     ))}
                   </tr>
@@ -846,15 +844,13 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
                     )}
                   </td>
                   {RATING_COLS.map(r => (
-                    <td key={r} style={{ border: '1px solid #94a3b8', padding: '4px', textAlign: 'center' }}>
-                      <button
-                        type="button"
+                    <td key={r} style={{ border: '1px solid #94a3b8', padding: '4px', textAlign: 'center', verticalAlign: 'middle' }}>
+                      <div
                         onClick={() => !isReadOnly && handleCompetencyRating(index, r)}
-                        disabled={isReadOnly}
-                        style={{ width: '16px', height: '16px', border: `2px solid ${comp.rating === r ? '#1e293b' : '#94a3b8'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', fontSize: '10px', fontWeight: 'bold', cursor: isReadOnly ? 'default' : 'pointer', background: 'white', color: '#1e293b' }}
+                        style={{ width: '16px', height: '16px', border: `2px solid #1e293b`, margin: '0 auto', background: 'white', cursor: isReadOnly ? 'default' : 'pointer', textAlign: 'center', lineHeight: '12px', fontSize: '12px', fontWeight: 'bold', color: '#1e293b', userSelect: 'none' }}
                       >
                         {comp.rating === r ? 'X' : ''}
-                      </button>
+                      </div>
                     </td>
                   ))}
                 </tr>
