@@ -217,7 +217,7 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
     try {
       const { data: rev, error } = await supabase
         .from('june_reviews')
-        .select(`*, employee:employees(id, first_name, last_name, position, departments(name))`)
+        .select(`*, employee:employees(id, first_name, last_name, position, employee_code, hire_date, departments(name), manager:direct_manager_id(first_name, last_name))`)
         .eq('id', id)
         .single();
 
@@ -1132,6 +1132,51 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
         }}
         aria-hidden="true"
       >
+        {/* PLIHSA Header */}
+        <div style={{ border: '2px solid #cbd5e1', marginBottom: '12px' }}>
+          <div style={{ display: 'table', width: '100%', borderCollapse: 'collapse', borderBottom: '2px solid #cbd5e1' }}>
+            <div style={{ display: 'table-row' }}>
+              <div style={{ display: 'table-cell', width: '120px', padding: '8px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
+                <img src="https://i.imgur.com/hii0TM1.png" alt="PLIHSA" crossOrigin="anonymous" style={{ maxWidth: '100px', height: 'auto', display: 'block', margin: '0 auto' }} />
+              </div>
+              <div style={{ display: 'table-cell', padding: '8px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
+                <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#1e293b' }}>
+                  {employeeType === 'operativo'
+                    ? 'Definicion de Factores y Revision del Desempeno Operativo'
+                    : 'Definicion de Factores y Revision del Desempeno Administrativo'}
+                </span>
+              </div>
+              <div style={{ display: 'table-cell', width: '160px', verticalAlign: 'middle', fontSize: '9px' }}>
+                <div style={{ borderBottom: '1px solid #cbd5e1', padding: '5px 8px', textAlign: 'center' }}>
+                  <span style={{ fontWeight: '700' }}>Codigo:</span> {employeeType === 'operativo' ? 'PL-RH-P-002-F04' : 'PL-RH-P-002-F01'}
+                </div>
+                <div style={{ borderBottom: '1px solid #cbd5e1', padding: '5px 8px', textAlign: 'center' }}>
+                  <span style={{ fontWeight: '700' }}>Version:</span> 01
+                </div>
+                <div style={{ padding: '5px 8px', textAlign: 'center' }}>
+                  <span style={{ fontWeight: '700' }}>Fecha de Revision:</span> 09/07/2025
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* Employee info */}
+          <div style={{ display: 'table', width: '100%', fontSize: '10px' }}>
+            <div style={{ display: 'table-row' }}>
+              <div style={{ display: 'table-cell', width: '50%', padding: '6px 12px', verticalAlign: 'top', borderRight: '1px solid #e2e8f0' }}>
+                <div style={{ marginBottom: '3px' }}><span style={{ fontWeight: '700', minWidth: '90px', display: 'inline-block' }}>Codigo:</span> <span style={{ color: '#374151' }}>{selectedEmployee?.employee_code || ''}</span></div>
+                <div style={{ marginBottom: '3px' }}><span style={{ fontWeight: '700', minWidth: '90px', display: 'inline-block' }}>Nombre:</span> <span style={{ color: '#374151' }}>{selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : ''}</span></div>
+                <div style={{ marginBottom: '3px' }}><span style={{ fontWeight: '700', minWidth: '90px', display: 'inline-block' }}>Puesto:</span> <span style={{ color: '#374151' }}>{position || ''}</span></div>
+                <div style={{ marginBottom: '3px' }}><span style={{ fontWeight: '700', minWidth: '90px', display: 'inline-block' }}>Departamento:</span> <span style={{ color: '#374151' }}>{department || ''}</span></div>
+              </div>
+              <div style={{ display: 'table-cell', width: '50%', padding: '6px 12px', verticalAlign: 'top' }}>
+                <div style={{ marginBottom: '3px' }}><span style={{ fontWeight: '700', minWidth: '120px', display: 'inline-block' }}>Fecha de Ingreso:</span> <span style={{ color: '#374151' }}>{selectedEmployee?.hire_date ? new Date(selectedEmployee.hire_date + 'T00:00:00').toLocaleDateString('es-HN') : ''}</span></div>
+                <div style={{ marginBottom: '3px' }}><span style={{ fontWeight: '700', minWidth: '120px', display: 'inline-block' }}>Jefe Inmediato:</span> <span style={{ color: '#374151' }}>{selectedEmployee?.manager ? `${selectedEmployee.manager.first_name} ${selectedEmployee.manager.last_name}` : ''}</span></div>
+                <div style={{ marginBottom: '3px' }}><span style={{ fontWeight: '700', minWidth: '120px', display: 'inline-block' }}>Fecha Definicion:</span> <span style={{ color: '#374151' }}>{reviewDate ? new Date(reviewDate + 'T00:00:00').toLocaleDateString('es-HN') : ''}</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Header */}
         <div style={{ background: '#1e3a5f', color: 'white', padding: '8px 14px', fontWeight: 'bold', fontSize: '13px', textAlign: 'center', letterSpacing: '0.5px' }}>
           REVISION DE METAS INDIVIDUALES
@@ -1195,18 +1240,18 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
                     return (
                       <div key={r} style={{ display: 'table-cell', width: '13%', textAlign: 'center', verticalAlign: 'middle', padding: '6px 4px', borderLeft: '1px solid #cbd5e1' }}>
                         <div style={{
-                          width: '18px', height: '18px',
-                          border: `2px solid ${checked ? '#1e3a5f' : '#94a3b8'}`,
-                          background: checked ? '#1e3a5f' : 'white',
+                          width: '16px', height: '16px',
+                          border: '2px solid #1e3a5f',
+                          background: 'white',
                           margin: '0 auto',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '11px',
+                          textAlign: 'center',
+                          lineHeight: '12px',
+                          fontSize: '13px',
                           fontWeight: '900',
-                          color: 'white',
+                          color: '#1e293b',
                           fontFamily: 'Arial, Helvetica, sans-serif',
                           boxSizing: 'border-box',
+                          overflow: 'hidden',
                         }}>
                           {checked ? 'X' : ''}
                         </div>
@@ -1280,19 +1325,20 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
                   return (
                     <div key={r} style={{ display: 'table-cell', width: '13%', textAlign: 'center', verticalAlign: 'middle', padding: '6px 4px', borderLeft: '1px solid #cbd5e1' }}>
                       <div style={{
-                        width: '20px', height: '20px',
-                        border: `2px solid ${checked ? '#1e3a5f' : '#94a3b8'}`,
-                        background: checked ? '#1e3a5f' : 'white',
+                        width: '16px', height: '16px',
+                        border: '2px solid #1e3a5f',
+                        background: 'white',
                         margin: '0 auto',
                         textAlign: 'center',
-                        fontSize: '14px',
+                        lineHeight: '12px',
+                        fontSize: '13px',
                         fontWeight: '900',
-                        color: 'white',
+                        color: '#1e293b',
                         fontFamily: 'Arial, Helvetica, sans-serif',
-                        lineHeight: '16px',
+                        boxSizing: 'border-box',
                         overflow: 'hidden',
                       }}>
-                        {checked ? 'X' : '\u00A0'}
+                        {checked ? 'X' : ''}
                       </div>
                     </div>
                   );
