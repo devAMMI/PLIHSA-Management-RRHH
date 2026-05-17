@@ -1388,7 +1388,7 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
         </div>
 
         {/* Signature lines */}
-        <div style={{ display: 'flex', justifyContent: 'space-around', padding: '30px 24px 12px', gap: '24px', marginTop: '6px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-around', padding: '12px 24px 4px', gap: '24px', marginTop: '4px' }}>
           {['Firma Colaborador', 'Firma Jefe Inmediato', 'Firma RRHH'].map(label => (
             <div key={label} style={{ flex: 1, textAlign: 'center' }}>
               <div style={{ borderTop: '1.5px solid #1e293b', paddingTop: '5px', marginTop: '0' }}>
