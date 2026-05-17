@@ -162,16 +162,30 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
         if (!defs || defs.length === 0) return;
         const defId = defs[0].id;
 
-        const { data: goalsData } = await supabase
-          .from('operative_individual_goals')
-          .select('goal_number, goal_description, measurement_and_expected_results')
-          .eq('goal_definition_id', defId)
-          .order('goal_number');
+        const [{ data: goalsData }, { data: standardsData }] = await Promise.all([
+          supabase
+            .from('operative_individual_goals')
+            .select('goal_number, goal_description, measurement_and_expected_results')
+            .eq('goal_definition_id', defId)
+            .order('goal_number'),
+          supabase
+            .from('operative_safety_standards')
+            .select('standard_number, standard_description')
+            .eq('goal_definition_id', defId)
+            .order('standard_number')
+        ]);
 
         if (goalsData && goalsData.length > 0) {
           setGoals(emptyGoals().map(g => {
             const found = goalsData.find(d => d.goal_number === g.goal_number);
             return found ? { ...g, goal_description: found.goal_description || '' } : g;
+          }));
+        }
+
+        if (standardsData && standardsData.length > 0) {
+          setCompetencies(emptyCompetencies().map(c => {
+            const found = standardsData.find(s => s.standard_number === c.competency_number);
+            return found ? { ...c, competency_description: found.standard_description || '' } : c;
           }));
         }
       }
