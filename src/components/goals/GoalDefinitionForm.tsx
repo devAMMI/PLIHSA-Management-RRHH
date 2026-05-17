@@ -86,6 +86,7 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
           manager:manager_id(first_name, last_name, position)
         `)
         .eq('status', 'active')
+        .eq('employee_type', 'administrativo')
         .order('first_name');
 
       if (error) throw error;

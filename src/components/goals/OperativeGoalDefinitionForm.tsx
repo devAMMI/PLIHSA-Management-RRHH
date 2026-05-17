@@ -86,6 +86,7 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
           manager:manager_id(first_name, last_name, position)
         `)
         .eq('status', 'active')
+        .eq('employee_type', 'operativo')
         .order('first_name');
 
       if (error) throw error;
