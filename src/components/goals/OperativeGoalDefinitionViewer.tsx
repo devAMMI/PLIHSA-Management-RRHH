@@ -37,11 +37,13 @@ interface OperativeGoalDefinition {
   manager_comments: string;
   employee_comments: string;
   operative_individual_goals: Array<{
+    id: string;
     goal_number: number;
     goal_description: string;
     measurement_and_expected_results: string;
   }>;
   operative_safety_standards: Array<{
+    id: string;
     standard_number: number;
     standard_description: string;
   }>;
@@ -68,6 +70,7 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
     Array.from({ length: 5 }, (_, i) => {
       const existing = definition.operative_individual_goals.find(g => g.goal_number === i + 1);
       return {
+        id: existing?.id,
         number: i + 1,
         jobFunction: existing?.goal_description || '',
         expectedResults: existing?.measurement_and_expected_results || ''
@@ -79,6 +82,7 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
     Array.from({ length: 5 }, (_, i) => {
       const existing = definition.operative_safety_standards.find(s => s.standard_number === i + 1);
       return {
+        id: existing?.id,
         number: i + 1,
         description: existing?.standard_description || ''
       };
@@ -121,31 +125,62 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
 
       if (updateError) throw updateError;
 
-      await supabase.from('operative_individual_goals').delete().eq('goal_definition_id', definition.id);
-      const goalsToInsert = functionalFactors
-        .filter(f => f.jobFunction.trim())
-        .map(f => ({
-          goal_definition_id: definition.id,
-          goal_number: f.number,
-          goal_description: f.jobFunction,
-          measurement_and_expected_results: f.expectedResults
-        }));
-      if (goalsToInsert.length > 0) {
-        const { error } = await supabase.from('operative_individual_goals').insert(goalsToInsert);
-        if (error) throw error;
+      for (const factor of functionalFactors) {
+        if (factor.jobFunction.trim() || factor.expectedResults.trim()) {
+          if (factor.id) {
+            const { error } = await supabase
+              .from('operative_individual_goals')
+              .update({
+                goal_description: factor.jobFunction,
+                measurement_and_expected_results: factor.expectedResults
+              })
+              .eq('id', factor.id);
+            if (error) throw error;
+          } else {
+            const { error } = await supabase
+              .from('operative_individual_goals')
+              .insert({
+                goal_definition_id: definition.id,
+                goal_number: factor.number,
+                goal_description: factor.jobFunction,
+                measurement_and_expected_results: factor.expectedResults
+              });
+            if (error) throw error;
+          }
+        } else if (factor.id) {
+          const { error } = await supabase
+            .from('operative_individual_goals')
+            .delete()
+            .eq('id', factor.id);
+          if (error) throw error;
+        }
       }
 
-      await supabase.from('operative_safety_standards').delete().eq('goal_definition_id', definition.id);
-      const standardsToInsert = behavioralCompetencies
-        .filter(c => c.description.trim())
-        .map(c => ({
-          goal_definition_id: definition.id,
-          standard_number: c.number,
-          standard_description: c.description
-        }));
-      if (standardsToInsert.length > 0) {
-        const { error } = await supabase.from('operative_safety_standards').insert(standardsToInsert);
-        if (error) throw error;
+      for (const competency of behavioralCompetencies) {
+        if (competency.description.trim()) {
+          if (competency.id) {
+            const { error } = await supabase
+              .from('operative_safety_standards')
+              .update({ standard_description: competency.description })
+              .eq('id', competency.id);
+            if (error) throw error;
+          } else {
+            const { error } = await supabase
+              .from('operative_safety_standards')
+              .insert({
+                goal_definition_id: definition.id,
+                standard_number: competency.number,
+                standard_description: competency.description
+              });
+            if (error) throw error;
+          }
+        } else if (competency.id) {
+          const { error } = await supabase
+            .from('operative_safety_standards')
+            .delete()
+            .eq('id', competency.id);
+          if (error) throw error;
+        }
       }
 
       setMessage({ type: 'success', text: 'Definicion de factores actualizada exitosamente' });

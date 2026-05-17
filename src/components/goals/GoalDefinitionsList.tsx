@@ -60,11 +60,13 @@ interface OperativeGoalDefinition {
   manager_comments: string;
   employee_comments: string;
   operative_individual_goals: Array<{
+    id: string;
     goal_number: number;
     goal_description: string;
     measurement_and_expected_results: string;
   }>;
   operative_safety_standards: Array<{
+    id: string;
     standard_number: number;
     standard_description: string;
   }>;
@@ -240,11 +242,13 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
               manager:manager_id (first_name, last_name, position)
             ),
             operative_individual_goals (
+              id,
               goal_number,
               goal_description,
               measurement_and_expected_results
             ),
             operative_safety_standards (
+              id,
               standard_number,
               standard_description
             )
