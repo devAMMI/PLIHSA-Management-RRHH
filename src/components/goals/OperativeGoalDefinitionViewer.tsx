@@ -24,6 +24,7 @@ interface OperativeGoalDefinition {
   evaluation_period: string;
   definition_date: string;
   work_area: string;
+  sub_department?: string | null;
   status: string;
   workflow_status?: string;
   signed_document_url?: string;
@@ -87,6 +88,9 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
   const [managerComments, setManagerComments] = useState(definition.manager_comments || '');
   const [employeeComments, setEmployeeComments] = useState(definition.employee_comments || '');
   const [definitionDate, setDefinitionDate] = useState(definition.definition_date);
+  const [subDepartment, setSubDepartment] = useState(
+    definition.sub_department ?? definition.employee?.sub_department?.name ?? ''
+  );
 
   const handleFunctionalFactorChange = (index: number, field: 'jobFunction' | 'expectedResults', value: string) => {
     const updated = [...functionalFactors];
@@ -110,7 +114,8 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
         .update({
           definition_date: definitionDate,
           employee_comments: employeeComments,
-          manager_comments: managerComments
+          manager_comments: managerComments,
+          sub_department: subDepartment.trim() || null
         })
         .eq('id', definition.id);
 
@@ -394,7 +399,19 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
                 </div>
                 <div className="col-span-1">
                   <div className="bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">Sub-departamento:</div>
-                  <div className="bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">{definition.employee.sub_department?.name || ''}</div>
+                  <div className="bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
+                    {mode === 'edit' ? (
+                      <input
+                        type="text"
+                        value={subDepartment}
+                        onChange={(e) => setSubDepartment(e.target.value)}
+                        className="w-full bg-transparent border-0 outline-none text-sm"
+                        placeholder="Sub-departamento..."
+                      />
+                    ) : (
+                      subDepartment || ''
+                    )}
+                  </div>
                 </div>
               </div>
 
