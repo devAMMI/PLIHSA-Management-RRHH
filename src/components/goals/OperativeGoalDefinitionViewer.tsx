@@ -397,207 +397,228 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
             )}
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 print-content" ref={formRef}>
-            <div className="grid grid-cols-12 border-b-2 border-slate-300">
-              <div className="col-span-3 border-r-2 border-slate-300 p-4 flex items-center justify-center bg-white">
-                <img src="https://i.imgur.com/hii0TM1.png" alt="PLIHSA Logo" className="w-full h-auto max-w-[180px]" crossOrigin="anonymous" />
-              </div>
-              <div className="col-span-6 border-r-2 border-slate-300 p-4 flex items-center justify-center bg-white">
-                <h1 className="text-base font-bold text-center text-slate-800">
-                  Definicion de Factores y Revision del Desempeno Operativo
-                </h1>
-              </div>
-              <div className="col-span-3 bg-white">
-                <div className="text-xs border-b border-slate-300 px-3 py-1.5"><span className="font-normal">Codigo: PL-RH-P-002-F04</span></div>
-                <div className="text-xs border-b border-slate-300 px-3 py-1.5"><span className="font-normal">Version: 01</span></div>
-                <div className="text-xs px-3 py-1.5"><span className="font-normal">Fecha de Revision: 09/07/2025</span></div>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden print-content" ref={formRef}>
+            <div className="bg-white border-b-2 border-slate-300">
+              <div className="grid grid-cols-12">
+                <div className="col-span-2 border-r-2 border-slate-300 p-2 flex items-center justify-center">
+                  <img
+                    src="https://i.imgur.com/hii0TM1.png"
+                    alt="PLIHSA Logo"
+                    className="w-full h-auto max-w-[120px]"
+                    crossOrigin="anonymous"
+                  />
+                </div>
+                <div className="col-span-7 border-r-2 border-slate-300 p-2 flex items-center justify-center">
+                  <h1 className="text-xs font-bold text-slate-800 text-center">
+                    Definición de Factores y Revisión del Desempeño Operativo
+                  </h1>
+                </div>
+                <div className="col-span-3 p-1 text-[8px]">
+                  <div className="border-b border-slate-300 px-1 py-0.5">
+                    <span className="font-semibold">Código:</span> PL-RH-P-002-F04
+                  </div>
+                  <div className="border-b border-slate-300 px-1 py-0.5">
+                    <span className="font-semibold">Versión:</span> 01
+                  </div>
+                  <div className="px-1 py-0.5">
+                    <span className="font-semibold">Fecha de Revisión:</span> 09/07/2025
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="p-0">
-              <div className="grid grid-cols-12">
-                <div className="col-span-12 bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">Nombre del Colaborador:</div>
-                <div className="col-span-12 bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
-                  {definition.employee.first_name} {definition.employee.last_name}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-12">
-                <div className="col-span-12 bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">Posicion del Colaborador:</div>
-                <div className="col-span-12 bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">{definition.employee.position}</div>
-              </div>
-
-              <div className="grid grid-cols-2">
-                <div className="col-span-1 border-r-2 border-slate-300">
-                  <div className="bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">Departamento:</div>
-                  <div className="bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">{definition.employee.department?.name || 'N/A'}</div>
-                </div>
-                <div className="col-span-1">
-                  <div className="bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">Sub-departamento:</div>
-                  <div className="bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
+            <div className="p-5 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1.5 text-[11px]">
+                <div className="space-y-1.5">
+                  <div className="flex gap-2">
+                    <span className="font-bold text-slate-700 min-w-[100px]">Código:</span>
+                    <span className="text-slate-600">{definition.employee.employee_code}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="font-bold text-slate-700 min-w-[100px]">Nombre:</span>
+                    <span className="text-slate-600">{definition.employee.first_name} {definition.employee.last_name}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="font-bold text-slate-700 min-w-[100px]">Puesto:</span>
+                    <span className="text-slate-600">{definition.employee.position}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="font-bold text-slate-700 min-w-[100px]">Departamento:</span>
+                    <span className="text-slate-600">{definition.employee.department?.name || 'N/A'}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="font-bold text-slate-700 min-w-[100px]">Sub Depto:</span>
                     {mode === 'edit' ? (
                       <input
                         type="text"
                         value={subDepartment}
                         onChange={(e) => setSubDepartment(e.target.value)}
-                        className="w-full bg-transparent border-0 outline-none text-sm"
-                        placeholder="Sub-departamento..."
+                        className="text-slate-600 border border-slate-300 rounded px-2 py-0.5 text-sm flex-1"
                       />
                     ) : (
-                      subDepartment || ''
+                      <span className="text-slate-600">{subDepartment || ''}</span>
                     )}
                   </div>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2">
-                <div className="col-span-1 border-r-2 border-slate-300">
-                  <div className="bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">Fecha de Ingreso:</div>
-                  <div className="bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
-                    {new Date(definition.employee.hire_date + 'T00:00:00').toLocaleDateString('es-HN')}
+                <div className="space-y-1.5">
+                  <div className="flex gap-2">
+                    <span className="font-bold text-slate-700 min-w-[120px]">Fecha de Ingreso:</span>
+                    <span className="text-slate-600">{new Date(definition.employee.hire_date + 'T00:00:00').toLocaleDateString('es-HN')}</span>
                   </div>
-                </div>
-                <div className="col-span-1">
-                  <div className="bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">Fecha de definicion de factores a evaluar:</div>
-                  <div className="bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
+                  <div className="flex gap-2">
+                    <span className="font-bold text-slate-700 min-w-[120px]">Jefe Inmediato:</span>
+                    <span className="text-slate-600">
+                      {definition.employee.manager
+                        ? `${definition.employee.manager.first_name} ${definition.employee.manager.last_name}`
+                        : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="font-bold text-slate-700 min-w-[120px]">Fecha Definición:</span>
                     {mode === 'edit' ? (
                       <input
                         type="date"
                         value={definitionDate}
                         onChange={(e) => setDefinitionDate(e.target.value)}
-                        className="w-full bg-transparent border-0 outline-none text-sm"
+                        className="border border-slate-300 rounded px-1 py-0.5 text-slate-600 text-[11px]"
                       />
                     ) : (
-                      new Date(definitionDate + 'T00:00:00').toLocaleDateString('es-HN')
+                      <span className="text-slate-600">{new Date(definitionDate + 'T00:00:00').toLocaleDateString('es-HN')}</span>
                     )}
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-12">
-                <div className="col-span-12 bg-[#1e5a96] text-white px-4 py-2 font-bold text-sm border-b-2 border-slate-300">Jefe Inmediato:</div>
-                <div className="col-span-12 bg-slate-100 px-4 py-2 text-sm border-b-2 border-slate-300">
-                  {definition.employee.manager
-                    ? `${definition.employee.manager.first_name} ${definition.employee.manager.last_name}`
-                    : 'N/A'}
-                </div>
-              </div>
-
-              <div className="bg-[#1e5a96] text-white px-4 py-2.5 font-bold text-sm text-center border-b-2 border-t-2 border-slate-300">
-                DEFINICION DE FACTORES FUNCIONALES
-              </div>
-
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-[#1e5a96] text-white">
-                    <th className="border-2 border-slate-300 px-3 py-2 text-sm font-bold text-center w-16">No.</th>
-                    <th className="border-2 border-slate-300 px-3 py-2 text-sm font-bold text-center">Funciones del Puesto</th>
-                    <th className="border-2 border-slate-300 px-3 py-2 text-sm font-bold text-center">Resultados Esperados</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {functionalFactors.map((factor, index) => (
-                    <tr key={factor.number}>
-                      <td className="border-2 border-slate-300 px-3 py-3 text-center font-semibold text-sm bg-white">{factor.number}</td>
-                      <td className="border-2 border-slate-300 px-3 py-2 bg-white">
-                        {mode === 'edit' ? (
-                          <textarea
-                            value={factor.jobFunction}
-                            onChange={(e) => handleFunctionalFactorChange(index, 'jobFunction', e.target.value)}
-                            className="w-full bg-transparent border-0 outline-none resize-none text-sm min-h-[60px]"
-                          />
-                        ) : (
-                          <div className="min-h-[60px] text-sm whitespace-pre-wrap">{factor.jobFunction || ''}</div>
-                        )}
-                      </td>
-                      <td className="border-2 border-slate-300 px-3 py-2 bg-white">
-                        {mode === 'edit' ? (
-                          <textarea
-                            value={factor.expectedResults}
-                            onChange={(e) => handleFunctionalFactorChange(index, 'expectedResults', e.target.value)}
-                            className="w-full bg-transparent border-0 outline-none resize-none text-sm min-h-[60px]"
-                          />
-                        ) : (
-                          <div className="min-h-[60px] text-sm whitespace-pre-wrap">{factor.expectedResults || ''}</div>
-                        )}
-                      </td>
+              <div>
+                <h3 className="font-bold text-white bg-blue-900 px-3 py-2 mb-3 text-[11px]">
+                  DEFINICIÓN DE FACTORES FUNCIONALES
+                </h3>
+                <table className="w-full border-2 border-slate-300 text-[10px]">
+                  <thead>
+                    <tr className="bg-slate-100">
+                      <th className="border border-slate-300 px-2 py-1.5 w-10 font-bold">No.</th>
+                      <th className="border border-slate-300 px-2 py-1.5 font-bold">Funciones del Puesto</th>
+                      <th className="border border-slate-300 px-2 py-1.5 font-bold">Resultados Esperados</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              <div className="bg-[#1e5a96] text-white px-4 py-2.5 font-bold text-sm text-center border-b-2 border-t-2 border-slate-300">
-                DEFINICION DE COMPETENCIAS CONDUCTUALES Y HABILIDADES TECNICAS
+                  </thead>
+                  <tbody>
+                    {functionalFactors.map((factor, index) => (
+                      <tr key={factor.number}>
+                        <td className="border border-slate-300 px-2 py-2 text-center font-bold">{factor.number}</td>
+                        <td className="border border-slate-300 px-2 py-2">
+                          {mode === 'edit' ? (
+                            <textarea
+                              value={factor.jobFunction}
+                              onChange={(e) => handleFunctionalFactorChange(index, 'jobFunction', e.target.value)}
+                              rows={2}
+                              className="w-full border border-slate-200 rounded p-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-[10px]"
+                              placeholder="Describa la funcion..."
+                            />
+                          ) : (
+                            <div className="min-h-[48px] whitespace-pre-wrap">{factor.jobFunction || '-'}</div>
+                          )}
+                        </td>
+                        <td className="border border-slate-300 px-2 py-2">
+                          {mode === 'edit' ? (
+                            <textarea
+                              value={factor.expectedResults}
+                              onChange={(e) => handleFunctionalFactorChange(index, 'expectedResults', e.target.value)}
+                              rows={2}
+                              className="w-full border border-slate-200 rounded p-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-[10px]"
+                              placeholder="Resultados esperados..."
+                            />
+                          ) : (
+                            <div className="min-h-[48px] whitespace-pre-wrap">{factor.expectedResults || '-'}</div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
 
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-[#1e5a96] text-white">
-                    <th className="border-2 border-slate-300 px-3 py-2 text-sm font-bold text-center w-16">No.</th>
-                    <th className="border-2 border-slate-300 px-3 py-2 text-sm font-bold text-center">
-                      Conductas y Habilidades Tecnicas (Definir las 5 Principales)
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {behavioralCompetencies.map((competency, index) => (
-                    <tr key={competency.number}>
-                      <td className="border-2 border-slate-300 px-3 py-3 text-center font-semibold text-sm bg-white">{competency.number}</td>
-                      <td className="border-2 border-slate-300 px-3 py-2 bg-white">
-                        {mode === 'edit' ? (
-                          <textarea
-                            value={competency.description}
-                            onChange={(e) => handleCompetencyChange(index, e.target.value)}
-                            className="w-full bg-transparent border-0 outline-none resize-none text-sm min-h-[60px]"
-                          />
-                        ) : (
-                          <div className="min-h-[60px] text-sm whitespace-pre-wrap">{competency.description || ''}</div>
-                        )}
-                      </td>
+              <div>
+                <h3 className="font-bold text-white bg-blue-900 px-3 py-2 mb-3 text-[11px]">
+                  DEFINICIÓN DE COMPETENCIAS CONDUCTUALES Y HABILIDADES TÉCNICAS
+                </h3>
+                <table className="w-full border-2 border-slate-300 text-[10px]">
+                  <thead>
+                    <tr className="bg-slate-100">
+                      <th className="border border-slate-300 px-2 py-1.5 w-10 font-bold">No.</th>
+                      <th className="border border-slate-300 px-2 py-1.5 font-bold">Conductas y Habilidades Técnicas (Definir las 5 Principales)</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {behavioralCompetencies.map((competency, index) => (
+                      <tr key={competency.number}>
+                        <td className="border border-slate-300 px-2 py-2 text-center font-bold">{competency.number}</td>
+                        <td className="border border-slate-300 px-2 py-2">
+                          {mode === 'edit' ? (
+                            <textarea
+                              value={competency.description}
+                              onChange={(e) => handleCompetencyChange(index, e.target.value)}
+                              rows={1}
+                              className="w-full border border-slate-200 rounded p-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-[10px]"
+                              placeholder="Describa la competencia..."
+                            />
+                          ) : (
+                            <div className="min-h-[32px] whitespace-pre-wrap">{competency.description || ''}</div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-              <div className="border-2 border-slate-300 mt-4">
-                <div className="bg-[#2c5282] text-white px-4 py-3 font-bold text-sm">Comentarios Jefe Inmediato</div>
-                <div className="bg-white px-4 py-3">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="border-2 border-slate-300">
+                  <div className="bg-blue-900 text-white px-3 py-1.5 text-[10px] font-bold">
+                    Comentarios Jefe Inmediato
+                  </div>
                   {mode === 'edit' ? (
                     <textarea
                       value={managerComments}
                       onChange={(e) => setManagerComments(e.target.value)}
-                      className="w-full bg-transparent border-0 outline-none resize-none text-sm min-h-[80px]"
+                      rows={4}
+                      className="w-full border-0 p-3 focus:ring-1 focus:ring-blue-500 outline-none resize-none text-[10px]"
+                      placeholder="Comentarios del jefe..."
                     />
                   ) : (
-                    <div className="min-h-[80px] text-sm whitespace-pre-wrap">{managerComments || ''}</div>
+                    <div className="p-3 min-h-[75px] text-[10px] whitespace-pre-wrap">
+                      {managerComments || ''}
+                    </div>
                   )}
                 </div>
-              </div>
-
-              <div className="border-2 border-slate-300 mt-4">
-                <div className="bg-[#2c5282] text-white px-4 py-3 font-bold text-sm">Comentarios del Colaborador</div>
-                <div className="bg-white px-4 py-3">
+                <div className="border-2 border-slate-300">
+                  <div className="bg-blue-900 text-white px-3 py-1.5 text-[10px] font-bold">
+                    Comentarios del Colaborador
+                  </div>
                   {mode === 'edit' ? (
                     <textarea
                       value={employeeComments}
                       onChange={(e) => setEmployeeComments(e.target.value)}
-                      className="w-full bg-transparent border-0 outline-none resize-none text-sm min-h-[80px]"
+                      rows={4}
+                      className="w-full border-0 p-3 focus:ring-1 focus:ring-blue-500 outline-none resize-none text-[10px]"
+                      placeholder="Comentarios del colaborador..."
                     />
                   ) : (
-                    <div className="min-h-[80px] text-sm whitespace-pre-wrap">{employeeComments || ''}</div>
+                    <div className="p-3 min-h-[75px] text-[10px] whitespace-pre-wrap">
+                      {employeeComments || ''}
+                    </div>
                   )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-32 px-12 py-8 mt-8">
+              <div className="grid grid-cols-2 gap-12 text-[10px] mt-12 pt-8">
                 <div className="text-center">
-                  <div className="border-t-2 border-slate-800 pt-2 mt-16">
-                    <p className="text-sm font-semibold text-slate-800">Firma Colaborador</p>
+                  <div className="border-t-2 border-slate-800 pt-2 mt-24">
+                    <p className="font-bold text-slate-800">Firma Colaborador</p>
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="border-t-2 border-slate-800 pt-2 mt-16">
-                    <p className="text-sm font-semibold text-slate-800">Firma Jefe Inmediato</p>
+                  <div className="border-t-2 border-slate-800 pt-2 mt-24">
+                    <p className="font-bold text-slate-800">Firma Jefe Inmediato</p>
                   </div>
                 </div>
               </div>
