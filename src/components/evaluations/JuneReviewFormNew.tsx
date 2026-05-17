@@ -514,9 +514,24 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
         scrollY: 0,
       });
       const imgWidth = 215.9;
+      const pageHeight = 279.4;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'letter');
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
+      if (imgHeight <= pageHeight) {
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      } else {
+        let position = 0;
+        let remaining = imgHeight;
+        let first = true;
+        while (remaining > 0) {
+          if (!first) pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, -position, imgWidth, imgHeight);
+          position += pageHeight;
+          remaining -= pageHeight;
+          first = false;
+        }
+      }
       const pdfBlob = pdf.output('blob');
       return URL.createObjectURL(pdfBlob);
     } catch {
@@ -1125,99 +1140,99 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
           left: '-9999px',
           width: '860px',
           fontFamily: 'Arial, Helvetica, sans-serif',
-          fontSize: '11px',
+          fontSize: '10px',
           background: 'white',
-          padding: '24px',
+          padding: '14px 18px',
           boxSizing: 'border-box',
         }}
         aria-hidden="true"
       >
         {/* PLIHSA Header */}
-        <div style={{ border: '2px solid #cbd5e1', marginBottom: '12px' }}>
+        <div style={{ border: '2px solid #cbd5e1', marginBottom: '8px' }}>
           <div style={{ display: 'table', width: '100%', borderCollapse: 'collapse', borderBottom: '2px solid #cbd5e1' }}>
             <div style={{ display: 'table-row' }}>
-              <div style={{ display: 'table-cell', width: '120px', padding: '8px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
-                <img src="https://i.imgur.com/hii0TM1.png" alt="PLIHSA" crossOrigin="anonymous" style={{ maxWidth: '100px', height: 'auto', display: 'block', margin: '0 auto' }} />
+              <div style={{ display: 'table-cell', width: '110px', padding: '4px 6px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
+                <img src="https://i.imgur.com/hii0TM1.png" alt="PLIHSA" crossOrigin="anonymous" style={{ maxWidth: '90px', height: 'auto', display: 'block', margin: '0 auto' }} />
               </div>
-              <div style={{ display: 'table-cell', padding: '8px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
-                <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#1e293b' }}>
+              <div style={{ display: 'table-cell', padding: '4px 8px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
+                <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#1e293b' }}>
                   {employeeType === 'operativo'
                     ? 'Definicion de Factores y Revision del Desempeno Operativo'
                     : 'Definicion de Factores y Revision del Desempeno Administrativo'}
                 </span>
               </div>
-              <div style={{ display: 'table-cell', width: '160px', verticalAlign: 'middle', fontSize: '9px' }}>
-                <div style={{ borderBottom: '1px solid #cbd5e1', padding: '5px 8px', textAlign: 'center' }}>
+              <div style={{ display: 'table-cell', width: '150px', verticalAlign: 'middle', fontSize: '8px' }}>
+                <div style={{ borderBottom: '1px solid #cbd5e1', padding: '3px 7px' }}>
                   <span style={{ fontWeight: '700' }}>Codigo:</span> {employeeType === 'operativo' ? 'PL-RH-P-002-F04' : 'PL-RH-P-002-F01'}
                 </div>
-                <div style={{ borderBottom: '1px solid #cbd5e1', padding: '5px 8px', textAlign: 'center' }}>
+                <div style={{ borderBottom: '1px solid #cbd5e1', padding: '3px 7px' }}>
                   <span style={{ fontWeight: '700' }}>Version:</span> 01
                 </div>
-                <div style={{ padding: '5px 8px', textAlign: 'center' }}>
+                <div style={{ padding: '3px 7px' }}>
                   <span style={{ fontWeight: '700' }}>Fecha de Revision:</span> 09/07/2025
                 </div>
               </div>
             </div>
           </div>
           {/* Employee info */}
-          <div style={{ display: 'table', width: '100%', fontSize: '10px' }}>
+          <div style={{ display: 'table', width: '100%', fontSize: '9px' }}>
             <div style={{ display: 'table-row' }}>
-              <div style={{ display: 'table-cell', width: '50%', padding: '6px 12px', verticalAlign: 'top', borderRight: '1px solid #e2e8f0' }}>
-                <div style={{ marginBottom: '3px' }}><span style={{ fontWeight: '700', minWidth: '90px', display: 'inline-block' }}>Codigo:</span> <span style={{ color: '#374151' }}>{selectedEmployee?.employee_code || ''}</span></div>
-                <div style={{ marginBottom: '3px' }}><span style={{ fontWeight: '700', minWidth: '90px', display: 'inline-block' }}>Nombre:</span> <span style={{ color: '#374151' }}>{selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : ''}</span></div>
-                <div style={{ marginBottom: '3px' }}><span style={{ fontWeight: '700', minWidth: '90px', display: 'inline-block' }}>Puesto:</span> <span style={{ color: '#374151' }}>{position || ''}</span></div>
-                <div style={{ marginBottom: '3px' }}><span style={{ fontWeight: '700', minWidth: '90px', display: 'inline-block' }}>Departamento:</span> <span style={{ color: '#374151' }}>{department || ''}</span></div>
+              <div style={{ display: 'table-cell', width: '50%', padding: '4px 10px', verticalAlign: 'top', borderRight: '1px solid #e2e8f0' }}>
+                <div style={{ marginBottom: '2px' }}><span style={{ fontWeight: '700', minWidth: '85px', display: 'inline-block' }}>Codigo:</span> <span style={{ color: '#374151' }}>{selectedEmployee?.employee_code || ''}</span></div>
+                <div style={{ marginBottom: '2px' }}><span style={{ fontWeight: '700', minWidth: '85px', display: 'inline-block' }}>Nombre:</span> <span style={{ color: '#374151' }}>{selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : ''}</span></div>
+                <div style={{ marginBottom: '2px' }}><span style={{ fontWeight: '700', minWidth: '85px', display: 'inline-block' }}>Puesto:</span> <span style={{ color: '#374151' }}>{position || ''}</span></div>
+                <div style={{ marginBottom: '2px' }}><span style={{ fontWeight: '700', minWidth: '85px', display: 'inline-block' }}>Departamento:</span> <span style={{ color: '#374151' }}>{department || ''}</span></div>
               </div>
-              <div style={{ display: 'table-cell', width: '50%', padding: '6px 12px', verticalAlign: 'top' }}>
-                <div style={{ marginBottom: '3px' }}><span style={{ fontWeight: '700', minWidth: '120px', display: 'inline-block' }}>Fecha de Ingreso:</span> <span style={{ color: '#374151' }}>{selectedEmployee?.hire_date ? new Date(selectedEmployee.hire_date + 'T00:00:00').toLocaleDateString('es-HN') : ''}</span></div>
-                <div style={{ marginBottom: '3px' }}><span style={{ fontWeight: '700', minWidth: '120px', display: 'inline-block' }}>Jefe Inmediato:</span> <span style={{ color: '#374151' }}>{selectedEmployee?.manager ? `${selectedEmployee.manager.first_name} ${selectedEmployee.manager.last_name}` : ''}</span></div>
-                <div style={{ marginBottom: '3px' }}><span style={{ fontWeight: '700', minWidth: '120px', display: 'inline-block' }}>Fecha Definicion:</span> <span style={{ color: '#374151' }}>{reviewDate ? new Date(reviewDate + 'T00:00:00').toLocaleDateString('es-HN') : ''}</span></div>
+              <div style={{ display: 'table-cell', width: '50%', padding: '4px 10px', verticalAlign: 'top' }}>
+                <div style={{ marginBottom: '2px' }}><span style={{ fontWeight: '700', minWidth: '110px', display: 'inline-block' }}>Fecha de Ingreso:</span> <span style={{ color: '#374151' }}>{selectedEmployee?.hire_date ? new Date(selectedEmployee.hire_date + 'T00:00:00').toLocaleDateString('es-HN') : ''}</span></div>
+                <div style={{ marginBottom: '2px' }}><span style={{ fontWeight: '700', minWidth: '110px', display: 'inline-block' }}>Jefe Inmediato:</span> <span style={{ color: '#374151' }}>{selectedEmployee?.manager ? `${selectedEmployee.manager.first_name} ${selectedEmployee.manager.last_name}` : ''}</span></div>
+                <div style={{ marginBottom: '2px' }}><span style={{ fontWeight: '700', minWidth: '110px', display: 'inline-block' }}>Fecha Definicion:</span> <span style={{ color: '#374151' }}>{reviewDate ? new Date(reviewDate + 'T00:00:00').toLocaleDateString('es-HN') : ''}</span></div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Header */}
-        <div style={{ background: '#1e3a5f', color: 'white', padding: '8px 14px', fontWeight: 'bold', fontSize: '13px', textAlign: 'center', letterSpacing: '0.5px' }}>
+        <div style={{ background: '#1e3a5f', color: 'white', padding: '5px 14px', fontWeight: 'bold', fontSize: '12px', textAlign: 'center', letterSpacing: '0.5px' }}>
           REVISION DE METAS INDIVIDUALES
         </div>
 
         {/* Date row */}
         <div style={{ display: 'table', width: '100%', borderCollapse: 'collapse', border: '1px solid #1e3a5f', borderTop: 'none' }}>
           <div style={{ display: 'table-row' }}>
-            <div style={{ display: 'table-cell', background: '#1e3a5f', color: 'white', fontWeight: '700', fontSize: '11px', padding: '6px 12px', width: '160px', whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
+            <div style={{ display: 'table-cell', background: '#1e3a5f', color: 'white', fontWeight: '700', fontSize: '10px', padding: '4px 12px', width: '160px', whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
               Fecha de Revision
             </div>
-            <div style={{ display: 'table-cell', background: '#f1f5f9', padding: '6px 12px', fontSize: '11px', color: '#374151', verticalAlign: 'middle' }}>
+            <div style={{ display: 'table-cell', background: '#f1f5f9', padding: '4px 12px', fontSize: '10px', color: '#374151', verticalAlign: 'middle' }}>
               {reviewDate ? new Date(reviewDate + 'T00:00:00').toLocaleDateString('es-HN') : '\u00A0'}
             </div>
           </div>
         </div>
 
         {/* Goals table - NO rowSpan/colSpan */}
-        <div style={{ marginTop: '10px', border: '1px solid #94a3b8' }}>
+        <div style={{ marginTop: '6px', border: '1px solid #94a3b8' }}>
           {/* Header row 1 */}
           <div style={{ display: 'table', width: '100%', background: '#1e3a5f', color: 'white' }}>
             <div style={{ display: 'table-row' }}>
-              <div style={{ display: 'table-cell', width: '46px', padding: '6px 4px', textAlign: 'center', fontWeight: 'bold', fontSize: '11px', borderRight: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
+              <div style={{ display: 'table-cell', width: '40px', padding: '4px 3px', textAlign: 'center', fontWeight: 'bold', fontSize: '10px', borderRight: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
                 No.
               </div>
-              <div style={{ display: 'table-cell', padding: '6px 8px', fontWeight: 'bold', fontSize: '11px', borderRight: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
+              <div style={{ display: 'table-cell', padding: '4px 7px', fontWeight: 'bold', fontSize: '10px', borderRight: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
                 Metas Individuales/Resultados
               </div>
-              <div style={{ display: 'table-cell', textAlign: 'center', fontWeight: 'bold', fontSize: '10px', padding: '4px', verticalAlign: 'middle' }}>
+              <div style={{ display: 'table-cell', textAlign: 'center', fontWeight: 'bold', fontSize: '9px', padding: '3px', verticalAlign: 'middle' }}>
                 Calificacion<br />
-                <span style={{ fontWeight: 'normal', fontSize: '9px' }}>(Marque una X en la opcion que corresponda)</span>
+                <span style={{ fontWeight: 'normal', fontSize: '8px' }}>(Marque una X en la opcion que corresponda)</span>
               </div>
             </div>
           </div>
           {/* Header row 2 - rating labels */}
           <div style={{ display: 'table', width: '100%', background: '#1e3a5f', color: 'white', borderTop: '1px solid #4a6fa5' }}>
             <div style={{ display: 'table-row' }}>
-              <div style={{ display: 'table-cell', width: '46px', borderRight: '1px solid #4a6fa5' }}></div>
+              <div style={{ display: 'table-cell', width: '40px', borderRight: '1px solid #4a6fa5' }}></div>
               <div style={{ display: 'table-cell', borderRight: '1px solid #4a6fa5' }}></div>
               {RATING_COLS.map(r => (
-                <div key={r} style={{ display: 'table-cell', width: '13%', padding: '5px 3px', textAlign: 'center', fontSize: '9px', fontWeight: '600', borderLeft: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
+                <div key={r} style={{ display: 'table-cell', width: '13%', padding: '3px 2px', textAlign: 'center', fontSize: '8px', fontWeight: '600', borderLeft: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
                   {RATING_LABELS[r]}
                 </div>
               ))}
@@ -1229,24 +1244,24 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
               {/* Main goal row */}
               <div style={{ display: 'table', width: '100%', background: 'white', borderTop: '1px solid #cbd5e1' }}>
                 <div style={{ display: 'table-row' }}>
-                  <div style={{ display: 'table-cell', width: '46px', textAlign: 'center', fontWeight: 'bold', fontSize: '12px', color: '#1e3a5f', verticalAlign: 'middle', padding: '8px 4px', borderRight: '1px solid #cbd5e1' }}>
+                  <div style={{ display: 'table-cell', width: '40px', textAlign: 'center', fontWeight: 'bold', fontSize: '11px', color: '#1e3a5f', verticalAlign: 'middle', padding: '5px 3px', borderRight: '1px solid #cbd5e1' }}>
                     {goal.goal_number}
                   </div>
-                  <div style={{ display: 'table-cell', padding: '7px 8px', fontSize: '11px', fontWeight: goal.goal_description ? '600' : '400', color: goal.goal_description ? '#1e293b' : '#94a3b8', background: goal.goal_description ? '#eff6ff' : 'white', borderRight: '1px solid #cbd5e1', verticalAlign: 'middle', wordBreak: 'break-word' }}>
+                  <div style={{ display: 'table-cell', padding: '5px 7px', fontSize: '10px', fontWeight: goal.goal_description ? '600' : '400', color: goal.goal_description ? '#1e293b' : '#94a3b8', background: goal.goal_description ? '#eff6ff' : 'white', borderRight: '1px solid #cbd5e1', verticalAlign: 'middle', wordBreak: 'break-word' }}>
                     {goal.goal_description || 'Meta individual...'}
                   </div>
                   {RATING_COLS.map(r => {
                     const checked = goal.rating === r;
                     return (
-                      <div key={r} style={{ display: 'table-cell', width: '13%', textAlign: 'center', verticalAlign: 'middle', padding: '6px 4px', borderLeft: '1px solid #cbd5e1' }}>
+                      <div key={r} style={{ display: 'table-cell', width: '13%', textAlign: 'center', verticalAlign: 'middle', padding: '4px 3px', borderLeft: '1px solid #cbd5e1' }}>
                         <div style={{
-                          width: '16px', height: '16px',
+                          width: '14px', height: '14px',
                           border: '2px solid #1e3a5f',
                           background: 'white',
                           margin: '0 auto',
                           textAlign: 'center',
-                          lineHeight: '12px',
-                          fontSize: '13px',
+                          lineHeight: '10px',
+                          fontSize: '12px',
                           fontWeight: '900',
                           color: '#1e293b',
                           fontFamily: 'Arial, Helvetica, sans-serif',
@@ -1263,10 +1278,10 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
               {/* Results row */}
               <div style={{ display: 'table', width: '100%', background: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
                 <div style={{ display: 'table-row' }}>
-                  <div style={{ display: 'table-cell', width: '46px', borderRight: '1px solid #cbd5e1' }}></div>
-                  <div style={{ display: 'table-cell', padding: '5px 8px', colSpan: 5 } as React.CSSProperties}>
-                    <div style={{ fontSize: '9px', fontWeight: '700', color: '#64748b', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Resultados a la fecha de revision</div>
-                    <div style={{ fontSize: '11px', color: '#374151', minHeight: '22px', wordBreak: 'break-word' }}>
+                  <div style={{ display: 'table-cell', width: '40px', borderRight: '1px solid #cbd5e1' }}></div>
+                  <div style={{ display: 'table-cell', padding: '3px 7px', colSpan: 5 } as React.CSSProperties}>
+                    <div style={{ fontSize: '8px', fontWeight: '700', color: '#64748b', marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Resultados a la fecha de revision</div>
+                    <div style={{ fontSize: '10px', color: '#374151', minHeight: '16px', wordBreak: 'break-word' }}>
                       {goal.results_description || '\u00A0'}
                     </div>
                   </div>
@@ -1277,7 +1292,7 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
         </div>
 
         {/* Competencies section */}
-        <div style={{ background: '#1e3a5f', color: 'white', padding: '8px 14px', fontWeight: 'bold', fontSize: '13px', textAlign: 'center', marginTop: '12px', letterSpacing: '0.5px' }}>
+        <div style={{ background: '#1e3a5f', color: 'white', padding: '5px 14px', fontWeight: 'bold', fontSize: '12px', textAlign: 'center', marginTop: '8px', letterSpacing: '0.5px' }}>
           REVISION DE FACTORES CONDUCTUALES Y HABILIDADES TECNICAS
         </div>
 
@@ -1285,26 +1300,26 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
           {/* Header row 1 */}
           <div style={{ display: 'table', width: '100%', background: '#1e3a5f', color: 'white' }}>
             <div style={{ display: 'table-row' }}>
-              <div style={{ display: 'table-cell', width: '46px', padding: '6px 4px', textAlign: 'center', fontWeight: 'bold', fontSize: '11px', borderRight: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
+              <div style={{ display: 'table-cell', width: '40px', padding: '4px 3px', textAlign: 'center', fontWeight: 'bold', fontSize: '10px', borderRight: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
                 No.
               </div>
-              <div style={{ display: 'table-cell', padding: '6px 8px', textAlign: 'center', fontWeight: 'bold', fontSize: '11px', borderRight: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
+              <div style={{ display: 'table-cell', padding: '4px 7px', textAlign: 'center', fontWeight: 'bold', fontSize: '10px', borderRight: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
                 Conductas y Habilidades Tecnicas<br />
-                <span style={{ fontSize: '9px', fontWeight: 'normal' }}>(Evaluar las 5 Definidas)</span>
+                <span style={{ fontSize: '8px', fontWeight: 'normal' }}>(Evaluar las 5 Definidas)</span>
               </div>
-              <div style={{ display: 'table-cell', textAlign: 'center', fontWeight: 'bold', fontSize: '10px', padding: '4px', verticalAlign: 'middle' }}>
+              <div style={{ display: 'table-cell', textAlign: 'center', fontWeight: 'bold', fontSize: '9px', padding: '3px', verticalAlign: 'middle' }}>
                 Calificacion<br />
-                <span style={{ fontWeight: 'normal', fontSize: '9px' }}>(Marque una X en la opcion que corresponda)</span>
+                <span style={{ fontWeight: 'normal', fontSize: '8px' }}>(Marque una X en la opcion que corresponda)</span>
               </div>
             </div>
           </div>
           {/* Header row 2 - rating labels */}
           <div style={{ display: 'table', width: '100%', background: '#1e3a5f', color: 'white', borderTop: '1px solid #4a6fa5' }}>
             <div style={{ display: 'table-row' }}>
-              <div style={{ display: 'table-cell', width: '46px', borderRight: '1px solid #4a6fa5' }}></div>
+              <div style={{ display: 'table-cell', width: '40px', borderRight: '1px solid #4a6fa5' }}></div>
               <div style={{ display: 'table-cell', borderRight: '1px solid #4a6fa5' }}></div>
               {RATING_COLS.map(r => (
-                <div key={r} style={{ display: 'table-cell', width: '13%', padding: '5px 3px', textAlign: 'center', fontSize: '9px', fontWeight: '600', borderLeft: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
+                <div key={r} style={{ display: 'table-cell', width: '13%', padding: '3px 2px', textAlign: 'center', fontSize: '8px', fontWeight: '600', borderLeft: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
                   {RATING_LABELS[r]}
                 </div>
               ))}
@@ -1314,24 +1329,24 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
           {competencies.map((comp) => (
             <div key={`pdf-comp-${comp.competency_number}`} style={{ display: 'table', width: '100%', background: 'white', borderTop: '1px solid #cbd5e1' }}>
               <div style={{ display: 'table-row' }}>
-                <div style={{ display: 'table-cell', width: '46px', textAlign: 'center', fontWeight: 'bold', fontSize: '12px', color: '#1e3a5f', verticalAlign: 'middle', padding: '8px 4px', borderRight: '1px solid #cbd5e1' }}>
+                <div style={{ display: 'table-cell', width: '40px', textAlign: 'center', fontWeight: 'bold', fontSize: '11px', color: '#1e3a5f', verticalAlign: 'middle', padding: '5px 3px', borderRight: '1px solid #cbd5e1' }}>
                   {comp.competency_number}
                 </div>
-                <div style={{ display: 'table-cell', padding: '7px 8px', fontSize: '11px', fontWeight: comp.competency_description ? '600' : '400', color: comp.competency_description ? '#1e293b' : '#94a3b8', background: comp.competency_description ? '#eff6ff' : 'white', borderRight: '1px solid #cbd5e1', verticalAlign: 'middle', wordBreak: 'break-word' }}>
+                <div style={{ display: 'table-cell', padding: '5px 7px', fontSize: '10px', fontWeight: comp.competency_description ? '600' : '400', color: comp.competency_description ? '#1e293b' : '#94a3b8', background: comp.competency_description ? '#eff6ff' : 'white', borderRight: '1px solid #cbd5e1', verticalAlign: 'middle', wordBreak: 'break-word' }}>
                   {comp.competency_description || 'Conducta o habilidad tecnica...'}
                 </div>
                 {RATING_COLS.map(r => {
                   const checked = comp.rating === r;
                   return (
-                    <div key={r} style={{ display: 'table-cell', width: '13%', textAlign: 'center', verticalAlign: 'middle', padding: '6px 4px', borderLeft: '1px solid #cbd5e1' }}>
+                    <div key={r} style={{ display: 'table-cell', width: '13%', textAlign: 'center', verticalAlign: 'middle', padding: '4px 3px', borderLeft: '1px solid #cbd5e1' }}>
                       <div style={{
-                        width: '16px', height: '16px',
+                        width: '14px', height: '14px',
                         border: '2px solid #1e3a5f',
                         background: 'white',
                         margin: '0 auto',
                         textAlign: 'center',
-                        lineHeight: '12px',
-                        fontSize: '13px',
+                        lineHeight: '10px',
+                        fontSize: '12px',
                         fontWeight: '900',
                         color: '#1e293b',
                         fontFamily: 'Arial, Helvetica, sans-serif',
@@ -1349,23 +1364,23 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
         </div>
 
         {/* Comments */}
-        <div style={{ border: '1px solid #94a3b8', marginTop: '10px' }}>
+        <div style={{ border: '1px solid #94a3b8', marginTop: '7px' }}>
           <div style={{ display: 'table', width: '100%', borderBottom: '1px solid #94a3b8' }}>
             <div style={{ display: 'table-row' }}>
-              <div style={{ display: 'table-cell', background: '#1e3a5f', color: 'white', fontWeight: 'bold', fontSize: '11px', padding: '7px 10px', width: '180px', verticalAlign: 'top', whiteSpace: 'nowrap' }}>
+              <div style={{ display: 'table-cell', background: '#1e3a5f', color: 'white', fontWeight: 'bold', fontSize: '10px', padding: '5px 8px', width: '170px', verticalAlign: 'top', whiteSpace: 'nowrap' }}>
                 Comentarios Jefe Inmediato
               </div>
-              <div style={{ display: 'table-cell', background: 'white', padding: '7px 10px', fontSize: '11px', color: '#374151', minHeight: '44px', wordBreak: 'break-word', borderLeft: '1px solid #94a3b8' }}>
+              <div style={{ display: 'table-cell', background: 'white', padding: '5px 8px', fontSize: '10px', color: '#374151', minHeight: '32px', wordBreak: 'break-word', borderLeft: '1px solid #94a3b8' }}>
                 {managerComments || '\u00A0'}
               </div>
             </div>
           </div>
           <div style={{ display: 'table', width: '100%' }}>
             <div style={{ display: 'table-row' }}>
-              <div style={{ display: 'table-cell', background: '#1e3a5f', color: 'white', fontWeight: 'bold', fontSize: '11px', padding: '7px 10px', width: '180px', verticalAlign: 'top', whiteSpace: 'nowrap' }}>
+              <div style={{ display: 'table-cell', background: '#1e3a5f', color: 'white', fontWeight: 'bold', fontSize: '10px', padding: '5px 8px', width: '170px', verticalAlign: 'top', whiteSpace: 'nowrap' }}>
                 Comentarios del Colaborador
               </div>
-              <div style={{ display: 'table-cell', background: 'white', padding: '7px 10px', fontSize: '11px', color: '#374151', minHeight: '44px', wordBreak: 'break-word', borderLeft: '1px solid #94a3b8' }}>
+              <div style={{ display: 'table-cell', background: 'white', padding: '5px 8px', fontSize: '10px', color: '#374151', minHeight: '32px', wordBreak: 'break-word', borderLeft: '1px solid #94a3b8' }}>
                 {employeeComments || '\u00A0'}
               </div>
             </div>
@@ -1373,7 +1388,7 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
         </div>
 
         {/* Signature lines */}
-        <div style={{ display: 'flex', justifyContent: 'space-around', padding: '40px 24px 16px', gap: '24px', marginTop: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-around', padding: '30px 24px 12px', gap: '24px', marginTop: '6px' }}>
           {['Firma Colaborador', 'Firma Jefe Inmediato', 'Firma RRHH'].map(label => (
             <div key={label} style={{ flex: 1, textAlign: 'center' }}>
               <div style={{ borderTop: '1.5px solid #1e293b', paddingTop: '5px', marginTop: '0' }}>
