@@ -71,6 +71,9 @@ export function toProxyUrl(supabasePublicUrl: string): string {
   const idx = supabasePublicUrl.indexOf(marker);
   if (idx === -1) return supabasePublicUrl;
   const storagePath = supabasePublicUrl.slice(idx + marker.length);
+  // In local dev the Vercel rewrite doesn't run, so use the direct Supabase URL.
+  const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  if (isLocalDev) return supabasePublicUrl;
   return `/docs/${storagePath}`;
 }
 
