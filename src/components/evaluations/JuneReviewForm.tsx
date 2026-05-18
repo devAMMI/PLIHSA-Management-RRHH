@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Save, Upload, CheckCircle, Eye, X, Download, FileText, ArrowLeft, Printer } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { buildStoragePath, storagePathToProxyUrl, BUCKET } from '../../lib/storagePaths';
 import { Toast } from '../ui/Toast';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -85,7 +86,7 @@ export function JuneReviewForm({ evaluationId, onCancel, onSaved }: JuneReviewFo
         .select(`
           *,
           employee:employees(
-            id, first_name, last_name, position, hire_date,
+            id, first_name, last_name, position, hire_date, employee_code,
             departments(name),
             manager:manager_id(first_name, last_name)
           ),
@@ -304,25 +305,35 @@ export function JuneReviewForm({ evaluationId, onCancel, onSaved }: JuneReviewFo
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No hay usuario autenticado');
 
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `review_${evaluationId}_${Date.now()}.${fileExt}`;
-      const filePath = `administrative-reviews/${fileName}`;
+      const fileExt = selectedFile.name.split('.').pop() || 'pdf';
+      const year = period ? new Date(period.start_date).getFullYear() : new Date().getFullYear();
+
+      let filePath: string;
+      if (employee?.employee_code && employee?.last_name) {
+        filePath = buildStoragePath({
+          docKind: 'revision-junio',
+          empType: 'administrativo',
+          year,
+          employee: { employee_code: employee.employee_code, last_name: employee.last_name },
+          fileExt
+        });
+      } else {
+        filePath = `PLIHSA/revision-junio/administrativo/${year}/${evaluationId}.${fileExt}`;
+      }
 
       const { error: uploadError } = await supabase.storage
-        .from('goal-signed-documents')
-        .upload(filePath, selectedFile, { cacheControl: '3600', upsert: false });
+        .from(BUCKET)
+        .upload(filePath, selectedFile, { cacheControl: '3600', upsert: true });
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('goal-signed-documents')
-        .getPublicUrl(filePath);
+      const proxyUrl = storagePathToProxyUrl(filePath);
 
       const now = new Date().toISOString();
       await supabase
         .from('administrative_evaluations')
         .update({
-          review_signed_document_url: publicUrl,
+          review_signed_document_url: proxyUrl,
           review_signed_document_filename: selectedFile.name,
           review_signed_document_mime_type: selectedFile.type,
           review_signed_document_uploaded_at: now,
@@ -331,7 +342,7 @@ export function JuneReviewForm({ evaluationId, onCancel, onSaved }: JuneReviewFo
         })
         .eq('id', evaluationId);
 
-      setSignedDocUrl(publicUrl);
+      setSignedDocUrl(proxyUrl);
       setSignedDocFilename(selectedFile.name);
       setSignedDocMimeType(selectedFile.type);
       setSignedDocUploadedAt(now);

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Upload, FileText, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { buildStoragePath, storagePathToProxyUrl, BUCKET } from '../../lib/storagePaths';
 
 interface EmployeeInfo {
   id: string;
@@ -20,18 +21,6 @@ interface SignedDocumentUploadProps {
 }
 
 const PHASE_1_LABEL = 'Definicion de Metas';
-
-function buildStoragePath(
-  employeeId: string,
-  employeeCode: string,
-  year: number,
-  definitionType: 'administrative' | 'operative',
-  fileExt: string
-): string {
-  const typeSlug = definitionType === 'administrative' ? 'Administrativo' : 'Operativo';
-  const filename = `${employeeCode}_Definicion_Metas_${year}.${fileExt}`;
-  return `${employeeId}/${year}/01_definicion_metas/${typeSlug}/${filename}`;
-}
 
 export function SignedDocumentUpload({
   goalDefinitionId,
@@ -78,21 +67,23 @@ export function SignedDocumentUpload({
       const fileExt = selectedFile.name.split('.').pop() || 'pdf';
       const year = evalYear || new Date().getFullYear();
 
+      const empType = definitionType === 'administrative' ? 'administrativo' : 'operativo';
+
       let storagePath: string;
       if (employee) {
-        storagePath = buildStoragePath(
-          employee.id,
-          employee.employee_code,
+        storagePath = buildStoragePath({
+          docKind: 'definicion-metas',
+          empType,
           year,
-          definitionType,
+          employee,
           fileExt
-        );
+        });
       } else {
-        storagePath = `${definitionType}/${goalDefinitionId}_${Date.now()}.${fileExt}`;
+        storagePath = `PLIHSA/definicion-metas/${empType}/${year}/${goalDefinitionId}.${fileExt}`;
       }
 
       const { error: uploadError } = await supabase.storage
-        .from('goal-signed-documents')
+        .from(BUCKET)
         .upload(storagePath, selectedFile, {
           cacheControl: '3600',
           upsert: true
@@ -100,9 +91,7 @@ export function SignedDocumentUpload({
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('goal-signed-documents')
-        .getPublicUrl(storagePath);
+      const proxyUrl = storagePathToProxyUrl(storagePath);
 
       const tableName = definitionType === 'administrative'
         ? 'goal_definitions'
@@ -111,7 +100,7 @@ export function SignedDocumentUpload({
       const { error: updateError } = await supabase
         .from(tableName)
         .update({
-          signed_document_url: publicUrl,
+          signed_document_url: proxyUrl,
           signed_document_filename: selectedFile.name,
           signed_document_mime_type: selectedFile.type,
           signed_document_uploaded_at: new Date().toISOString(),
@@ -136,7 +125,7 @@ export function SignedDocumentUpload({
             employee_type: definitionType,
             source_table: tableName,
             source_record_id: goalDefinitionId,
-            document_url: publicUrl,
+            document_url: proxyUrl,
             document_filename: selectedFile.name,
             document_mime_type: selectedFile.type,
             storage_path: storagePath,

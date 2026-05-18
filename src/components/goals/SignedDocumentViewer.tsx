@@ -1,5 +1,6 @@
 import { X, Download, FileText, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
+import { toProxyUrl } from '../../lib/storagePaths';
 
 interface SignedDocumentViewerProps {
   documentUrl: string;
@@ -26,12 +27,13 @@ export function SignedDocumentViewer({
   const [activeTab, setActiveTab] = useState<'signed' | 'original' | 'both'>('both');
   const [downloadingBoth, setDownloadingBoth] = useState(false);
 
+  const resolvedUrl = toProxyUrl(documentUrl);
   const isPDF = mimeType === 'application/pdf';
   const isImage = mimeType.includes('image');
 
   const handleDownload = () => {
     const link = document.createElement('a');
-    link.href = documentUrl;
+    link.href = resolvedUrl;
     link.download = filename;
     document.body.appendChild(link);
     link.click();
@@ -44,7 +46,7 @@ export function SignedDocumentViewer({
     setDownloadingBoth(true);
     try {
       const signedLink = document.createElement('a');
-      signedLink.href = documentUrl;
+      signedLink.href = resolvedUrl;
       signedLink.download = `Firmado_${filename}`;
       document.body.appendChild(signedLink);
       signedLink.click();
@@ -199,7 +201,7 @@ export function SignedDocumentViewer({
                 <h3 className="text-sm font-semibold text-slate-700 mb-2 px-2">Documento Firmado</h3>
                 {isPDF ? (
                   <iframe
-                    src={documentUrl}
+                    src={resolvedUrl}
                     className="flex-1 w-full rounded-lg border-2 border-slate-300 bg-white"
                     title="Documento firmado PDF"
                     onLoad={() => setIsLoading(false)}
@@ -211,7 +213,7 @@ export function SignedDocumentViewer({
                 ) : isImage ? (
                   <div className="flex-1 flex items-center justify-center bg-white rounded-lg border-2 border-slate-300">
                     <img
-                      src={documentUrl}
+                      src={resolvedUrl}
                       alt="Documento firmado"
                       className="max-w-full max-h-full rounded-lg"
                       onLoad={() => setIsLoading(false)}
@@ -239,7 +241,7 @@ export function SignedDocumentViewer({
             <>
               {isPDF && (
                 <iframe
-                  src={documentUrl}
+                  src={resolvedUrl}
                   className="w-full h-full rounded-lg border-2 border-slate-300 bg-white"
                   title="Documento firmado PDF"
                   onLoad={() => setIsLoading(false)}
@@ -253,7 +255,7 @@ export function SignedDocumentViewer({
               {isImage && (
                 <div className="flex items-center justify-center h-full">
                   <img
-                    src={documentUrl}
+                    src={resolvedUrl}
                     alt="Documento firmado"
                     className="max-w-full max-h-full rounded-lg shadow-lg border-2 border-slate-300"
                     onLoad={() => setIsLoading(false)}

@@ -1,8 +1,25 @@
 {
   "rewrites": [
     {
+      "source": "/docs/:path*",
+      "destination": "https://yithnwgzzdhxecghzmjl.supabase.co/storage/v1/object/public/goal-signed-documents/:path*"
+    },
+    {
       "source": "/storage/:path*",
       "destination": "https://yithnwgzzdhxecghzmjl.supabase.co/storage/v1/object/public/:path*"
+    },
+    {
+      "source": "/((?!api|docs|storage|assets|favicon|.*\\..*).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/docs/:path*",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
+      ]
     }
   ]
 }

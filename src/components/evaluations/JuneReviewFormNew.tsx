@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Save, Download, Printer, Upload, CheckCircle, Eye, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { buildStoragePath, storagePathToProxyUrl, BUCKET } from '../../lib/storagePaths';
 import { useAuth } from '../../contexts/AuthContext';
 import { Toast } from '../ui/Toast';
 import { SignedDocumentViewer } from '../goals/SignedDocumentViewer';
@@ -448,23 +449,37 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
     setUploadingDoc(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const ext = selectedFile.name.split('.').pop();
-      const filePath = `june-reviews/${reviewId}_${Date.now()}.${ext}`;
+      const ext = selectedFile.name.split('.').pop() || 'pdf';
+      const year = new Date().getFullYear();
+
+      let filePath: string;
+      if (selectedEmployee?.employee_code && selectedEmployee?.last_name) {
+        filePath = buildStoragePath({
+          docKind: 'revision-junio',
+          empType: employeeType === 'operativo' ? 'operativo' : 'administrativo',
+          year,
+          employee: { employee_code: selectedEmployee.employee_code, last_name: selectedEmployee.last_name },
+          fileExt: ext
+        });
+      } else {
+        filePath = `PLIHSA/revision-junio/${employeeType}/${year}/${reviewId}.${ext}`;
+      }
+
       const { error: uploadErr } = await supabase.storage
-        .from('goal-signed-documents')
-        .upload(filePath, selectedFile, { cacheControl: '3600', upsert: false });
+        .from(BUCKET)
+        .upload(filePath, selectedFile, { cacheControl: '3600', upsert: true });
       if (uploadErr) throw uploadErr;
-      const { data: { publicUrl } } = supabase.storage.from('goal-signed-documents').getPublicUrl(filePath);
+      const proxyUrl = storagePathToProxyUrl(filePath);
       const now = new Date().toISOString();
       await supabase.from('june_reviews').update({
-        signed_document_url: publicUrl,
+        signed_document_url: proxyUrl,
         signed_document_filename: selectedFile.name,
         signed_document_mime_type: selectedFile.type,
         signed_document_uploaded_at: now,
         signed_document_uploaded_by: user?.id,
         status: 'pending_signature',
       }).eq('id', reviewId);
-      setSignedDocUrl(publicUrl);
+      setSignedDocUrl(proxyUrl);
       setSignedDocFilename(selectedFile.name);
       setSignedDocMimeType(selectedFile.type);
       setSignedDocUploadedAt(now);

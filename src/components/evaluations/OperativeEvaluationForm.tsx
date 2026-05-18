@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Save, Download, Printer, Upload, CheckCircle, Eye, X, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { buildStoragePath, storagePathToProxyUrl, BUCKET } from '../../lib/storagePaths';
 import { useAuth } from '../../contexts/AuthContext';
 import { Toast } from '../ui/Toast';
 import { OperativeEvaluationPDFTemplate } from './OperativeEvaluationPDFTemplate';
@@ -465,25 +466,35 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel, periodI
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No hay usuario autenticado');
 
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${savedEvaluationId}_${Date.now()}.${fileExt}`;
-      const filePath = `operative/${fileName}`;
+      const fileExt = selectedFile.name.split('.').pop() || 'pdf';
+      const year = period ? new Date(period.start_date).getFullYear() : new Date().getFullYear();
+
+      let filePath: string;
+      if (selectedEmployee?.employee_code && selectedEmployee?.last_name) {
+        filePath = buildStoragePath({
+          docKind: 'evaluacion',
+          empType: 'operativo',
+          year,
+          employee: { employee_code: selectedEmployee.employee_code, last_name: selectedEmployee.last_name },
+          fileExt
+        });
+      } else {
+        filePath = `PLIHSA/evaluacion/operativo/${year}/${savedEvaluationId}.${fileExt}`;
+      }
 
       const { error: uploadError } = await supabase.storage
-        .from('goal-signed-documents')
-        .upload(filePath, selectedFile, { cacheControl: '3600', upsert: false });
+        .from(BUCKET)
+        .upload(filePath, selectedFile, { cacheControl: '3600', upsert: true });
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('goal-signed-documents')
-        .getPublicUrl(filePath);
+      const proxyUrl = storagePathToProxyUrl(filePath);
 
       const now = new Date().toISOString();
       const { error: updateError } = await supabase
         .from('operative_evaluations')
         .update({
-          signed_document_url: publicUrl,
+          signed_document_url: proxyUrl,
           signed_document_filename: selectedFile.name,
           signed_document_mime_type: selectedFile.type,
           signed_document_uploaded_at: now,
@@ -493,7 +504,7 @@ export function OperativeEvaluationForm({ editingEvaluationId, onCancel, periodI
 
       if (updateError) throw updateError;
 
-      setSignedDocumentUrl(publicUrl);
+      setSignedDocumentUrl(proxyUrl);
       setSignedDocumentFilename(selectedFile.name);
       setSignedDocumentMimeType(selectedFile.type);
       setSignedDocumentUploadedAt(now);

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { GoalDefinitionViewer } from '../goals/GoalDefinitionViewer';
 import { OperativeGoalDefinitionViewer } from '../goals/OperativeGoalDefinitionViewer';
+import { toProxyUrl } from '../../lib/storagePaths';
 
 interface GoalDefinitionRecord {
   id: string;
@@ -305,7 +306,7 @@ function JuneReviewModal({ review, onClose }: { review: JuneReviewRecord; onClos
                 </div>
               </div>
               <a
-                href={review.signed_document_url}
+                href={toProxyUrl(review.signed_document_url)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium"
