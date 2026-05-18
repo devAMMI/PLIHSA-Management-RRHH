@@ -1,6 +1,8 @@
-import { ArrowLeft, Mail, Phone, MapPin, Calendar, Briefcase, User, GraduationCap, Users, Building2, Clock, MapPinned, Home, CreditCard as Edit2, Trash2, Heart } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowLeft, Mail, Phone, MapPin, Calendar, Briefcase, User, GraduationCap, Users, Building2, Clock, MapPinned, Home, Pencil, Trash2, Heart, UserCheck } from 'lucide-react';
 import { formatSeniorityFromDate } from '../../lib/seniority';
 import { EmployeeEvaluationsHistory } from './EmployeeEvaluationsHistory';
+import { supabase } from '../../lib/supabase';
 
 interface EmployeeProfilePageProps {
   employee: any;
@@ -9,7 +11,30 @@ interface EmployeeProfilePageProps {
   onDelete: () => void;
 }
 
+interface Subordinate {
+  id: string;
+  first_name: string;
+  last_name: string;
+  position: string;
+  employee_code: string;
+  photo_url?: string | null;
+  employee_type?: string;
+  status?: string;
+}
+
 export function EmployeeProfilePage({ employee, onBack, onEdit, onDelete }: EmployeeProfilePageProps) {
+  const [subordinates, setSubordinates] = useState<Subordinate[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from('employees')
+      .select('id, first_name, last_name, position, employee_code, photo_url, employee_type, status')
+      .eq('manager_id', employee.id)
+      .eq('status', 'active')
+      .order('first_name', { ascending: true })
+      .then(({ data }) => setSubordinates(data || []));
+  }, [employee.id]);
+
   const formatDate = (date: string | null) => {
     if (!date) return 'N/A';
     return new Date(date + 'T00:00:00').toLocaleDateString('es-HN', {
@@ -97,7 +122,7 @@ export function EmployeeProfilePage({ employee, onBack, onEdit, onDelete }: Empl
                       onClick={onEdit}
                       className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium shadow-sm"
                     >
-                      <Edit2 className="w-4 h-4" />
+                      <Pencil className="w-4 h-4" />
                       Editar
                     </button>
                     <button
@@ -369,6 +394,57 @@ export function EmployeeProfilePage({ employee, onBack, onEdit, onDelete }: Empl
                     </div>
                   </div>
                 )}
+
+                <div className="bg-slate-50 rounded-xl p-6 border border-slate-200">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="p-2 bg-teal-100 rounded-lg">
+                      <UserCheck className="w-5 h-5 text-teal-600" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-slate-900">Empleados bajo su cargo</h2>
+                      {subordinates.length > 0 && (
+                        <p className="text-xs text-slate-500 mt-0.5">{subordinates.length} colaborador{subordinates.length !== 1 ? 'es' : ''}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {subordinates.length === 0 ? (
+                    <div className="text-center py-6">
+                      <Users className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                      <p className="text-sm text-slate-400">Sin colaboradores directos</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {subordinates.map((sub) => (
+                        <div
+                          key={sub.id}
+                          className="flex items-center gap-3 bg-white rounded-lg p-3 border border-slate-200 hover:border-teal-300 hover:shadow-sm transition"
+                        >
+                          <div className="w-10 h-10 rounded-full bg-slate-100 border-2 border-white shadow-sm flex-shrink-0 overflow-hidden flex items-center justify-center">
+                            {sub.photo_url ? (
+                              <img src={sub.photo_url} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <User className="w-5 h-5 text-slate-400" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-slate-800 truncate">
+                              {sub.first_name} {sub.last_name}
+                            </p>
+                            <p className="text-xs text-slate-500 truncate">{sub.position}</p>
+                          </div>
+                          <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${
+                            sub.employee_type === 'administrativo'
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-green-100 text-green-700'
+                          }`}>
+                            {sub.employee_type === 'administrativo' ? 'Adm' : 'Op'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
