@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Save, Printer, CreditCard as Edit2, X, ArrowLeft, Download, FileText, Eye } from 'lucide-react';
+import { Save, Printer, Pencil, X, ArrowLeft, Download, FileText, Eye } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { GoalWorkflowStatus } from './GoalWorkflowStatus';
@@ -340,7 +340,7 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
             {mode === 'view' && (
               <>
                 <button onClick={() => setMode('edit')} className="p-2 hover:bg-orange-600 rounded-lg transition" title="Editar">
-                  <Edit2 className="w-5 h-5" />
+                  <Pencil className="w-5 h-5" />
                 </button>
                 <button onClick={handleDownloadPDF} disabled={loading} className="p-2 hover:bg-orange-600 rounded-lg transition disabled:opacity-50" title="Descargar PDF">
                   <Download className="w-5 h-5" />
