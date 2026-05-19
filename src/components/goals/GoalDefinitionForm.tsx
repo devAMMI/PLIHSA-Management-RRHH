@@ -311,7 +311,7 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
       {showSaveNotif && (
         <SaveNotification
           employeeName={selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : undefined}
-          onClose={() => setShowSaveNotif(false)}
+          onClose={() => { setShowSaveNotif(false); onBack?.(); }}
         />
       )}
 
