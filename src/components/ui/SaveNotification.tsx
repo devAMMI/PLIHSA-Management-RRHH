@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { X } from 'lucide-react';
 
 interface SaveNotificationProps {
   employeeName?: string;
@@ -45,21 +46,18 @@ const STEPS = [
 ];
 
 export function SaveNotification({ employeeName, onClose }: SaveNotificationProps) {
-  const [phase, setPhase] = useState<'enter' | 'show' | 'exit'>('enter');
+  const [phase, setPhase] = useState<'enter' | 'show' | 'closable'>('enter');
 
   useEffect(() => {
+    // card animates in
     const t1 = setTimeout(() => setPhase('show'), 50);
-    const t2 = setTimeout(() => setPhase('exit'), 6000);
-    const t3 = setTimeout(() => onClose(), 6400);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, [onClose]);
+    // after 6s progress bar finishes → show X button
+    const t2 = setTimeout(() => setPhase('closable'), 6050);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
 
   return (
-    <div
-      className={`fixed inset-0 z-[200] flex items-center justify-center transition-all duration-300 ${
-        phase === 'exit' ? 'opacity-0 pointer-events-none' : 'opacity-100'
-      }`}
-    >
+    <div className="fixed inset-0 z-[200] flex items-center justify-center">
       {/* backdrop */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
 
@@ -68,12 +66,21 @@ export function SaveNotification({ employeeName, onClose }: SaveNotificationProp
         className={`relative bg-white rounded-3xl shadow-2xl overflow-hidden transition-all duration-500 ${
           phase === 'enter'
             ? 'scale-75 opacity-0 translate-y-8'
-            : phase === 'show'
-            ? 'scale-100 opacity-100 translate-y-0'
-            : 'scale-95 opacity-0 -translate-y-4'
+            : 'scale-100 opacity-100 translate-y-0'
         }`}
         style={{ width: 480 }}
       >
+        {/* close button — only visible after progress finishes */}
+        <button
+          onClick={onClose}
+          className={`absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-white transition-all duration-300 ${
+            phase === 'closable' ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'
+          }`}
+          aria-label="Cerrar"
+        >
+          <X size={16} />
+        </button>
+
         {/* top banner */}
         <div className="relative h-36 bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center overflow-hidden px-6">
           <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full bg-white/10" />
@@ -81,7 +88,6 @@ export function SaveNotification({ employeeName, onClose }: SaveNotificationProp
           <div className="absolute top-3 left-5 w-14 h-14 rounded-full bg-white/10" />
 
           <div className="relative z-10 flex items-center gap-4">
-            {/* check circle */}
             <div className="w-16 h-16 rounded-full bg-white/20 border-4 border-white/50 flex items-center justify-center shadow-xl flex-shrink-0">
               <svg viewBox="0 0 48 48" className="w-9 h-9" fill="none">
                 <polyline
@@ -98,9 +104,7 @@ export function SaveNotification({ employeeName, onClose }: SaveNotificationProp
             <div className="text-white">
               <p className="font-bold text-xl leading-tight">Guardado exitosamente</p>
               {employeeName && (
-                <p className="text-white/80 text-sm mt-0.5">
-                  {employeeName}
-                </p>
+                <p className="text-white/80 text-sm mt-0.5">{employeeName}</p>
               )}
             </div>
           </div>
@@ -121,7 +125,6 @@ export function SaveNotification({ employeeName, onClose }: SaveNotificationProp
               <div
                 key={i}
                 className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100"
-                style={{ animationDelay: `${0.2 + i * 0.12}s` }}
               >
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${step.color}`}>
                   {step.icon}
@@ -138,19 +141,25 @@ export function SaveNotification({ employeeName, onClose }: SaveNotificationProp
           </div>
         </div>
 
-        {/* footer note */}
+        {/* footer */}
         <div className="px-6 pb-5 pt-3">
-          <p className="text-xs text-center text-slate-400">
-            Esta pantalla se cerrara automaticamente y regresaras al inicio
+          <p className={`text-xs text-center transition-all duration-500 ${
+            phase === 'closable' ? 'text-slate-500' : 'text-slate-400'
+          }`}>
+            {phase === 'closable'
+              ? 'Puedes cerrar esta notificacion cuando estes listo'
+              : 'Lee los pasos siguientes antes de continuar'}
           </p>
         </div>
 
-        {/* progress bar */}
+        {/* progress bar — runs once for 6s */}
         <div className="h-1.5 bg-slate-100">
-          <div
-            className="h-full bg-emerald-500 rounded-full"
-            style={{ animation: 'save-progress 6s linear forwards' }}
-          />
+          {phase !== 'enter' && (
+            <div
+              className="h-full bg-emerald-500 rounded-full"
+              style={{ animation: 'save-progress 6s linear forwards' }}
+            />
+          )}
         </div>
 
         <style>{`
