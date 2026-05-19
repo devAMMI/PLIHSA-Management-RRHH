@@ -423,22 +423,6 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
                 <Save className="w-4 h-4" />
                 {loading ? 'Guardando...' : 'Guardar'}
               </button>
-              <button
-                onClick={handleDownloadPDF}
-                disabled={loading || !selectedEmployeeId}
-                className="flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
-              >
-                <Download className="w-4 h-4" />
-                {loading ? 'Generando...' : 'Descargar PDF'}
-              </button>
-              <button
-                onClick={handlePrint}
-                disabled={!selectedEmployeeId}
-                className="flex items-center justify-center gap-2 bg-slate-600 text-white px-4 py-2 rounded-md hover:bg-slate-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
-              >
-                <Printer className="w-4 h-4" />
-                Imprimir
-              </button>
             </div>
           </div>
         </div>
