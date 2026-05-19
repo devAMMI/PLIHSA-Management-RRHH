@@ -18,6 +18,12 @@ interface PhaseStats {
   loading: boolean;
 }
 
+interface GoalStats {
+  admin: { total: number; finalized: number; inProgress: number };
+  operative: { total: number; finalized: number; inProgress: number };
+  loading: boolean;
+}
+
 interface DeptStat {
   department: string;
   total: number;
@@ -84,6 +90,11 @@ export function Dashboard() {
   const [phase1, setPhase1] = useState<PhaseStats>({ ...emptyPhase });
   const [phase2, setPhase2] = useState<PhaseStats>({ ...emptyPhase });
   const [phase3, setPhase3] = useState<PhaseStats>({ ...emptyPhase });
+  const [goalStats, setGoalStats] = useState<GoalStats>({
+    admin: { total: 0, finalized: 0, inProgress: 0 },
+    operative: { total: 0, finalized: 0, inProgress: 0 },
+    loading: true,
+  });
 
   const [deptStats, setDeptStats] = useState<DeptStat[]>([]);
   const [ratingStats, setRatingStats] = useState<RatingStat[]>([]);
@@ -117,6 +128,7 @@ export function Dashboard() {
       loadPhase1(),
       loadPhase2(),
       loadPhase3(),
+      loadGoalStats(),
       loadDeptStats(),
       loadRatingStats(),
       canSeeEvaluations ? loadEvaluations() : Promise.resolve(),
@@ -142,17 +154,51 @@ export function Dashboard() {
   const loadPhase1 = async () => {
     setPhase1(s => ({ ...s, loading: true }));
     try {
-      const { data } = await supabase.from('goal_definitions' as any).select('id, status');
-      const rows = (data as any[]) || [];
+      const [adminRes, operRes] = await Promise.all([
+        supabase.from('goal_definitions' as any).select('id, signed_document_url'),
+        supabase.from('operative_goal_definitions' as any).select('id, signed_document_url'),
+      ]);
+      const adminRows = (adminRes.data as any[]) || [];
+      const operRows = (operRes.data as any[]) || [];
+      const allRows = [...adminRows, ...operRows];
+      const isFinalized = (r: any) => r.signed_document_url && r.signed_document_url !== '';
       setPhase1({
-        total: rows.length,
-        completed: rows.filter(r => r.status === 'approved').length,
-        draft: rows.filter(r => r.status === 'draft').length,
-        pending: rows.filter(r => ['pending_review', 'pending_approval'].includes(r.status)).length,
+        total: allRows.length,
+        completed: allRows.filter(isFinalized).length,
+        draft: allRows.filter(r => !isFinalized(r)).length,
+        pending: 0,
         loading: false,
       });
     } catch {
       setPhase1(s => ({ ...s, loading: false }));
+    }
+  };
+
+  const loadGoalStats = async () => {
+    setGoalStats(s => ({ ...s, loading: true }));
+    try {
+      const [adminRes, operRes] = await Promise.all([
+        supabase.from('goal_definitions' as any).select('id, signed_document_url'),
+        supabase.from('operative_goal_definitions' as any).select('id, signed_document_url'),
+      ]);
+      const adminRows = (adminRes.data as any[]) || [];
+      const operRows = (operRes.data as any[]) || [];
+      const isFinalized = (r: any) => r.signed_document_url && r.signed_document_url !== '';
+      setGoalStats({
+        admin: {
+          total: adminRows.length,
+          finalized: adminRows.filter(isFinalized).length,
+          inProgress: adminRows.filter(r => !isFinalized(r)).length,
+        },
+        operative: {
+          total: operRows.length,
+          finalized: operRows.filter(isFinalized).length,
+          inProgress: operRows.filter(r => !isFinalized(r)).length,
+        },
+        loading: false,
+      });
+    } catch {
+      setGoalStats(s => ({ ...s, loading: false }));
     }
   };
 
@@ -330,8 +376,8 @@ export function Dashboard() {
           icon={<Target className="w-5 h-5 text-emerald-600" />}
           iconBg="bg-emerald-50"
           label="Definición de Metas"
-          value={phase1.loading ? '—' : phase1.total}
-          sub={phase1.loading ? '' : `${phase1.completed} aprobadas`}
+          value={goalStats.loading ? '—' : goalStats.admin.total + goalStats.operative.total}
+          sub={goalStats.loading ? '' : `${goalStats.admin.finalized + goalStats.operative.finalized} finalizadas`}
           accent="text-emerald-600"
         />
         <KPICard
@@ -359,15 +405,74 @@ export function Dashboard() {
           <h2 className="text-base font-semibold text-slate-700">Ciclo de Evaluaciones {year} — Estado por Fase</h2>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
-          <PhaseBlock
-            number={1}
-            title="Definición de Metas"
-            period="Enero — Febrero"
-            stats={phase1}
-            color={{ ring: 'ring-emerald-200', bg: 'bg-emerald-600', light: 'bg-emerald-50', text: 'text-emerald-700', bar: 'bg-emerald-500' }}
-            completedLabel="Aprobadas"
-            pendingLabel="En revisión"
-          />
+          {/* Fase 1 — Definición de Metas (Admin + Operativo) */}
+          <div className="p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-emerald-600 text-white text-sm font-bold flex items-center justify-center flex-shrink-0 shadow-sm">1</div>
+              <div>
+                <h4 className="text-sm font-semibold text-slate-800">Definición de Metas</h4>
+                <p className="text-xs text-slate-400">Enero — Febrero</p>
+              </div>
+            </div>
+
+            {goalStats.loading ? (
+              <div className="space-y-3 animate-pulse">
+                <div className="h-16 bg-slate-100 rounded-xl" />
+                <div className="h-16 bg-slate-100 rounded-xl" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Administrativo */}
+                <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-emerald-800">Administrativo</span>
+                    <span className="text-xs font-bold text-slate-700">{goalStats.admin.total} total</span>
+                  </div>
+                  <div className="h-1.5 bg-emerald-100 rounded-full overflow-hidden mb-2">
+                    <div
+                      className="h-full bg-emerald-500 rounded-full transition-all duration-700"
+                      style={{ width: goalStats.admin.total > 0 ? `${Math.round((goalStats.admin.finalized / goalStats.admin.total) * 100)}%` : '0%' }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-white rounded-lg p-2 text-center">
+                      <p className="text-[10px] text-slate-400 font-medium">Finalizadas</p>
+                      <p className="text-base font-bold text-emerald-700">{goalStats.admin.finalized}</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-2 text-center">
+                      <p className="text-[10px] text-slate-400 font-medium">En Proceso</p>
+                      <p className="text-base font-bold text-amber-600">{goalStats.admin.inProgress}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Operativo */}
+                <div className="bg-teal-50 rounded-xl p-3 border border-teal-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-teal-800">Operativo</span>
+                    <span className="text-xs font-bold text-slate-700">{goalStats.operative.total} total</span>
+                  </div>
+                  <div className="h-1.5 bg-teal-100 rounded-full overflow-hidden mb-2">
+                    <div
+                      className="h-full bg-teal-500 rounded-full transition-all duration-700"
+                      style={{ width: goalStats.operative.total > 0 ? `${Math.round((goalStats.operative.finalized / goalStats.operative.total) * 100)}%` : '0%' }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-white rounded-lg p-2 text-center">
+                      <p className="text-[10px] text-slate-400 font-medium">Finalizadas</p>
+                      <p className="text-base font-bold text-teal-700">{goalStats.operative.finalized}</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-2 text-center">
+                      <p className="text-[10px] text-slate-400 font-medium">En Proceso</p>
+                      <p className="text-base font-bold text-amber-600">{goalStats.operative.inProgress}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           <PhaseBlock
             number={2}
             title="Revisión de Metas"
