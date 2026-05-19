@@ -133,9 +133,9 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
   const fetchDefinitions = async () => {
     setLoading(true);
     try {
-      // For jefe role, get their subordinate employee IDs first
+      // For jefe and manager roles, get their subordinate employee IDs first
       let subordinateIds: string[] | null = null;
-      if (systemUser?.role === 'jefe' && systemUser.employee_id) {
+      if ((systemUser?.role === 'jefe' || systemUser?.role === 'manager') && systemUser.employee_id) {
         const { data: subs } = await supabase
           .from('employees')
           .select('id')
