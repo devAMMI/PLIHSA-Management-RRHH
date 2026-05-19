@@ -809,9 +809,9 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
                       <td key={r} style={{ border: '1px solid #94a3b8', padding: '4px', textAlign: 'center', verticalAlign: 'middle' }}>
                         <div
                           onClick={() => !isReadOnly && handleGoalRating(index, r)}
-                          style={{ width: '16px', height: '16px', border: `2px solid #1e293b`, margin: '0 auto', background: 'white', cursor: isReadOnly ? 'default' : 'pointer', textAlign: 'center', lineHeight: '12px', fontSize: '12px', fontWeight: 'bold', color: '#1e293b', userSelect: 'none' }}
+                          style={{ width: '20px', height: '20px', border: `2px solid #1e293b`, margin: '0 auto', background: 'white', cursor: isReadOnly ? 'default' : 'pointer', textAlign: 'center', lineHeight: '16px', fontSize: '15px', fontWeight: '900', color: '#1e293b', userSelect: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         >
-                          {goal.rating === r ? 'X' : ''}
+                          {goal.rating === r ? '✕' : ''}
                         </div>
                       </td>
                     ))}
@@ -877,9 +877,9 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
                     <td key={r} style={{ border: '1px solid #94a3b8', padding: '4px', textAlign: 'center', verticalAlign: 'middle' }}>
                       <div
                         onClick={() => !isReadOnly && handleCompetencyRating(index, r)}
-                        style={{ width: '16px', height: '16px', border: `2px solid #1e293b`, margin: '0 auto', background: 'white', cursor: isReadOnly ? 'default' : 'pointer', textAlign: 'center', lineHeight: '12px', fontSize: '12px', fontWeight: 'bold', color: '#1e293b', userSelect: 'none' }}
+                        style={{ width: '20px', height: '20px', border: `2px solid #1e293b`, margin: '0 auto', background: 'white', cursor: isReadOnly ? 'default' : 'pointer', textAlign: 'center', lineHeight: '16px', fontSize: '15px', fontWeight: '900', color: '#1e293b', userSelect: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >
-                        {comp.rating === r ? 'X' : ''}
+                        {comp.rating === r ? '✕' : ''}
                       </div>
                     </td>
                   ))}
@@ -1270,20 +1270,20 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
                     return (
                       <div key={r} style={{ display: 'table-cell', width: '13%', textAlign: 'center', verticalAlign: 'middle', padding: '4px 3px', borderLeft: '1px solid #cbd5e1' }}>
                         <div style={{
-                          width: '14px', height: '14px',
+                          width: '20px', height: '20px',
                           border: '2px solid #1e3a5f',
                           background: 'white',
                           margin: '0 auto',
-                          textAlign: 'center',
-                          lineHeight: '10px',
-                          fontSize: '12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '15px',
                           fontWeight: '900',
                           color: '#1e293b',
                           fontFamily: 'Arial, Helvetica, sans-serif',
                           boxSizing: 'border-box',
-                          overflow: 'hidden',
                         }}>
-                          {checked ? 'X' : ''}
+                          {checked ? '✕' : ''}
                         </div>
                       </div>
                     );
@@ -1355,20 +1355,20 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
                   return (
                     <div key={r} style={{ display: 'table-cell', width: '13%', textAlign: 'center', verticalAlign: 'middle', padding: '4px 3px', borderLeft: '1px solid #cbd5e1' }}>
                       <div style={{
-                        width: '14px', height: '14px',
+                        width: '20px', height: '20px',
                         border: '2px solid #1e3a5f',
                         background: 'white',
                         margin: '0 auto',
-                        textAlign: 'center',
-                        lineHeight: '10px',
-                        fontSize: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '15px',
                         fontWeight: '900',
                         color: '#1e293b',
                         fontFamily: 'Arial, Helvetica, sans-serif',
                         boxSizing: 'border-box',
-                        overflow: 'hidden',
                       }}>
-                        {checked ? 'X' : ''}
+                        {checked ? '✕' : ''}
                       </div>
                     </div>
                   );

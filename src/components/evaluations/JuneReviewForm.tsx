@@ -560,13 +560,13 @@ export function JuneReviewForm({ evaluationId, onCancel, onSaved }: JuneReviewFo
                           type="button"
                           onClick={() => !isReadOnly && handleGoalRatingChange(index, r)}
                           disabled={isReadOnly}
-                          className={`w-5 h-5 border-2 flex items-center justify-center mx-auto transition-all text-xs font-bold
+                          className={`w-6 h-6 border-2 flex items-center justify-center mx-auto transition-all font-black text-base
                             ${goal.rating === r
                               ? 'border-slate-700 text-slate-800'
                               : 'border-slate-400'
                             } ${isReadOnly ? 'cursor-default' : 'cursor-pointer hover:border-slate-600'}`}
                         >
-                          {goal.rating === r ? 'X' : ''}
+                          {goal.rating === r ? '✕' : ''}
                         </button>
                       </td>
                     ))}
@@ -629,13 +629,13 @@ export function JuneReviewForm({ evaluationId, onCancel, onSaved }: JuneReviewFo
                         type="button"
                         onClick={() => !isReadOnly && handleCompetencyRatingChange(index, r)}
                         disabled={isReadOnly}
-                        className={`w-5 h-5 border-2 flex items-center justify-center mx-auto transition-all text-xs font-bold
+                        className={`w-6 h-6 border-2 flex items-center justify-center mx-auto transition-all font-black text-base
                           ${comp.rating === r
                             ? 'border-slate-700 text-slate-800'
                             : 'border-slate-400'
                           } ${isReadOnly ? 'cursor-default' : 'cursor-pointer hover:border-slate-600'}`}
                       >
-                        {comp.rating === r ? 'X' : ''}
+                        {comp.rating === r ? '✕' : ''}
                       </button>
                     </td>
                   ))}
