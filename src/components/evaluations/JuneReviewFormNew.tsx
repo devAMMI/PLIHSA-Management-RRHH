@@ -807,12 +807,13 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
                     </td>
                     {RATING_COLS.map(r => (
                       <td key={r} style={{ border: '1px solid #94a3b8', padding: '4px', textAlign: 'center', verticalAlign: 'middle' }}>
-                        <div
-                          onClick={() => !isReadOnly && handleGoalRating(index, r)}
-                          style={{ width: '20px', height: '20px', border: `2px solid #1e293b`, margin: '0 auto', background: 'white', cursor: isReadOnly ? 'default' : 'pointer', textAlign: 'center', lineHeight: '16px', fontSize: '15px', fontWeight: '900', color: '#1e293b', userSelect: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                          {goal.rating === r ? '✕' : ''}
-                        </div>
+                        <input
+                          type="checkbox"
+                          className="rating-checkbox"
+                          checked={goal.rating === r}
+                          onChange={() => !isReadOnly && handleGoalRating(index, r)}
+                          disabled={isReadOnly}
+                        />
                       </td>
                     ))}
                   </tr>
@@ -875,12 +876,13 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
                   </td>
                   {RATING_COLS.map(r => (
                     <td key={r} style={{ border: '1px solid #94a3b8', padding: '4px', textAlign: 'center', verticalAlign: 'middle' }}>
-                      <div
-                        onClick={() => !isReadOnly && handleCompetencyRating(index, r)}
-                        style={{ width: '20px', height: '20px', border: `2px solid #1e293b`, margin: '0 auto', background: 'white', cursor: isReadOnly ? 'default' : 'pointer', textAlign: 'center', lineHeight: '16px', fontSize: '15px', fontWeight: '900', color: '#1e293b', userSelect: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                      >
-                        {comp.rating === r ? '✕' : ''}
-                      </div>
+                      <input
+                        type="checkbox"
+                        className="rating-checkbox"
+                        checked={comp.rating === r}
+                        onChange={() => !isReadOnly && handleCompetencyRating(index, r)}
+                        disabled={isReadOnly}
+                      />
                     </td>
                   ))}
                 </tr>
@@ -1269,22 +1271,13 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
                     const checked = goal.rating === r;
                     return (
                       <div key={r} style={{ display: 'table-cell', width: '13%', textAlign: 'center', verticalAlign: 'middle', padding: '4px 3px', borderLeft: '1px solid #cbd5e1' }}>
-                        <div style={{
-                          width: '20px', height: '20px',
-                          border: '2px solid #1e3a5f',
-                          background: 'white',
-                          margin: '0 auto',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '15px',
-                          fontWeight: '900',
-                          color: '#1e293b',
-                          fontFamily: 'Arial, Helvetica, sans-serif',
-                          boxSizing: 'border-box',
-                        }}>
-                          {checked ? '✕' : ''}
-                        </div>
+                        <input
+                          type="checkbox"
+                          className="rating-checkbox"
+                          checked={checked}
+                          readOnly
+                          disabled
+                        />
                       </div>
                     );
                   })}
@@ -1354,22 +1347,13 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
                   const checked = comp.rating === r;
                   return (
                     <div key={r} style={{ display: 'table-cell', width: '13%', textAlign: 'center', verticalAlign: 'middle', padding: '4px 3px', borderLeft: '1px solid #cbd5e1' }}>
-                      <div style={{
-                        width: '20px', height: '20px',
-                        border: '2px solid #1e3a5f',
-                        background: 'white',
-                        margin: '0 auto',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '15px',
-                        fontWeight: '900',
-                        color: '#1e293b',
-                        fontFamily: 'Arial, Helvetica, sans-serif',
-                        boxSizing: 'border-box',
-                      }}>
-                        {checked ? '✕' : ''}
-                      </div>
+                      <input
+                        type="checkbox"
+                        className="rating-checkbox"
+                        checked={checked}
+                        readOnly
+                        disabled
+                      />
                     </div>
                   );
                 })}

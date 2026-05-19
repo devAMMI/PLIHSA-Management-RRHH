@@ -556,18 +556,13 @@ export function JuneReviewForm({ evaluationId, onCancel, onSaved }: JuneReviewFo
                     </td>
                     {RATING_COLS.map((r) => (
                       <td key={r} className="border border-slate-400 px-2 py-3 text-center align-middle">
-                        <button
-                          type="button"
-                          onClick={() => !isReadOnly && handleGoalRatingChange(index, r)}
+                        <input
+                          type="checkbox"
+                          className="rating-checkbox"
+                          checked={goal.rating === r}
+                          onChange={() => !isReadOnly && handleGoalRatingChange(index, r)}
                           disabled={isReadOnly}
-                          className={`w-6 h-6 border-2 flex items-center justify-center mx-auto transition-all font-black text-base
-                            ${goal.rating === r
-                              ? 'border-slate-700 text-slate-800'
-                              : 'border-slate-400'
-                            } ${isReadOnly ? 'cursor-default' : 'cursor-pointer hover:border-slate-600'}`}
-                        >
-                          {goal.rating === r ? '✕' : ''}
-                        </button>
+                        />
                       </td>
                     ))}
                   </tr>
@@ -625,18 +620,13 @@ export function JuneReviewForm({ evaluationId, onCancel, onSaved }: JuneReviewFo
                   </td>
                   {RATING_COLS.map((r) => (
                     <td key={r} className="border border-slate-400 px-2 py-2.5 text-center">
-                      <button
-                        type="button"
-                        onClick={() => !isReadOnly && handleCompetencyRatingChange(index, r)}
+                      <input
+                        type="checkbox"
+                        className="rating-checkbox"
+                        checked={comp.rating === r}
+                        onChange={() => !isReadOnly && handleCompetencyRatingChange(index, r)}
                         disabled={isReadOnly}
-                        className={`w-6 h-6 border-2 flex items-center justify-center mx-auto transition-all font-black text-base
-                          ${comp.rating === r
-                            ? 'border-slate-700 text-slate-800'
-                            : 'border-slate-400'
-                          } ${isReadOnly ? 'cursor-default' : 'cursor-pointer hover:border-slate-600'}`}
-                      >
-                        {comp.rating === r ? '✕' : ''}
-                      </button>
+                      />
                     </td>
                   ))}
                 </tr>
