@@ -7,11 +7,22 @@ import { UserPermissionsModal } from './UserPermissionsModal';
 import { SystemUser, ROLE_LABELS, canManageUser, canSeeUser } from '../../types/roles';
 import { userService } from '../../services/userService';
 
+const ROLE_ORDER: Record<string, number> = {
+  superadmin: 0,
+  admin: 1,
+  rrhh: 2,
+  manager: 3,
+  jefe: 4,
+  employee: 5,
+  viewer: 6,
+};
+
 export function UserList() {
   const { systemUser } = useAuth();
   const [users, setUsers] = useState<SystemUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
   const [showModal, setShowModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
@@ -143,17 +154,29 @@ export function UserList() {
     return canSeeUser(systemUser.role, user.role, isMe(user));
   });
 
-  const filteredUsers = visibleUsers.filter((user) => {
-    const q = searchTerm.toLowerCase();
-    const email = user.email?.toLowerCase() || '';
-    const name = user.employee
-      ? `${user.employee.first_name} ${user.employee.last_name}`.toLowerCase()
-      : '';
-    const role = ROLE_LABELS[user.role]?.toLowerCase() || '';
-    const company = user.company?.name?.toLowerCase() || '';
+  const filteredUsers = visibleUsers
+    .filter((user) => {
+      if (roleFilter !== 'all' && user.role !== roleFilter) return false;
+      const q = searchTerm.toLowerCase();
+      if (!q) return true;
+      const email = user.email?.toLowerCase() || '';
+      const name = user.employee
+        ? `${user.employee.first_name} ${user.employee.last_name}`.toLowerCase()
+        : '';
+      const role = ROLE_LABELS[user.role]?.toLowerCase() || '';
+      const company = user.company?.name?.toLowerCase() || '';
+      return email.includes(q) || name.includes(q) || role.includes(q) || company.includes(q);
+    })
+    .sort((a, b) => {
+      const roleDiff = (ROLE_ORDER[a.role] ?? 99) - (ROLE_ORDER[b.role] ?? 99);
+      if (roleDiff !== 0) return roleDiff;
+      const nameA = a.employee ? `${a.employee.first_name} ${a.employee.last_name}` : a.email || '';
+      const nameB = b.employee ? `${b.employee.first_name} ${b.employee.last_name}` : b.email || '';
+      return nameA.localeCompare(nameB, 'es');
+    });
 
-    return email.includes(q) || name.includes(q) || role.includes(q) || company.includes(q);
-  });
+  const availableRoles = [...new Set(visibleUsers.map(u => u.role))]
+    .sort((a, b) => (ROLE_ORDER[a] ?? 99) - (ROLE_ORDER[b] ?? 99));
 
   const getRoleBadge = (role: string) => {
     const map: Record<string, string> = {
@@ -253,6 +276,16 @@ export function UserList() {
               className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             />
           </div>
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          >
+            <option value="all">Todos los roles</option>
+            {availableRoles.map(role => (
+              <option key={role} value={role}>{ROLE_LABELS[role as keyof typeof ROLE_LABELS] || role}</option>
+            ))}
+          </select>
           <button
             onClick={loadUsers}
             className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
