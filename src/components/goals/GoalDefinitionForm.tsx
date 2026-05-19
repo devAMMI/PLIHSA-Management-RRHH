@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Save, FileText, Users, Calendar, Building2, MapPin, User, Download, Printer, X, ArrowLeft, FilePlus } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { SaveNotification } from '../ui/SaveNotification';
 
 interface Employee {
   id: string;
@@ -32,6 +33,7 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showSaveNotif, setShowSaveNotif] = useState(false);
 
   const [definitionDate, setDefinitionDate] = useState(new Date().toISOString().split('T')[0]);
 
@@ -259,7 +261,7 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
         });
       }
 
-      setMessage({ type: 'success', text: 'Definición de metas guardada exitosamente' });
+      setShowSaveNotif(true);
 
     } catch (error: any) {
       console.error('Error saving goal definition:', error);
@@ -306,8 +308,15 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
         </div>
       )}
 
-      {message && (
-        <div className={`mb-4 p-4 rounded-lg ${message.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'} print:hidden`}>
+      {showSaveNotif && (
+        <SaveNotification
+          employeeName={selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : undefined}
+          onClose={() => setShowSaveNotif(false)}
+        />
+      )}
+
+      {message && message.type === 'error' && (
+        <div className="mb-4 p-4 rounded-lg bg-red-50 text-red-800 border border-red-200 print:hidden">
           <div className="flex items-center justify-between">
             <span>{message.text}</span>
             <button onClick={() => setMessage(null)} className="text-xl">×</button>
