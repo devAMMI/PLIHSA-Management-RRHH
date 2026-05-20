@@ -10,15 +10,27 @@ const STEPS = [
   {
     icon: (
       <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 10v6m0 0l-3-3m3 3l3-3" />
-        <path d="M3 15v4a2 2 0 002 2h14a2 2 0 002-2v-4" />
-        <path d="M7 10l5-7 5 7" />
+        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
+        <rect x="9" y="3" width="6" height="4" rx="1" />
+        <path d="M9 12h6M9 16h4" />
       </svg>
     ),
-    label: 'Descargar PDF',
-    desc: 'Genera y descarga el documento en formato PDF',
+    label: 'Ve a "Ver las definiciones"',
+    desc: 'Desde el menu lateral abre la seccion de Ver Definiciones de Metas',
     color: 'bg-blue-100 text-blue-600',
     num: '1',
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="8" />
+        <path d="M21 21l-4.35-4.35" />
+      </svg>
+    ),
+    label: 'Selecciona la definicion del empleado',
+    desc: 'Busca y abre la definicion de metas del colaborador que acabas de guardar',
+    color: 'bg-sky-100 text-sky-600',
+    num: '2',
   },
   {
     icon: (
@@ -26,10 +38,10 @@ const STEPS = [
         <path d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 2.828L11.828 15.828a2 2 0 01-1.414.586H8v-2.414A2 2 0 018.586 12.5z" />
       </svg>
     ),
-    label: 'Firmar el Documento',
+    label: 'Firma la definicion',
     desc: 'El documento debe ser firmado por el colaborador y el jefe inmediato',
     color: 'bg-amber-100 text-amber-600',
-    num: '2',
+    num: '3',
   },
   {
     icon: (
@@ -38,10 +50,10 @@ const STEPS = [
         <path d="M12 12V4m0 0L8 8m4-4l4 4" />
       </svg>
     ),
-    label: 'Subir PDF Firmado',
-    desc: 'Carga el documento firmado para completar el proceso',
+    label: 'Sube el documento firmado',
+    desc: 'Carga el PDF firmado y guarda la definicion de metas para completar el proceso',
     color: 'bg-emerald-100 text-emerald-600',
-    num: '3',
+    num: '4',
   },
 ];
 
