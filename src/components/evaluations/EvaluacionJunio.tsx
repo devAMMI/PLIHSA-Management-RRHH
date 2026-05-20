@@ -237,7 +237,7 @@ export function EvaluacionJunio() {
               <p className="text-sm text-slate-600">
                 <span className="font-medium">1. Definicion de Metas (Enero)</span> &rarr; Establecimiento de objetivos y conductas. &nbsp;
                 <span className="font-semibold text-slate-800">2. Revision (Junio)</span> &rarr; Calificacion del avance semestral. &nbsp;
-                <span className="font-medium">3. Evaluacion Final (Diciembre)</span> &rarr; Cierre y evaluacion del ano.
+                <span className="font-medium">3. Evaluacion Final (Diciembre)</span> &rarr; Cierre y evaluacion del año.
               </p>
             </div>
           </div>
