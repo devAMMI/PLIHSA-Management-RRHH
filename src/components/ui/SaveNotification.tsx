@@ -94,7 +94,7 @@ export function SaveNotification({ employeeName, onClose }: SaveNotificationProp
         </button>
 
         {/* top banner */}
-        <div className="relative h-36 bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center overflow-hidden px-6">
+        <div className="relative h-36 bg-gradient-to-br from-blue-700 to-blue-900 flex items-center justify-center overflow-hidden px-6">
           <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full bg-white/10" />
           <div className="absolute -bottom-10 -left-10 w-44 h-44 rounded-full bg-white/10" />
           <div className="absolute top-3 left-5 w-14 h-14 rounded-full bg-white/10" />
@@ -168,7 +168,7 @@ export function SaveNotification({ employeeName, onClose }: SaveNotificationProp
         <div className="h-1.5 bg-slate-100">
           {phase !== 'enter' && (
             <div
-              className="h-full bg-emerald-500 rounded-full"
+              className="h-full bg-blue-700 rounded-full"
               style={{ animation: 'save-progress 6s linear forwards' }}
             />
           )}
