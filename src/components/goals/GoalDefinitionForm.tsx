@@ -5,6 +5,7 @@ import { Save, FileText, Users, Calendar, Building2, MapPin, User, Download, Pri
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { SaveNotification } from '../ui/SaveNotification';
+import { getDateForInput } from '../../utils/dateTime';
 
 interface Employee {
   id: string;
@@ -35,7 +36,7 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showSaveNotif, setShowSaveNotif] = useState(false);
 
-  const [definitionDate, setDefinitionDate] = useState(new Date().toISOString().split('T')[0]);
+  const [definitionDate, setDefinitionDate] = useState(getDateForInput());
 
   const [goals, setGoals] = useState([
     { number: 1, description: '', measurement: '' },

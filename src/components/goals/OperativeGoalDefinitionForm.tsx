@@ -5,6 +5,7 @@ import { Save, Download, Printer, ArrowLeft, X, FileText, FilePlus } from 'lucid
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { SaveNotification } from '../ui/SaveNotification';
+import { getDateForInput } from '../../utils/dateTime';
 
 interface Employee {
   id: string;
@@ -35,7 +36,7 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showSaveNotif, setShowSaveNotif] = useState(false);
 
-  const [definitionDate, setDefinitionDate] = useState(new Date().toISOString().split('T')[0]);
+  const [definitionDate, setDefinitionDate] = useState(getDateForInput());
 
   const [functionalFactors, setFunctionalFactors] = useState([
     { number: 1, jobFunction: '', expectedResults: '' },
@@ -209,7 +210,7 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
     setManagerComments('');
     setEmployeeComments('');
     setSubDepartment('');
-    setDefinitionDate(new Date().toISOString().split('T')[0]);
+    setDefinitionDate(getDateForInput());
     setMessage(null);
   };
 

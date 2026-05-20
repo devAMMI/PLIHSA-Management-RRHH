@@ -1,7 +1,8 @@
 export const TIMEZONE = 'America/Tegucigalpa';
 
 export const getCurrentDateTimeHonduras = (): Date => {
-  return new Date(new Date().toLocaleString('en-US', { timeZone: TIMEZONE }));
+  // GMT-6 fixed offset — Honduras does not observe DST
+  return new Date(Date.now() - 6 * 60 * 60 * 1000);
 };
 
 export const formatDateHonduras = (date: Date | string | null): string => {
