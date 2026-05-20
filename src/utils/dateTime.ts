@@ -1,8 +1,20 @@
 export const TIMEZONE = 'America/Tegucigalpa';
 
 export const getCurrentDateTimeHonduras = (): Date => {
-  // GMT-6 fixed offset — Honduras does not observe DST
-  return new Date(Date.now() - 6 * 60 * 60 * 1000);
+  // Uses Intl to get the wall-clock time in Tegucigalpa, then builds a
+  // plain Date whose UTC values equal those local components (no DST shift).
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: TIMEZONE,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+  }).formatToParts(now);
+  const get = (t: string) => parts.find(p => p.type === t)?.value ?? '0';
+  const hour = get('hour') === '24' ? 0 : Number(get('hour'));
+  return new Date(
+    Number(get('year')), Number(get('month')) - 1, Number(get('day')),
+    hour, Number(get('minute')), Number(get('second'))
+  );
 };
 
 export const formatDateHonduras = (date: Date | string | null): string => {
