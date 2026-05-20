@@ -97,6 +97,7 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
   const { systemUser, employee } = useAuth();
   const [allDefinitions, setAllDefinitions] = useState<(AdministrativeGoalDefinition | OperativeGoalDefinition)[]>([]);
   const [definitions, setDefinitions] = useState<(AdministrativeGoalDefinition | OperativeGoalDefinition)[]>([]);
+  const [numberMap, setNumberMap] = useState<Record<string, number>>({});
   const [auditMap, setAuditMap] = useState<Record<string, AuditInfo>>({});
   const [loading, setLoading] = useState(true);
   const [selectedDefinition, setSelectedDefinition] = useState<AdministrativeGoalDefinition | OperativeGoalDefinition | null>(null);
@@ -271,6 +272,13 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
         const { data, error } = await query;
         if (error) throw error;
         const loaded = data || [];
+        // FIFO numbering: sort by created_at ascending to assign #1 to oldest
+        const sorted = [...loaded].sort((a: any, b: any) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        const nm: Record<string, number> = {};
+        sorted.forEach((d: any, i: number) => { nm[d.id] = i + 1; });
+        setNumberMap(nm);
         setAllDefinitions(loaded);
         setDefinitions(loaded);
 
@@ -400,6 +408,9 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
                 </h1>
                 <p className="text-white/80 mt-1">
                   {allDefinitions.length} definicion{allDefinitions.length !== 1 ? 'es' : ''} registrada{allDefinitions.length !== 1 ? 's' : ''}
+                  {definitions.length !== allDefinitions.length && (
+                    <span className="ml-2 text-white/60">({definitions.length} mostradas)</span>
+                  )}
                 </p>
               </div>
             </div>
@@ -467,6 +478,11 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
+                          {numberMap[definition.id] && (
+                            <span className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${accentColor === 'blue' ? 'bg-blue-600' : 'bg-orange-600'}`}>
+                              #{numberMap[definition.id]}
+                            </span>
+                          )}
                           <h3 className="text-lg font-bold text-slate-800">
                             {definition.employee.first_name} {definition.employee.last_name}
                           </h3>
