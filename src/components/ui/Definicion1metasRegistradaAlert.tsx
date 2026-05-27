@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { X, AlertTriangle, Phone, Mail } from 'lucide-react';
 
-interface DuplicateDefinitionAlertProps {
+interface Definicion1metasRegistradaAlertProps {
   employeeName: string;
   year: number;
   status: string;
@@ -51,7 +51,7 @@ const STEPS = [
   },
 ];
 
-export function DuplicateDefinitionAlert({ employeeName, year, status, onClose }: DuplicateDefinitionAlertProps) {
+export function Definicion1metasRegistradaAlert({ employeeName, year, status, onClose }: Definicion1metasRegistradaAlertProps) {
   const [phase, setPhase] = useState<'enter' | 'show' | 'closable'>('enter');
 
   useEffect(() => {

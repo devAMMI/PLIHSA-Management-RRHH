@@ -5,7 +5,7 @@ import { Save, FileText, Users, Calendar, Building2, MapPin, User, Download, Pri
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { SaveNotification } from '../ui/SaveNotification';
-import { DuplicateDefinitionAlert } from '../ui/DuplicateDefinitionAlert';
+import { Definicion1metasRegistradaAlert } from '../ui/Definicion1metasRegistradaAlert';
 import { getDateForInput } from '../../utils/dateTime';
 
 interface Employee {
@@ -345,7 +345,7 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
       )}
 
       {showDuplicateAlert && existingDefinition && selectedEmployee && (
-        <DuplicateDefinitionAlert
+        <Definicion1metasRegistradaAlert
           employeeName={`${selectedEmployee.first_name} ${selectedEmployee.last_name}`}
           year={new Date().getFullYear()}
           status={existingDefinition.workflow_status}
