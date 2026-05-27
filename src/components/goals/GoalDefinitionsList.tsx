@@ -194,6 +194,12 @@ export function GoalDefinitionsList({ type, onBack, filterStatus: initialFilterS
         const { data, error } = await query;
         if (error) throw error;
         const loadedAdm = data || [];
+        const sortedAdm = [...loadedAdm].sort((a: any, b: any) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        const nmAdm: Record<string, number> = {};
+        sortedAdm.forEach((d: any, i: number) => { nmAdm[d.id] = i + 1; });
+        setNumberMap(nmAdm);
         setAllDefinitions(loadedAdm);
         setDefinitions(loadedAdm);
 
