@@ -5,6 +5,7 @@ import { Save, FileText, Users, Calendar, Building2, MapPin, User, Download, Pri
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { SaveNotification } from '../ui/SaveNotification';
+import { DuplicateDefinitionAlert } from '../ui/DuplicateDefinitionAlert';
 import { getDateForInput } from '../../utils/dateTime';
 
 interface Employee {
@@ -37,6 +38,7 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
   const [showSaveNotif, setShowSaveNotif] = useState(false);
   const [existingDefinition, setExistingDefinition] = useState<{ id: string; workflow_status: string; definition_date: string } | null>(null);
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
+  const [showDuplicateAlert, setShowDuplicateAlert] = useState(false);
 
   const [definitionDate, setDefinitionDate] = useState(getDateForInput());
 
@@ -89,6 +91,7 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
         .lte('definition_date', `${currentYear}-12-31`)
         .maybeSingle();
       setExistingDefinition(data || null);
+      if (data) setShowDuplicateAlert(true);
     } finally {
       setCheckingDuplicate(false);
     }
@@ -338,6 +341,15 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
         <SaveNotification
           employeeName={selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : undefined}
           onClose={() => { setShowSaveNotif(false); onBack?.(); }}
+        />
+      )}
+
+      {showDuplicateAlert && existingDefinition && selectedEmployee && (
+        <DuplicateDefinitionAlert
+          employeeName={`${selectedEmployee.first_name} ${selectedEmployee.last_name}`}
+          year={new Date().getFullYear()}
+          status={existingDefinition.workflow_status}
+          onClose={() => setShowDuplicateAlert(false)}
         />
       )}
 
