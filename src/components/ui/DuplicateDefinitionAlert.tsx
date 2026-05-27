@@ -113,7 +113,7 @@ export function DuplicateDefinitionAlert({ employeeName, year, status, onClose }
         {/* body */}
         <div className="px-6 pt-5 pb-2">
           <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800 leading-snug">
-            Solo se permite <strong>una definicion de metas por empleado por ano</strong>.
+            Solo se permite <strong>una definicion de metas por empleado por año</strong>.
             Este colaborador ya cuenta con una definicion activa para {year}.
             En caso de haber cometido un error, favor contactar a <strong>RRHH</strong>.
           </div>
