@@ -35,6 +35,8 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showSaveNotif, setShowSaveNotif] = useState(false);
+  const [existingDefinition, setExistingDefinition] = useState<{ id: string; workflow_status: string; definition_date: string } | null>(null);
+  const [checkingDuplicate, setCheckingDuplicate] = useState(false);
 
   const [definitionDate, setDefinitionDate] = useState(getDateForInput());
 
@@ -67,11 +69,30 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
       const employee = employees.find(e => e.id === selectedEmployeeId);
       setSelectedEmployee(employee || null);
       setSubDepartment((employee?.sub_department as any)?.name || '');
+      checkExistingDefinition(selectedEmployeeId);
     } else {
       setSelectedEmployee(null);
       setSubDepartment('');
+      setExistingDefinition(null);
     }
   }, [selectedEmployeeId, employees]);
+
+  const checkExistingDefinition = async (employeeId: string) => {
+    setCheckingDuplicate(true);
+    try {
+      const currentYear = new Date().getFullYear();
+      const { data } = await supabase
+        .from('goal_definitions')
+        .select('id, workflow_status, definition_date')
+        .eq('employee_id', employeeId)
+        .gte('definition_date', `${currentYear}-01-01`)
+        .lte('definition_date', `${currentYear}-12-31`)
+        .maybeSingle();
+      setExistingDefinition(data || null);
+    } finally {
+      setCheckingDuplicate(false);
+    }
+  };
 
   const loadEmployees = async () => {
     try {
@@ -188,9 +209,13 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
   };
 
   const handleSave = async () => {
-
     if (!selectedEmployeeId) {
       setMessage({ type: 'error', text: 'Por favor seleccione un empleado' });
+      return;
+    }
+
+    if (existingDefinition) {
+      setMessage({ type: 'error', text: 'Este empleado ya tiene una definición de metas registrada para este año.' });
       return;
     }
 
@@ -361,6 +386,39 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
               </select>
             </div>
 
+            {checkingDuplicate && (
+              <div className="flex items-center gap-2 text-xs text-slate-500 mb-3">
+                <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                Verificando...
+              </div>
+            )}
+
+            {existingDefinition && !checkingDuplicate && (
+              <div className="mb-3 p-3 bg-amber-50 border border-amber-300 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                  </svg>
+                  <div>
+                    <p className="text-xs font-semibold text-amber-800">Definicion ya registrada</p>
+                    <p className="text-xs text-amber-700 mt-0.5">
+                      Este empleado ya tiene una definicion de metas en {new Date().getFullYear()}.
+                    </p>
+                    <p className="text-xs text-amber-600 mt-1">
+                      Estado: <span className="font-medium capitalize">{
+                        existingDefinition.workflow_status === 'draft' ? 'Borrador' :
+                        existingDefinition.workflow_status === 'pending_signature' ? 'Pendiente Firma' :
+                        'Finalizado'
+                      }</span>
+                    </p>
+                    <p className="text-xs text-amber-600">
+                      Solo se permite una definicion por empleado por ano.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {selectedEmployee && (
               <div className="border-t pt-4 mt-4">
                 <h3 className="text-sm font-semibold text-slate-700 mb-2">Información del Colaborador</h3>
@@ -418,7 +476,7 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
               </button>
               <button
                 onClick={handleSave}
-                disabled={loading || !selectedEmployeeId}
+                disabled={loading || !selectedEmployeeId || !!existingDefinition || checkingDuplicate}
                 className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
               >
                 <Save className="w-4 h-4" />
