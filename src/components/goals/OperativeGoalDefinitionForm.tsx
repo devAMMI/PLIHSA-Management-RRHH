@@ -27,6 +27,7 @@ interface OperativeGoalDefinitionFormProps {
 export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionFormProps) {
   const { systemUser } = useAuth();
   const formRef = useRef<HTMLDivElement>(null);
+  const commentsRef = useRef<HTMLDivElement>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
 
@@ -275,6 +276,24 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
 
     setLoading(true);
     try {
+      // Push comments section to next page if it would be split
+      let addedMargin = 0;
+      if (commentsRef.current) {
+        const imgWidth = 215.9 - 20;
+        const contentHeightMm = 279.4 - 20;
+        const pxPerMm = formRef.current.offsetWidth / imgWidth;
+        const pageHeightPx = contentHeightMm * pxPerMm;
+        const formTop = formRef.current.getBoundingClientRect().top;
+        const commentsTop = commentsRef.current.getBoundingClientRect().top;
+        const offsetPx = commentsTop - formTop;
+        const posWithinPage = offsetPx % pageHeightPx;
+        if (posWithinPage > 0) {
+          addedMargin = pageHeightPx - posWithinPage + 8;
+          commentsRef.current.style.marginTop = `${addedMargin}px`;
+          await new Promise(r => setTimeout(r, 50));
+        }
+      }
+
       const canvas = await html2canvas(formRef.current, {
         scale: 2.5,
         useCORS: true,
@@ -286,6 +305,10 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
         scrollX: 0,
         scrollY: 0
       });
+
+      if (addedMargin > 0 && commentsRef.current) {
+        commentsRef.current.style.marginTop = '';
+      }
 
       const margin = 10;
       const imgWidth = 215.9 - margin * 2;
@@ -662,7 +685,7 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
                 </table>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4" ref={commentsRef}>
                 <div className="border-2 border-slate-300">
                   <div className="bg-blue-900 text-white px-3 py-1.5 text-[10px] font-bold">
                     Comentarios Jefe Inmediato
