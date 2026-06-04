@@ -220,7 +220,7 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
       const pdf = new jsPDF('p', 'mm', 'letter');
 
       if (imgHeight <= contentHeight) {
-        pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', margin, margin, imgWidth, imgHeight);
       } else {
         const scale = canvas.width / imgWidth;
         const pageHeightPx = Math.floor(contentHeight * scale);
