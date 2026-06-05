@@ -402,14 +402,6 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                 >
                   <Download className="w-5 h-5" />
                 </button>
-                <button
-                  onClick={handlePrint}
-                  disabled={loading}
-                  className="p-2 hover:bg-blue-800 rounded-lg transition disabled:opacity-50"
-                  title="Imprimir"
-                >
-                  <Printer className="w-5 h-5" />
-                </button>
               </>
             )}
             {mode === 'edit' && (
@@ -448,7 +440,6 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
             <GoalWorkflowStatus
               status={(currentDefinition.workflow_status || 'draft') as 'draft' | 'pending_signature' | 'completed'}
               signedDocumentUrl={currentDefinition.signed_document_url}
-              onPrint={handlePrint}
               onDownloadPDF={handleDownloadPDF}
               onUploadSigned={() => setShowUploadModal(true)}
               onMarkAsCompleted={handleMarkAsCompleted}

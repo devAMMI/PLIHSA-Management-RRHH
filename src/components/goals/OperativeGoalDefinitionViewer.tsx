@@ -382,9 +382,6 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
                 <button onClick={handleDownloadPDF} disabled={loading} className="p-2 hover:bg-orange-600 rounded-lg transition disabled:opacity-50" title="Descargar PDF">
                   <Download className="w-5 h-5" />
                 </button>
-                <button onClick={handlePrint} disabled={loading} className="p-2 hover:bg-orange-600 rounded-lg transition disabled:opacity-50" title="Imprimir">
-                  <Printer className="w-5 h-5" />
-                </button>
               </>
             )}
             {mode === 'edit' && (
@@ -413,7 +410,6 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
             <GoalWorkflowStatus
               status={(currentDefinition.workflow_status || 'draft') as 'draft' | 'pending_signature' | 'completed'}
               signedDocumentUrl={currentDefinition.signed_document_url}
-              onPrint={handlePrint}
               onDownloadPDF={handleDownloadPDF}
               onUploadSigned={() => setShowUploadModal(true)}
               onMarkAsCompleted={handleMarkAsCompleted}
