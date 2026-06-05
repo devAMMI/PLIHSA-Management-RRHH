@@ -518,7 +518,7 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                       className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium whitespace-nowrap"
                     >
                       <Eye className="w-4 h-4" />
-                      Ver Documento
+                      Ver ambos documentos
                     </button>
                   </div>
                 </div>
