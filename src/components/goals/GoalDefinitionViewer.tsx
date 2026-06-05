@@ -6,6 +6,7 @@ import jsPDF from 'jspdf';
 import { GoalWorkflowStatus } from './GoalWorkflowStatus';
 import { SignedDocumentUpload } from './SignedDocumentUpload';
 import { SignedDocumentViewer } from './SignedDocumentViewer';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Employee {
   employee_code: string;
@@ -56,6 +57,7 @@ interface GoalDefinitionViewerProps {
 }
 
 export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: initialMode = 'view' }: GoalDefinitionViewerProps) {
+  const { systemUser } = useAuth();
   const formRef = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<'view' | 'edit'>(initialMode);
   const [loading, setLoading] = useState(false);
@@ -387,13 +389,15 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
           <div className="flex gap-2">
             {mode === 'view' && (
               <>
-                <button
-                  onClick={() => setMode('edit')}
-                  className="p-2 hover:bg-blue-800 rounded-lg transition"
-                  title="Editar"
-                >
-                  <Pencil className="w-5 h-5" />
-                </button>
+                {(currentDefinition.workflow_status !== 'completed' || ['superadmin', 'admin'].includes(systemUser?.role || '')) && (
+                  <button
+                    onClick={() => setMode('edit')}
+                    className="p-2 hover:bg-blue-800 rounded-lg transition"
+                    title="Editar"
+                  >
+                    <Pencil className="w-5 h-5" />
+                  </button>
+                )}
                 <button
                   onClick={handleDownloadPDF}
                   disabled={loading}

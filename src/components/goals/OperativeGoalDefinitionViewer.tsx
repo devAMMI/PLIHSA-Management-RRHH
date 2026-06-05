@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { Save, Printer, Pencil, X, ArrowLeft, Download, FileText, Eye } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { useAuth } from '../../contexts/AuthContext';
 import { GoalWorkflowStatus } from './GoalWorkflowStatus';
 import { SignedDocumentUpload } from './SignedDocumentUpload';
 import { SignedDocumentViewer } from './SignedDocumentViewer';
@@ -57,6 +58,7 @@ interface OperativeGoalDefinitionViewerProps {
 }
 
 export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, mode: initialMode = 'view' }: OperativeGoalDefinitionViewerProps) {
+  const { systemUser } = useAuth();
   const formRef = useRef<HTMLDivElement>(null);
   const commentsRef = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<'view' | 'edit'>(initialMode);
@@ -376,9 +378,11 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
           <div className="flex gap-2">
             {mode === 'view' && (
               <>
-                <button onClick={() => setMode('edit')} className="p-2 hover:bg-orange-600 rounded-lg transition" title="Editar">
-                  <Pencil className="w-5 h-5" />
-                </button>
+                {(currentDefinition.workflow_status !== 'completed' || ['superadmin', 'admin'].includes(systemUser?.role || '')) && (
+                  <button onClick={() => setMode('edit')} className="p-2 hover:bg-orange-600 rounded-lg transition" title="Editar">
+                    <Pencil className="w-5 h-5" />
+                  </button>
+                )}
                 <button onClick={handleDownloadPDF} disabled={loading} className="p-2 hover:bg-orange-600 rounded-lg transition disabled:opacity-50" title="Descargar PDF">
                   <Download className="w-5 h-5" />
                 </button>
