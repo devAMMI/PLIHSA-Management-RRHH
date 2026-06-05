@@ -309,6 +309,31 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
     }
   };
 
+  const handleViewPDF = async () => {
+    if (!formRef.current) return;
+    setLoading(true);
+    try {
+      const result = await generatePdfBlob();
+      if (!result) throw new Error('No se pudo generar el PDF');
+      window.open(result.url, '_blank');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      setMessage({ type: 'error', text: 'Error al generar el PDF' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownloadSignedDocument = () => {
+    if (!currentDefinition.signed_document_url) return;
+    const link = document.createElement('a');
+    link.href = currentDefinition.signed_document_url;
+    link.download = currentDefinition.signed_document_filename || 'documento_firmado.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
     if (printWindow && formRef.current) {
@@ -414,7 +439,9 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
             <GoalWorkflowStatus
               status={(currentDefinition.workflow_status || 'draft') as 'draft' | 'pending_signature' | 'completed'}
               signedDocumentUrl={currentDefinition.signed_document_url}
+              onViewDigitalPDF={handleViewPDF}
               onDownloadPDF={handleDownloadPDF}
+              onDownloadSignedDocument={handleDownloadSignedDocument}
               onUploadSigned={() => setShowUploadModal(true)}
               onMarkAsCompleted={handleMarkAsCompleted}
             />
