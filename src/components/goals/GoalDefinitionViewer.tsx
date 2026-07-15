@@ -213,7 +213,7 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
         scrollY: 0
       });
 
-      const margin = 8;
+      const margin = 5;
       const imgWidth = 215.9 - margin * 2;
       const pageHeight = 279.4;
       const contentHeight = pageHeight - margin * 2;
@@ -524,9 +524,9 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden print-content" ref={formRef}>
-            <div className="bg-white border-b-2 border-slate-300">
+            <div className="bg-white border-b border-slate-400">
               <div className="grid grid-cols-12">
-                <div className="col-span-2 border-r-2 border-slate-300 p-2 flex items-center justify-center">
+                <div className="col-span-2 border-r border-slate-400 p-1.5 flex items-center justify-center">
                   <img
                     src="https://i.imgur.com/hii0TM1.png"
                     alt="PLIHSA Logo"
@@ -534,28 +534,28 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                     crossOrigin="anonymous"
                   />
                 </div>
-                <div className="col-span-7 border-r-2 border-slate-300 p-2 flex items-center justify-center">
-                  <h1 className="text-sm font-bold text-slate-800 text-center">
+                <div className="col-span-7 border-r border-slate-400 p-1.5 flex items-center justify-center">
+                  <h1 className="text-base font-bold text-slate-800 text-center">
                     Definición de Factores y Revisión del Desempeño Administrativo
                   </h1>
                 </div>
-                <div className="col-span-3 flex flex-col justify-center text-[11px]">
-                  <div className="border-b border-slate-300 py-1.5 text-center">
+                <div className="col-span-3 flex flex-col justify-center text-[13px]">
+                  <div className="border-b border-slate-400 py-1 text-center">
                     <span className="font-semibold">Código:</span> PL-RH-P-002-F01
                   </div>
-                  <div className="border-b border-slate-300 py-1.5 text-center">
+                  <div className="border-b border-slate-400 py-1 text-center">
                     <span className="font-semibold">Versión:</span> 01
                   </div>
-                  <div className="py-1.5 text-center">
+                  <div className="py-1 text-center">
                     <span className="font-semibold">Fecha de Revisión:</span> 09/07/2025
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="p-5 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-[13px]">
-                <div className="space-y-1.5">
+            <div className="p-4 space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1.5 text-[15px]">
+                <div className="space-y-1">
                   <div className="flex gap-2">
                     <span className="font-bold text-slate-700 min-w-[110px]">Código:</span>
                     <span className="text-slate-600">{definition.employee.employee_code}</span>
@@ -579,20 +579,20 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                         type="text"
                         value={subDepartment}
                         onChange={(e) => setSubDepartment(e.target.value)}
-                        className="text-slate-600 border border-slate-300 rounded px-2 py-0.5 text-sm flex-1"
+                        className="text-slate-600 border border-slate-300 rounded px-2 py-0.5 text-[15px] flex-1"
                       />
                     ) : (
                       <span className="text-slate-600">{subDepartment || ''}</span>
                     )}
                   </div>
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <div className="flex gap-2">
-                    <span className="font-bold text-slate-700 min-w-[130px]">Fecha de Ingreso:</span>
+                    <span className="font-bold text-slate-700 min-w-[140px]">Fecha de Ingreso:</span>
                     <span className="text-slate-600">{new Date(definition.employee.hire_date + 'T00:00:00').toLocaleDateString('es-HN')}</span>
                   </div>
                   <div className="flex gap-2">
-                    <span className="font-bold text-slate-700 min-w-[130px]">Jefe Inmediato:</span>
+                    <span className="font-bold text-slate-700 min-w-[140px]">Jefe Inmediato:</span>
                     <span className="text-slate-600">
                       {definition.employee.manager
                         ? `${definition.employee.manager.first_name} ${definition.employee.manager.last_name}`
@@ -600,13 +600,13 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                     </span>
                   </div>
                   <div className="flex gap-2">
-                    <span className="font-bold text-slate-700 min-w-[130px]">Fecha Definición:</span>
+                    <span className="font-bold text-slate-700 min-w-[140px]">Fecha Definición:</span>
                     {mode === 'edit' ? (
                       <input
                         type="date"
                         value={definitionDate}
                         onChange={(e) => setDefinitionDate(e.target.value)}
-                        className="border border-slate-300 rounded px-1 py-0.5 text-slate-600 text-[13px]"
+                        className="border border-slate-300 rounded px-1 py-0.5 text-slate-600 text-[15px]"
                       />
                     ) : (
                       <span className="text-slate-600">{new Date(definitionDate + 'T00:00:00').toLocaleDateString('es-HN')}</span>
@@ -616,45 +616,45 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
               </div>
 
               <div>
-                <h3 className="font-bold text-white bg-blue-900 px-3 py-2 mb-3 text-[13px]">
+                <h3 className="font-bold text-white bg-blue-900 px-2 py-1.5 mb-2 text-[15px]">
                   DEFINICIÓN METAS INDIVIDUALES
                 </h3>
-                <table className="w-full border-2 border-slate-300 text-[12px]">
+                <table className="w-full border border-slate-400 text-[14px]">
                   <thead>
                     <tr className="bg-slate-100">
-                      <th className="border border-slate-300 px-2 py-1.5 w-10 font-bold">No.</th>
-                      <th className="border border-slate-300 px-2 py-1.5 font-bold">Metas Individuales</th>
-                      <th className="border border-slate-300 px-2 py-1.5 font-bold">Medición y Resultados Esperados</th>
+                      <th className="border border-slate-400 px-1.5 py-1 w-10 font-bold">No.</th>
+                      <th className="border border-slate-400 px-1.5 py-1 font-bold">Metas Individuales</th>
+                      <th className="border border-slate-400 px-1.5 py-1 font-bold">Medición y Resultados Esperados</th>
                     </tr>
                   </thead>
                   <tbody>
                     {goals.map((goal, index) => (
                       <tr key={goal.number}>
-                        <td className="border border-slate-300 px-2 py-2 text-center font-bold">{goal.number}</td>
-                        <td className="border border-slate-300 px-2 py-2">
+                        <td className="border border-slate-400 px-1.5 py-1.5 text-center font-bold">{goal.number}</td>
+                        <td className="border border-slate-400 px-1.5 py-1.5">
                           {mode === 'edit' ? (
                             <textarea
                               value={goal.description}
                               onChange={(e) => handleGoalChange(index, 'description', e.target.value)}
                               rows={2}
-                              className="w-full border border-slate-200 rounded p-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-[12px]"
+                              className="w-full border border-slate-200 rounded p-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-[14px]"
                               placeholder="Describa la meta..."
                             />
                           ) : (
-                            <div className="min-h-[48px] whitespace-pre-wrap">{goal.description || '-'}</div>
+                            <div className="min-h-[40px] whitespace-pre-wrap">{goal.description || '-'}</div>
                           )}
                         </td>
-                        <td className="border border-slate-300 px-2 py-2">
+                        <td className="border border-slate-400 px-1.5 py-1.5">
                           {mode === 'edit' ? (
                             <textarea
                               value={goal.measurement}
                               onChange={(e) => handleGoalChange(index, 'measurement', e.target.value)}
                               rows={2}
-                              className="w-full border border-slate-200 rounded p-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-[12px]"
+                              className="w-full border border-slate-200 rounded p-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-[14px]"
                               placeholder="Indique medición..."
                             />
                           ) : (
-                            <div className="min-h-[48px] whitespace-pre-wrap">{goal.measurement || '-'}</div>
+                            <div className="min-h-[40px] whitespace-pre-wrap">{goal.measurement || '-'}</div>
                           )}
                         </td>
                       </tr>
@@ -664,31 +664,31 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
               </div>
 
               <div>
-                <h3 className="font-bold text-white bg-blue-900 px-3 py-2 mb-3 text-[13px]">
+                <h3 className="font-bold text-white bg-blue-900 px-2 py-1.5 mb-2 text-[15px]">
                   DEFINICIÓN DE COMPETENCIAS CONDUCTUALES/HABILIDADES
                 </h3>
-                <table className="w-full border-2 border-slate-300 text-[12px]">
+                <table className="w-full border border-slate-400 text-[14px]">
                   <thead>
                     <tr className="bg-slate-100">
-                      <th className="border border-slate-300 px-2 py-1.5 w-10 font-bold">No.</th>
-                      <th className="border border-slate-300 px-2 py-1.5 font-bold">Conductas/Habilidades (Definir las 5 Principales)</th>
+                      <th className="border border-slate-400 px-1.5 py-1 w-10 font-bold">No.</th>
+                      <th className="border border-slate-400 px-1.5 py-1 font-bold">Conductas/Habilidades (Definir las 5 Principales)</th>
                     </tr>
                   </thead>
                   <tbody>
                     {behaviors.map((behavior, index) => (
                       <tr key={behavior.number}>
-                        <td className="border border-slate-300 px-2 py-2 text-center font-bold">{behavior.number}</td>
-                        <td className="border border-slate-300 px-2 py-2">
+                        <td className="border border-slate-400 px-1.5 py-1 text-center font-bold">{behavior.number}</td>
+                        <td className="border border-slate-400 px-1.5 py-1">
                           {mode === 'edit' ? (
                             <textarea
                               value={behavior.description}
                               onChange={(e) => handleBehaviorChange(index, e.target.value)}
                               rows={1}
-                              className="w-full border border-slate-200 rounded p-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-[10px]"
+                              className="w-full border border-slate-200 rounded p-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-[14px]"
                               placeholder="Describa la competencia..."
                             />
                           ) : (
-                            <div className="min-h-[32px] whitespace-pre-wrap">{behavior.description || ''}</div>
+                            <div className="min-h-[28px] whitespace-pre-wrap">{behavior.description || ''}</div>
                           )}
                         </td>
                       </tr>
@@ -697,53 +697,53 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                 </table>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="border-2 border-slate-300">
-                  <div className="bg-blue-900 text-white px-3 py-1.5 text-[12px] font-bold">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="border border-slate-400">
+                  <div className="bg-blue-900 text-white px-2 py-1 text-[14px] font-bold">
                     Comentarios Jefe Inmediato
                   </div>
                   {mode === 'edit' ? (
                     <textarea
                       value={managerComments}
                       onChange={(e) => setManagerComments(e.target.value)}
-                      rows={3}
-                      className="w-full border-0 p-3 focus:ring-1 focus:ring-blue-500 outline-none resize-none text-[12px]"
+                      rows={2}
+                      className="w-full border-0 p-2 focus:ring-1 focus:ring-blue-500 outline-none resize-none text-[14px]"
                       placeholder="Comentarios del jefe..."
                     />
                   ) : (
-                    <div className="p-3 min-h-[50px] text-[12px] whitespace-pre-wrap">
+                    <div className="p-2 min-h-[40px] text-[14px] whitespace-pre-wrap">
                       {managerComments || ''}
                     </div>
                   )}
                 </div>
-                <div className="border-2 border-slate-300">
-                  <div className="bg-blue-900 text-white px-3 py-1.5 text-[12px] font-bold">
+                <div className="border border-slate-400">
+                  <div className="bg-blue-900 text-white px-2 py-1 text-[14px] font-bold">
                     Comentarios del Colaborador
                   </div>
                   {mode === 'edit' ? (
                     <textarea
                       value={employeeComments}
                       onChange={(e) => setEmployeeComments(e.target.value)}
-                      rows={3}
-                      className="w-full border-0 p-3 focus:ring-1 focus:ring-blue-500 outline-none resize-none text-[12px]"
+                      rows={2}
+                      className="w-full border-0 p-2 focus:ring-1 focus:ring-blue-500 outline-none resize-none text-[14px]"
                       placeholder="Comentarios del colaborador..."
                     />
                   ) : (
-                    <div className="p-3 min-h-[50px] text-[12px] whitespace-pre-wrap">
+                    <div className="p-2 min-h-[40px] text-[14px] whitespace-pre-wrap">
                       {employeeComments || ''}
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-12 text-[12px] mt-8 pt-4">
+              <div className="grid grid-cols-2 gap-12 text-[14px] mt-6 pt-2">
                 <div className="text-center">
-                  <div className="border-t-2 border-slate-800 pt-2 mt-8">
+                  <div className="border-t-2 border-slate-800 pt-1 mt-6">
                     <p className="font-bold text-slate-800">Firma Colaborador</p>
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="border-t-2 border-slate-800 pt-2 mt-8">
+                  <div className="border-t-2 border-slate-800 pt-1 mt-6">
                     <p className="font-bold text-slate-800">Firma Jefe Inmediato</p>
                   </div>
                 </div>
