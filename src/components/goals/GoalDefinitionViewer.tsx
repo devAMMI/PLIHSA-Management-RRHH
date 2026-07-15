@@ -198,18 +198,17 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
   };
 
   const generatePdfBlob = async (): Promise<{ url: string; fileName: string } | null> => {
-    const pdfEl = document.getElementById('pdf-render-target');
-    if (!pdfEl) return null;
+    if (!formRef.current) return null;
 
     try {
-      const canvas = await html2canvas(pdfEl as HTMLElement, {
+      const canvas = await html2canvas(formRef.current, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         logging: false,
         backgroundColor: '#ffffff',
-        windowWidth: (pdfEl as HTMLElement).scrollWidth,
-        windowHeight: (pdfEl as HTMLElement).scrollHeight,
+        windowWidth: formRef.current.scrollWidth,
+        windowHeight: formRef.current.scrollHeight,
         scrollX: 0,
         scrollY: 0
       });
@@ -536,11 +535,11 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                   />
                 </div>
                 <div className="col-span-7 border-r-2 border-slate-300 p-2 flex items-center justify-center">
-                  <h1 className="text-xs font-bold text-slate-800 text-center">
+                  <h1 className="text-sm font-bold text-slate-800 text-center">
                     Definición de Factores y Revisión del Desempeño Administrativo
                   </h1>
                 </div>
-                <div className="col-span-3 flex flex-col justify-center text-[8px]">
+                <div className="col-span-3 flex flex-col justify-center text-[11px]">
                   <div className="border-b border-slate-300 py-1.5 text-center">
                     <span className="font-semibold">Código:</span> PL-RH-P-002-F01
                   </div>
@@ -555,26 +554,26 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
             </div>
 
             <div className="p-5 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1.5 text-[11px]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-[13px]">
                 <div className="space-y-1.5">
                   <div className="flex gap-2">
-                    <span className="font-bold text-slate-700 min-w-[100px]">Código:</span>
+                    <span className="font-bold text-slate-700 min-w-[110px]">Código:</span>
                     <span className="text-slate-600">{definition.employee.employee_code}</span>
                   </div>
                   <div className="flex gap-2">
-                    <span className="font-bold text-slate-700 min-w-[100px]">Nombre:</span>
+                    <span className="font-bold text-slate-700 min-w-[110px]">Nombre:</span>
                     <span className="text-slate-600">{definition.employee.first_name} {definition.employee.last_name}</span>
                   </div>
                   <div className="flex gap-2">
-                    <span className="font-bold text-slate-700 min-w-[100px]">Puesto:</span>
+                    <span className="font-bold text-slate-700 min-w-[110px]">Puesto:</span>
                     <span className="text-slate-600">{definition.employee.position}</span>
                   </div>
                   <div className="flex gap-2">
-                    <span className="font-bold text-slate-700 min-w-[100px]">Departamento:</span>
+                    <span className="font-bold text-slate-700 min-w-[110px]">Departamento:</span>
                     <span className="text-slate-600">{definition.employee.department?.name || 'N/A'}</span>
                   </div>
                   <div className="flex gap-2">
-                    <span className="font-bold text-slate-700 min-w-[100px]">Sub Depto:</span>
+                    <span className="font-bold text-slate-700 min-w-[110px]">Sub Depto:</span>
                     {mode === 'edit' ? (
                       <input
                         type="text"
@@ -589,11 +588,11 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex gap-2">
-                    <span className="font-bold text-slate-700 min-w-[120px]">Fecha de Ingreso:</span>
+                    <span className="font-bold text-slate-700 min-w-[130px]">Fecha de Ingreso:</span>
                     <span className="text-slate-600">{new Date(definition.employee.hire_date + 'T00:00:00').toLocaleDateString('es-HN')}</span>
                   </div>
                   <div className="flex gap-2">
-                    <span className="font-bold text-slate-700 min-w-[120px]">Jefe Inmediato:</span>
+                    <span className="font-bold text-slate-700 min-w-[130px]">Jefe Inmediato:</span>
                     <span className="text-slate-600">
                       {definition.employee.manager
                         ? `${definition.employee.manager.first_name} ${definition.employee.manager.last_name}`
@@ -601,13 +600,13 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                     </span>
                   </div>
                   <div className="flex gap-2">
-                    <span className="font-bold text-slate-700 min-w-[120px]">Fecha Definición:</span>
+                    <span className="font-bold text-slate-700 min-w-[130px]">Fecha Definición:</span>
                     {mode === 'edit' ? (
                       <input
                         type="date"
                         value={definitionDate}
                         onChange={(e) => setDefinitionDate(e.target.value)}
-                        className="border border-slate-300 rounded px-1 py-0.5 text-slate-600 text-[11px]"
+                        className="border border-slate-300 rounded px-1 py-0.5 text-slate-600 text-[13px]"
                       />
                     ) : (
                       <span className="text-slate-600">{new Date(definitionDate + 'T00:00:00').toLocaleDateString('es-HN')}</span>
@@ -617,10 +616,10 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
               </div>
 
               <div>
-                <h3 className="font-bold text-white bg-blue-900 px-3 py-2 mb-3 text-[11px]">
+                <h3 className="font-bold text-white bg-blue-900 px-3 py-2 mb-3 text-[13px]">
                   DEFINICIÓN METAS INDIVIDUALES
                 </h3>
-                <table className="w-full border-2 border-slate-300 text-[10px]">
+                <table className="w-full border-2 border-slate-300 text-[12px]">
                   <thead>
                     <tr className="bg-slate-100">
                       <th className="border border-slate-300 px-2 py-1.5 w-10 font-bold">No.</th>
@@ -638,7 +637,7 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                               value={goal.description}
                               onChange={(e) => handleGoalChange(index, 'description', e.target.value)}
                               rows={2}
-                              className="w-full border border-slate-200 rounded p-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-[10px]"
+                              className="w-full border border-slate-200 rounded p-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-[12px]"
                               placeholder="Describa la meta..."
                             />
                           ) : (
@@ -651,7 +650,7 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                               value={goal.measurement}
                               onChange={(e) => handleGoalChange(index, 'measurement', e.target.value)}
                               rows={2}
-                              className="w-full border border-slate-200 rounded p-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-[10px]"
+                              className="w-full border border-slate-200 rounded p-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-[12px]"
                               placeholder="Indique medición..."
                             />
                           ) : (
@@ -665,10 +664,10 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
               </div>
 
               <div>
-                <h3 className="font-bold text-white bg-blue-900 px-3 py-2 mb-3 text-[11px]">
+                <h3 className="font-bold text-white bg-blue-900 px-3 py-2 mb-3 text-[13px]">
                   DEFINICIÓN DE COMPETENCIAS CONDUCTUALES/HABILIDADES
                 </h3>
-                <table className="w-full border-2 border-slate-300 text-[10px]">
+                <table className="w-full border-2 border-slate-300 text-[12px]">
                   <thead>
                     <tr className="bg-slate-100">
                       <th className="border border-slate-300 px-2 py-1.5 w-10 font-bold">No.</th>
@@ -700,193 +699,55 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="border-2 border-slate-300">
-                  <div className="bg-blue-900 text-white px-3 py-1.5 text-[10px] font-bold">
+                  <div className="bg-blue-900 text-white px-3 py-1.5 text-[12px] font-bold">
                     Comentarios Jefe Inmediato
                   </div>
                   {mode === 'edit' ? (
                     <textarea
                       value={managerComments}
                       onChange={(e) => setManagerComments(e.target.value)}
-                      rows={4}
-                      className="w-full border-0 p-3 focus:ring-1 focus:ring-blue-500 outline-none resize-none text-[10px]"
+                      rows={3}
+                      className="w-full border-0 p-3 focus:ring-1 focus:ring-blue-500 outline-none resize-none text-[12px]"
                       placeholder="Comentarios del jefe..."
                     />
                   ) : (
-                    <div className="p-3 min-h-[75px] text-[10px] whitespace-pre-wrap">
+                    <div className="p-3 min-h-[50px] text-[12px] whitespace-pre-wrap">
                       {managerComments || ''}
                     </div>
                   )}
                 </div>
                 <div className="border-2 border-slate-300">
-                  <div className="bg-blue-900 text-white px-3 py-1.5 text-[10px] font-bold">
+                  <div className="bg-blue-900 text-white px-3 py-1.5 text-[12px] font-bold">
                     Comentarios del Colaborador
                   </div>
                   {mode === 'edit' ? (
                     <textarea
                       value={employeeComments}
                       onChange={(e) => setEmployeeComments(e.target.value)}
-                      rows={4}
-                      className="w-full border-0 p-3 focus:ring-1 focus:ring-blue-500 outline-none resize-none text-[10px]"
+                      rows={3}
+                      className="w-full border-0 p-3 focus:ring-1 focus:ring-blue-500 outline-none resize-none text-[12px]"
                       placeholder="Comentarios del colaborador..."
                     />
                   ) : (
-                    <div className="p-3 min-h-[75px] text-[10px] whitespace-pre-wrap">
+                    <div className="p-3 min-h-[50px] text-[12px] whitespace-pre-wrap">
                       {employeeComments || ''}
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-12 text-[10px] mt-12 pt-8">
+              <div className="grid grid-cols-2 gap-12 text-[12px] mt-8 pt-4">
                 <div className="text-center">
-                  <div className="border-t-2 border-slate-800 pt-2 mt-24">
+                  <div className="border-t-2 border-slate-800 pt-2 mt-8">
                     <p className="font-bold text-slate-800">Firma Colaborador</p>
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="border-t-2 border-slate-800 pt-2 mt-24">
+                  <div className="border-t-2 border-slate-800 pt-2 mt-8">
                     <p className="font-bold text-slate-800">Firma Jefe Inmediato</p>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Hidden PDF-only template: larger fonts, compact spacing, fits one page */}
-      <div
-        id="pdf-render-target"
-        style={{
-          position: 'absolute',
-          left: '-9999px',
-          top: 0,
-          width: '800px',
-          background: '#ffffff',
-          padding: '24px 28px',
-          boxSizing: 'border-box',
-          fontFamily: 'Arial, Helvetica, sans-serif',
-          color: '#1e293b',
-        }}
-      >
-        {/* Header */}
-        <div style={{ display: 'flex', borderBottom: '2px solid #cbd5e1', paddingBottom: '8px', marginBottom: '14px' }}>
-          <div style={{ width: '14%', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingRight: '8px', borderRight: '2px solid #cbd5e1' }}>
-            <img
-              src="https://i.imgur.com/hii0TM1.png"
-              alt="Logo"
-              style={{ width: '100%', maxWidth: '90px', height: 'auto' }}
-              crossOrigin="anonymous"
-            />
-          </div>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingRight: '8px', borderRight: '2px solid #cbd5e1' }}>
-            <h1 style={{ fontSize: '15px', fontWeight: 'bold', textAlign: 'center', margin: 0, lineHeight: 1.3 }}>
-              Definición de Factores y Revisión del Desempeño Administrativo
-            </h1>
-          </div>
-          <div style={{ width: '20%', display: 'flex', flexDirection: 'column', justifyContent: 'center', fontSize: '11px', paddingLeft: '8px' }}>
-            <div style={{ borderBottom: '1px solid #cbd5e1', padding: '4px 0', textAlign: 'center' }}>
-              <strong>Código:</strong> PL-RH-P-002-F01
-            </div>
-            <div style={{ borderBottom: '1px solid #cbd5e1', padding: '4px 0', textAlign: 'center' }}>
-              <strong>Versión:</strong> 01
-            </div>
-            <div style={{ padding: '4px 0', textAlign: 'center' }}>
-              <strong>Revisión:</strong> 09/07/2025
-            </div>
-          </div>
-        </div>
-
-        {/* Employee info */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 32px', fontSize: '13px', marginBottom: '14px', lineHeight: 1.5 }}>
-          <div><strong style={{ display: 'inline-block', width: '110px' }}>Código:</strong> {definition.employee.employee_code}</div>
-          <div><strong style={{ display: 'inline-block', width: '130px' }}>Fecha Ingreso:</strong> {new Date(definition.employee.hire_date + 'T00:00:00').toLocaleDateString('es-HN')}</div>
-          <div><strong style={{ display: 'inline-block', width: '110px' }}>Nombre:</strong> {definition.employee.first_name} {definition.employee.last_name}</div>
-          <div><strong style={{ display: 'inline-block', width: '130px' }}>Jefe Inmediato:</strong> {definition.employee.manager ? `${definition.employee.manager.first_name} ${definition.employee.manager.last_name}` : 'N/A'}</div>
-          <div><strong style={{ display: 'inline-block', width: '110px' }}>Puesto:</strong> {definition.employee.position}</div>
-          <div><strong style={{ display: 'inline-block', width: '130px' }}>Fecha Definición:</strong> {new Date(definitionDate + 'T00:00:00').toLocaleDateString('es-HN')}</div>
-          <div><strong style={{ display: 'inline-block', width: '110px' }}>Departamento:</strong> {definition.employee.department?.name || 'N/A'}</div>
-          <div><strong style={{ display: 'inline-block', width: '130px' }}>Sub Departamento:</strong> {subDepartment || ''}</div>
-        </div>
-
-        {/* Goals table */}
-        <div style={{ marginBottom: '12px' }}>
-          <div style={{ backgroundColor: '#1e3a8a', color: '#ffffff', fontSize: '13px', fontWeight: 'bold', padding: '6px 10px', marginBottom: '0' }}>
-            DEFINICIÓN METAS INDIVIDUALES
-          </div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', border: '2px solid #cbd5e1' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#f1f5f9' }}>
-                <th style={{ border: '1px solid #cbd5e1', padding: '5px 8px', width: '36px', textAlign: 'center' }}>No.</th>
-                <th style={{ border: '1px solid #cbd5e1', padding: '5px 8px', textAlign: 'left' }}>Metas Individuales</th>
-                <th style={{ border: '1px solid #cbd5e1', padding: '5px 8px', textAlign: 'left' }}>Medición y Resultados Esperados</th>
-              </tr>
-            </thead>
-            <tbody>
-              {goals.map((goal) => (
-                <tr key={goal.number}>
-                  <td style={{ border: '1px solid #cbd5e1', padding: '5px 8px', textAlign: 'center', fontWeight: 'bold' }}>{goal.number}</td>
-                  <td style={{ border: '1px solid #cbd5e1', padding: '5px 8px', whiteSpace: 'pre-wrap' }}>{goal.description || '-'}</td>
-                  <td style={{ border: '1px solid #cbd5e1', padding: '5px 8px', whiteSpace: 'pre-wrap' }}>{goal.measurement || '-'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Behaviors table */}
-        <div style={{ marginBottom: '12px' }}>
-          <div style={{ backgroundColor: '#1e3a8a', color: '#ffffff', fontSize: '13px', fontWeight: 'bold', padding: '6px 10px' }}>
-            DEFINICIÓN DE COMPETENCIAS CONDUCTUALES/HABILIDADES
-          </div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', border: '2px solid #cbd5e1' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#f1f5f9' }}>
-                <th style={{ border: '1px solid #cbd5e1', padding: '5px 8px', width: '36px', textAlign: 'center' }}>No.</th>
-                <th style={{ border: '1px solid #cbd5e1', padding: '5px 8px', textAlign: 'left' }}>Conductas/Habilidades (Definir las 5 Principales)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {behaviors.map((behavior) => (
-                <tr key={behavior.number}>
-                  <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px', textAlign: 'center', fontWeight: 'bold' }}>{behavior.number}</td>
-                  <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px', whiteSpace: 'pre-wrap' }}>{behavior.description || ''}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Comments */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
-          <div style={{ border: '2px solid #cbd5e1' }}>
-            <div style={{ backgroundColor: '#1e3a8a', color: '#ffffff', fontSize: '12px', fontWeight: 'bold', padding: '5px 10px' }}>
-              Comentarios Jefe Inmediato
-            </div>
-            <div style={{ padding: '8px 10px', fontSize: '12px', minHeight: '50px', whiteSpace: 'pre-wrap' }}>
-              {managerComments || ''}
-            </div>
-          </div>
-          <div style={{ border: '2px solid #cbd5e1' }}>
-            <div style={{ backgroundColor: '#1e3a8a', color: '#ffffff', fontSize: '12px', fontWeight: 'bold', padding: '5px 10px' }}>
-              Comentarios del Colaborador
-            </div>
-            <div style={{ padding: '8px 10px', fontSize: '12px', minHeight: '50px', whiteSpace: 'pre-wrap' }}>
-              {employeeComments || ''}
-            </div>
-          </div>
-        </div>
-
-        {/* Signatures */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '48px', fontSize: '12px', marginTop: '20px' }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ borderTop: '2px solid #1e293b', paddingTop: '5px' }}>
-              <strong>Firma Colaborador</strong>
-            </div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ borderTop: '2px solid #1e293b', paddingTop: '5px' }}>
-              <strong>Firma Jefe Inmediato</strong>
             </div>
           </div>
         </div>
