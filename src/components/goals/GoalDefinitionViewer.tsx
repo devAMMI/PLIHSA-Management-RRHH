@@ -198,22 +198,23 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
   };
 
   const generatePdfBlob = async (): Promise<{ url: string; fileName: string } | null> => {
-    if (!formRef.current) return null;
+    const pdfEl = document.getElementById('pdf-render-target');
+    if (!pdfEl) return null;
 
     try {
-      const canvas = await html2canvas(formRef.current, {
-        scale: 2.5,
+      const canvas = await html2canvas(pdfEl as HTMLElement, {
+        scale: 2,
         useCORS: true,
         allowTaint: true,
         logging: false,
         backgroundColor: '#ffffff',
-        windowWidth: formRef.current.scrollWidth,
-        windowHeight: formRef.current.scrollHeight,
+        windowWidth: (pdfEl as HTMLElement).scrollWidth,
+        windowHeight: (pdfEl as HTMLElement).scrollHeight,
         scrollX: 0,
         scrollY: 0
       });
 
-      const margin = 10;
+      const margin = 8;
       const imgWidth = 215.9 - margin * 2;
       const pageHeight = 279.4;
       const contentHeight = pageHeight - margin * 2;
@@ -230,11 +231,9 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
 
         for (let page = 0; page < totalPages; page++) {
           if (page > 0) pdf.addPage();
-
           const srcY = page * pageHeightPx;
           const srcH = Math.min(pageHeightPx, canvas.height - srcY);
           const sliceHeight = srcH / scale;
-
           const pageCanvas = document.createElement('canvas');
           pageCanvas.width = canvas.width;
           pageCanvas.height = srcH;
@@ -242,7 +241,6 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
           ctx.fillStyle = '#ffffff';
           ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
           ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
-
           pdf.addImage(pageCanvas.toDataURL('image/png'), 'PNG', margin, margin, imgWidth, sliceHeight);
         }
       }
@@ -751,6 +749,144 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Hidden PDF-only template: larger fonts, compact spacing, fits one page */}
+      <div
+        id="pdf-render-target"
+        style={{
+          position: 'absolute',
+          left: '-9999px',
+          top: 0,
+          width: '800px',
+          background: '#ffffff',
+          padding: '24px 28px',
+          boxSizing: 'border-box',
+          fontFamily: 'Arial, Helvetica, sans-serif',
+          color: '#1e293b',
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', borderBottom: '2px solid #cbd5e1', paddingBottom: '8px', marginBottom: '14px' }}>
+          <div style={{ width: '14%', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingRight: '8px', borderRight: '2px solid #cbd5e1' }}>
+            <img
+              src="https://i.imgur.com/hii0TM1.png"
+              alt="Logo"
+              style={{ width: '100%', maxWidth: '90px', height: 'auto' }}
+              crossOrigin="anonymous"
+            />
+          </div>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingRight: '8px', borderRight: '2px solid #cbd5e1' }}>
+            <h1 style={{ fontSize: '15px', fontWeight: 'bold', textAlign: 'center', margin: 0, lineHeight: 1.3 }}>
+              Definición de Factores y Revisión del Desempeño Administrativo
+            </h1>
+          </div>
+          <div style={{ width: '20%', display: 'flex', flexDirection: 'column', justifyContent: 'center', fontSize: '11px', paddingLeft: '8px' }}>
+            <div style={{ borderBottom: '1px solid #cbd5e1', padding: '4px 0', textAlign: 'center' }}>
+              <strong>Código:</strong> PL-RH-P-002-F01
+            </div>
+            <div style={{ borderBottom: '1px solid #cbd5e1', padding: '4px 0', textAlign: 'center' }}>
+              <strong>Versión:</strong> 01
+            </div>
+            <div style={{ padding: '4px 0', textAlign: 'center' }}>
+              <strong>Revisión:</strong> 09/07/2025
+            </div>
+          </div>
+        </div>
+
+        {/* Employee info */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 32px', fontSize: '13px', marginBottom: '14px', lineHeight: 1.5 }}>
+          <div><strong style={{ display: 'inline-block', width: '110px' }}>Código:</strong> {definition.employee.employee_code}</div>
+          <div><strong style={{ display: 'inline-block', width: '130px' }}>Fecha Ingreso:</strong> {new Date(definition.employee.hire_date + 'T00:00:00').toLocaleDateString('es-HN')}</div>
+          <div><strong style={{ display: 'inline-block', width: '110px' }}>Nombre:</strong> {definition.employee.first_name} {definition.employee.last_name}</div>
+          <div><strong style={{ display: 'inline-block', width: '130px' }}>Jefe Inmediato:</strong> {definition.employee.manager ? `${definition.employee.manager.first_name} ${definition.employee.manager.last_name}` : 'N/A'}</div>
+          <div><strong style={{ display: 'inline-block', width: '110px' }}>Puesto:</strong> {definition.employee.position}</div>
+          <div><strong style={{ display: 'inline-block', width: '130px' }}>Fecha Definición:</strong> {new Date(definitionDate + 'T00:00:00').toLocaleDateString('es-HN')}</div>
+          <div><strong style={{ display: 'inline-block', width: '110px' }}>Departamento:</strong> {definition.employee.department?.name || 'N/A'}</div>
+          <div><strong style={{ display: 'inline-block', width: '130px' }}>Sub Departamento:</strong> {subDepartment || ''}</div>
+        </div>
+
+        {/* Goals table */}
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ backgroundColor: '#1e3a8a', color: '#ffffff', fontSize: '13px', fontWeight: 'bold', padding: '6px 10px', marginBottom: '0' }}>
+            DEFINICIÓN METAS INDIVIDUALES
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', border: '2px solid #cbd5e1' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f1f5f9' }}>
+                <th style={{ border: '1px solid #cbd5e1', padding: '5px 8px', width: '36px', textAlign: 'center' }}>No.</th>
+                <th style={{ border: '1px solid #cbd5e1', padding: '5px 8px', textAlign: 'left' }}>Metas Individuales</th>
+                <th style={{ border: '1px solid #cbd5e1', padding: '5px 8px', textAlign: 'left' }}>Medición y Resultados Esperados</th>
+              </tr>
+            </thead>
+            <tbody>
+              {goals.map((goal) => (
+                <tr key={goal.number}>
+                  <td style={{ border: '1px solid #cbd5e1', padding: '5px 8px', textAlign: 'center', fontWeight: 'bold' }}>{goal.number}</td>
+                  <td style={{ border: '1px solid #cbd5e1', padding: '5px 8px', whiteSpace: 'pre-wrap' }}>{goal.description || '-'}</td>
+                  <td style={{ border: '1px solid #cbd5e1', padding: '5px 8px', whiteSpace: 'pre-wrap' }}>{goal.measurement || '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Behaviors table */}
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ backgroundColor: '#1e3a8a', color: '#ffffff', fontSize: '13px', fontWeight: 'bold', padding: '6px 10px' }}>
+            DEFINICIÓN DE COMPETENCIAS CONDUCTUALES/HABILIDADES
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', border: '2px solid #cbd5e1' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f1f5f9' }}>
+                <th style={{ border: '1px solid #cbd5e1', padding: '5px 8px', width: '36px', textAlign: 'center' }}>No.</th>
+                <th style={{ border: '1px solid #cbd5e1', padding: '5px 8px', textAlign: 'left' }}>Conductas/Habilidades (Definir las 5 Principales)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {behaviors.map((behavior) => (
+                <tr key={behavior.number}>
+                  <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px', textAlign: 'center', fontWeight: 'bold' }}>{behavior.number}</td>
+                  <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px', whiteSpace: 'pre-wrap' }}>{behavior.description || ''}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Comments */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+          <div style={{ border: '2px solid #cbd5e1' }}>
+            <div style={{ backgroundColor: '#1e3a8a', color: '#ffffff', fontSize: '12px', fontWeight: 'bold', padding: '5px 10px' }}>
+              Comentarios Jefe Inmediato
+            </div>
+            <div style={{ padding: '8px 10px', fontSize: '12px', minHeight: '50px', whiteSpace: 'pre-wrap' }}>
+              {managerComments || ''}
+            </div>
+          </div>
+          <div style={{ border: '2px solid #cbd5e1' }}>
+            <div style={{ backgroundColor: '#1e3a8a', color: '#ffffff', fontSize: '12px', fontWeight: 'bold', padding: '5px 10px' }}>
+              Comentarios del Colaborador
+            </div>
+            <div style={{ padding: '8px 10px', fontSize: '12px', minHeight: '50px', whiteSpace: 'pre-wrap' }}>
+              {employeeComments || ''}
+            </div>
+          </div>
+        </div>
+
+        {/* Signatures */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '48px', fontSize: '12px', marginTop: '20px' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ borderTop: '2px solid #1e293b', paddingTop: '5px' }}>
+              <strong>Firma Colaborador</strong>
+            </div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ borderTop: '2px solid #1e293b', paddingTop: '5px' }}>
+              <strong>Firma Jefe Inmediato</strong>
             </div>
           </div>
         </div>
