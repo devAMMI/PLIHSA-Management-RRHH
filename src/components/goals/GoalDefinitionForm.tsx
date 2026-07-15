@@ -180,37 +180,24 @@ export function GoalDefinitionForm({ onBack }: GoalDefinitionFormProps) {
         scrollY: 0
       });
 
-      const margin = 10;
-      const imgWidth = 215.9 - margin * 2;
+      const imgWidth = 215.9;
       const pageHeight = 279.4;
-      const contentHeight = pageHeight - margin * 2;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
       const pdf = new jsPDF('p', 'mm', 'letter');
 
-      if (imgHeight <= contentHeight) {
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', margin, margin, imgWidth, imgHeight);
+      if (imgHeight <= pageHeight) {
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
       } else {
-        const scale = canvas.width / imgWidth;
-        const pageHeightPx = Math.floor(contentHeight * scale);
-        const totalPages = Math.ceil(canvas.height / pageHeightPx);
-
-        for (let page = 0; page < totalPages; page++) {
-          if (page > 0) pdf.addPage();
-
-          const srcY = page * pageHeightPx;
-          const srcH = Math.min(pageHeightPx, canvas.height - srcY);
-          const sliceHeight = srcH / scale;
-
-          const pageCanvas = document.createElement('canvas');
-          pageCanvas.width = canvas.width;
-          pageCanvas.height = srcH;
-          const ctx = pageCanvas.getContext('2d')!;
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-          ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
-
-          pdf.addImage(pageCanvas.toDataURL('image/png'), 'PNG', margin, margin, imgWidth, sliceHeight);
+        let position = 0;
+        let remainingHeight = imgHeight;
+        let firstPage = true;
+        while (remainingHeight > 0) {
+          if (!firstPage) pdf.addPage();
+          pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, -position, imgWidth, imgHeight);
+          position += pageHeight;
+          remainingHeight -= pageHeight;
+          firstPage = false;
         }
       }
 

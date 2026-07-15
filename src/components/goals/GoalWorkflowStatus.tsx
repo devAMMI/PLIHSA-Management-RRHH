@@ -1,13 +1,12 @@
-import { FileText, Upload, CheckCircle, Clock, Download, Eye } from 'lucide-react';
+import { FileText, Upload, CheckCircle, Clock, Printer, Download } from 'lucide-react';
 
 export type WorkflowStatus = 'draft' | 'pending_signature' | 'completed';
 
 interface WorkflowStatusBadgeProps {
   status: WorkflowStatus;
   signedDocumentUrl?: string | null;
+  onPrint?: () => void;
   onDownloadPDF?: () => void;
-  onViewDigitalPDF?: () => void;
-  onDownloadSignedDocument?: () => void;
   onUploadSigned?: () => void;
   onMarkAsCompleted?: () => void;
 }
@@ -15,9 +14,8 @@ interface WorkflowStatusBadgeProps {
 export function GoalWorkflowStatus({
   status,
   signedDocumentUrl,
+  onPrint,
   onDownloadPDF,
-  onViewDigitalPDF,
-  onDownloadSignedDocument,
   onUploadSigned,
   onMarkAsCompleted
 }: WorkflowStatusBadgeProps) {
@@ -68,18 +66,9 @@ export function GoalWorkflowStatus({
       {status === 'draft' && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-sm text-blue-800 mb-3">
-            <strong>Siguiente paso:</strong> Descarga el documento, fírmalo a puño y letra, escanéalo y súbelo aquí.
+            <strong>Siguiente paso:</strong> Imprime el documento, fírmalo a puño y letra, escanéalo y súbelo aquí.
           </p>
           <div className="flex flex-wrap gap-2">
-            {onViewDigitalPDF && (
-              <button
-                onClick={onViewDigitalPDF}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition text-sm font-medium"
-              >
-                <Eye className="w-4 h-4" />
-                Ver Documento Digital
-              </button>
-            )}
             {onDownloadPDF && (
               <button
                 onClick={onDownloadPDF}
@@ -87,6 +76,15 @@ export function GoalWorkflowStatus({
               >
                 <Download className="w-4 h-4" />
                 Descargar PDF
+              </button>
+            )}
+            {onPrint && (
+              <button
+                onClick={onPrint}
+                className="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition text-sm font-medium"
+              >
+                <Printer className="w-4 h-4" />
+                Imprimir
               </button>
             )}
             {onUploadSigned && (
@@ -161,61 +159,20 @@ export function GoalWorkflowStatus({
         </div>
       )}
 
-      {status === 'completed' && (
+      {status === 'completed' && signedDocumentUrl && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <p className="text-sm text-green-800 mb-4">
+          <p className="text-sm text-green-800 mb-3">
             <strong>Proceso completado:</strong> El documento ha sido firmado y finalizado exitosamente.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Documento Digital (sin firma)</p>
-              <div className="flex gap-2">
-                {onViewDigitalPDF && (
-                  <button
-                    onClick={onViewDigitalPDF}
-                    className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition text-sm font-medium"
-                  >
-                    <Eye className="w-4 h-4" />
-                    Ver
-                  </button>
-                )}
-                {onDownloadPDF && (
-                  <button
-                    onClick={onDownloadPDF}
-                    className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition text-sm font-medium"
-                  >
-                    <Download className="w-4 h-4" />
-                    Descargar
-                  </button>
-                )}
-              </div>
-            </div>
-            {signedDocumentUrl && (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Documento Firmado</p>
-                <div className="flex gap-2">
-                  <a
-                    href={signedDocumentUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-3 py-2 bg-white border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition text-sm font-medium"
-                  >
-                    <Eye className="w-4 h-4" />
-                    Ver
-                  </a>
-                  {onDownloadSignedDocument && (
-                    <button
-                      onClick={onDownloadSignedDocument}
-                      className="flex items-center gap-2 px-3 py-2 bg-white border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition text-sm font-medium"
-                    >
-                      <Download className="w-4 h-4" />
-                      Descargar
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+          <a
+            href={signedDocumentUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition text-sm font-medium"
+          >
+            <FileText className="w-4 h-4" />
+            Ver Documento Firmado
+          </a>
         </div>
       )}
     </div>

@@ -27,7 +27,6 @@ interface OperativeGoalDefinitionFormProps {
 export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionFormProps) {
   const { systemUser } = useAuth();
   const formRef = useRef<HTMLDivElement>(null);
-  const commentsRef = useRef<HTMLDivElement>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
 
@@ -276,24 +275,6 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
 
     setLoading(true);
     try {
-      // Push comments section to next page if it would be split
-      let addedMargin = 0;
-      if (commentsRef.current) {
-        const imgWidth = 215.9 - 20;
-        const contentHeightMm = 279.4 - 20;
-        const pxPerMm = formRef.current.offsetWidth / imgWidth;
-        const pageHeightPx = contentHeightMm * pxPerMm;
-        const formTop = formRef.current.getBoundingClientRect().top;
-        const commentsTop = commentsRef.current.getBoundingClientRect().top;
-        const offsetPx = commentsTop - formTop;
-        const posWithinPage = offsetPx % pageHeightPx;
-        if (posWithinPage > 0) {
-          addedMargin = pageHeightPx - posWithinPage + 8;
-          commentsRef.current.style.marginTop = `${addedMargin}px`;
-          await new Promise(r => setTimeout(r, 50));
-        }
-      }
-
       const canvas = await html2canvas(formRef.current, {
         scale: 2.5,
         useCORS: true,
@@ -306,41 +287,24 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
         scrollY: 0
       });
 
-      if (addedMargin > 0 && commentsRef.current) {
-        commentsRef.current.style.marginTop = '';
-      }
-
-      const margin = 10;
-      const imgWidth = 215.9 - margin * 2;
+      const imgWidth = 215.9;
       const pageHeight = 279.4;
-      const contentHeight = pageHeight - margin * 2;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
       const pdf = new jsPDF('p', 'mm', 'letter');
 
-      if (imgHeight <= contentHeight) {
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', margin, margin, imgWidth, imgHeight);
+      if (imgHeight <= pageHeight) {
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
       } else {
-        const scale = canvas.width / imgWidth;
-        const pageHeightPx = Math.floor(contentHeight * scale);
-        const totalPages = Math.ceil(canvas.height / pageHeightPx);
-
-        for (let page = 0; page < totalPages; page++) {
-          if (page > 0) pdf.addPage();
-
-          const srcY = page * pageHeightPx;
-          const srcH = Math.min(pageHeightPx, canvas.height - srcY);
-          const sliceHeight = srcH / scale;
-
-          const pageCanvas = document.createElement('canvas');
-          pageCanvas.width = canvas.width;
-          pageCanvas.height = srcH;
-          const ctx = pageCanvas.getContext('2d')!;
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-          ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
-
-          pdf.addImage(pageCanvas.toDataURL('image/png'), 'PNG', margin, margin, imgWidth, sliceHeight);
+        let position = 0;
+        let remainingHeight = imgHeight;
+        let firstPage = true;
+        while (remainingHeight > 0) {
+          if (!firstPage) pdf.addPage();
+          pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, -position, imgWidth, imgHeight);
+          position += pageHeight;
+          remainingHeight -= pageHeight;
+          firstPage = false;
         }
       }
 
@@ -685,7 +649,7 @@ export function OperativeGoalDefinitionForm({ onBack }: OperativeGoalDefinitionF
                 </table>
               </div>
 
-              <div className="grid grid-cols-2 gap-4" ref={commentsRef}>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="border-2 border-slate-300">
                   <div className="bg-blue-900 text-white px-3 py-1.5 text-[10px] font-bold">
                     Comentarios Jefe Inmediato
