@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Archive } from 'lucide-react';
+import { FinalEvaluationContainer } from './components/evaluations/FinalEvaluationContainer';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CompanyProvider } from './contexts/CompanyContext';
 import { LoginForm } from './components/auth/LoginForm';
@@ -145,17 +145,7 @@ function AppContent() {
       case 'audit-log':
         return <EvaluationAuditLog />;
       case 'evaluacion-final':
-        return (
-          <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center">
-              <Archive className="w-8 h-8 text-slate-400" />
-            </div>
-            <h2 className="text-xl font-bold text-slate-700">Evaluación Final</h2>
-            <p className="text-slate-500 text-sm text-center max-w-sm">
-              Este módulo está en preparación. Aquí se realizará la evaluación final del desempeño.
-            </p>
-          </div>
-        );
+        return <FinalEvaluationContainer />;
       default:
         return <Dashboard />;
     }
@@ -175,6 +165,7 @@ function AppContent() {
         ].includes(currentView) ? 'overflow-hidden' : [
           'evaluacion-junio',
           'goal-definition-enero',
+          'evaluacion-final',
         ].includes(currentView) ? 'overflow-y-auto' : ['dashboard', 'audit-log'].includes(currentView) ? 'overflow-y-auto' : 'overflow-y-auto p-8'}`}>
           {renderView()}
         </main>
