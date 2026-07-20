@@ -58,6 +58,25 @@ const SCORE_OPTIONS = [
   { value: '1', label: '1 - Debajo' },
 ];
 
+const BLUE = '#1f5c8b';
+const LIGHT_BLUE = '#d6e8f5';
+
+const getScoreColorHex = (score: number) => {
+  if (!score) return '#1e293b';
+  if (score >= 10) return '#16a34a';
+  if (score >= 8) return '#2563eb';
+  if (score >= 6) return '#d97706';
+  return '#dc2626';
+};
+
+const getScoreLabel = (score: number) => {
+  if (!score) return '';
+  if (score >= 10) return 'Excede Expectativas';
+  if (score >= 8) return 'Cumple Expectativas';
+  if (score >= 6) return 'Desempeño a Mejorar';
+  return 'Debajo de Expectativas';
+};
+
 export function FinalAdministrativeEvaluationForm({ editingEvaluationId, onCancel, periodId }: FinalAdministrativeEvaluationFormProps) {
   const formRef = useRef<HTMLDivElement>(null);
   const { employee, systemUser } = useAuth();
@@ -86,11 +105,11 @@ export function FinalAdministrativeEvaluationForm({ editingEvaluationId, onCance
     department: '',
     sub_department: '',
     evaluation_date: new Date().toISOString().split('T')[0],
-    time_in_position: '',
+    time_in_position_years: '',
+    time_in_position_months: '',
     manager_name: '',
-    manager_comments: '',
-    employee_comments: '',
-    overall_comments: ''
+    overall_comments: '',
+    employee_comments: ''
   });
 
   const [individualGoals, setIndividualGoals] = useState<IndividualGoal[]>(
@@ -138,6 +157,15 @@ export function FinalAdministrativeEvaluationForm({ editingEvaluationId, onCance
     }
   }, [selectedEmployeeId, employees]);
 
+  const parseTimeInPosition = (raw: string | null) => {
+    if (!raw) return { years: '', months: '' };
+    if (raw.includes('|')) {
+      const [y, m] = raw.split('|');
+      return { years: y || '', months: m || '' };
+    }
+    return { years: raw, months: '' };
+  };
+
   const loadExistingEvaluation = async (evaluationId: string) => {
     try {
       const { data: evalData, error: evalError } = await supabase
@@ -150,15 +178,16 @@ export function FinalAdministrativeEvaluationForm({ editingEvaluationId, onCance
 
       if (evalData) {
         setSelectedEmployeeId(evalData.employee_id);
+        const tip = parseTimeInPosition(evalData.time_in_position);
         setFormData({
           department: evalData.department || '',
           sub_department: evalData.sub_department || '',
           evaluation_date: evalData.evaluation_date || new Date().toISOString().split('T')[0],
-          time_in_position: evalData.time_in_position || '',
+          time_in_position_years: tip.years,
+          time_in_position_months: tip.months,
           manager_name: evalData.manager_name || '',
-          manager_comments: evalData.manager_comments || '',
-          employee_comments: evalData.employee_comments || '',
-          overall_comments: evalData.overall_comments || ''
+          overall_comments: evalData.overall_comments || '',
+          employee_comments: evalData.employee_comments || ''
         });
 
         if (evalData.status === 'completed') setWorkflowStatus('completed');
@@ -337,20 +366,6 @@ export function FinalAdministrativeEvaluationForm({ editingEvaluationId, onCance
     return (goalsAvg * 0.6) + (compsAvg * 0.4);
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 10) return 'text-green-600';
-    if (score >= 8) return 'text-blue-600';
-    if (score >= 6) return 'text-amber-600';
-    return 'text-red-600';
-  };
-
-  const getScoreLabel = (score: number) => {
-    if (score >= 10) return 'Excede';
-    if (score >= 8) return 'Cumple';
-    if (score >= 6) return 'A Mejorar';
-    return 'Debajo';
-  };
-
   const handleSave = async () => {
     if (!selectedEmployeeId || !period) {
       setToast({ message: 'Por favor seleccione un empleado', type: 'error' });
@@ -359,6 +374,7 @@ export function FinalAdministrativeEvaluationForm({ editingEvaluationId, onCance
 
     setSaving(true);
     try {
+      const timeInPosition = `${formData.time_in_position_years}|${formData.time_in_position_months}`;
       const evaluationCode = !savedEvaluationId ?
         `FIN-${selectedEmployee?.employee_code?.replace(/-/g, '') || 'XXX'}-${new Date().toISOString().split('T')[0].replace(/-/g, '')}`
         : undefined;
@@ -372,11 +388,10 @@ export function FinalAdministrativeEvaluationForm({ editingEvaluationId, onCance
         hire_date: selectedEmployee?.hire_date,
         evaluation_date: formData.evaluation_date || null,
         manager_id: selectedEmployee?.manager_id,
-        time_in_position: formData.time_in_position || null,
+        time_in_position: timeInPosition,
         manager_name: formData.manager_name,
-        manager_comments: formData.manager_comments,
-        employee_comments: formData.employee_comments,
         overall_comments: formData.overall_comments,
+        employee_comments: formData.employee_comments,
         status: 'draft',
         ...(evaluationCode && { evaluation_code: evaluationCode })
       };
@@ -473,7 +488,7 @@ export function FinalAdministrativeEvaluationForm({ editingEvaluationId, onCance
       pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
       const pdfBlob = pdf.output('blob');
       return URL.createObjectURL(pdfBlob);
-    } catch (error) {
+    } catch {
       return null;
     }
   };
@@ -582,7 +597,6 @@ export function FinalAdministrativeEvaluationForm({ editingEvaluationId, onCance
           employee: { employee_code: selectedEmployee.employee_code, last_name: selectedEmployee.last_name },
           fileExt
         });
-        const docSlug = 'evaluacion_final';
         filePath = filePath.replace('evaluacion', 'evaluacion-final');
       } else {
         filePath = `PLIHSA/evaluacion-final/administrativo/${year}/${savedEvaluationId}.${fileExt}`;
@@ -672,6 +686,9 @@ export function FinalAdministrativeEvaluationForm({ editingEvaluationId, onCance
   const compsAvg = calculateCompetenciesAverage();
   const finalScore = calculateFinalScore();
 
+  const inputClass = 'w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 text-sm';
+  const textareaClass = 'w-full px-3 py-2 border border-slate-200 rounded focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-transparent text-sm';
+
   return (
     <div className="p-8 max-w-7xl mx-auto">
       {workflowStatus === 'completed' && (
@@ -694,370 +711,410 @@ export function FinalAdministrativeEvaluationForm({ editingEvaluationId, onCance
         </div>
       )}
 
-      <div ref={formRef} className="bg-white rounded-lg shadow-sm border border-slate-200">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 rounded-t-lg">
-          <div className="flex items-center gap-4">
-            <div className="bg-white p-3 rounded-lg">
-              <img src="/Profile-pic-plihsa-logo-foto.jpg" alt="PLIHSA" className="h-12" />
+      <div ref={formRef} className="bg-white rounded-lg shadow-sm border border-slate-200" style={{ maxWidth: '794px', margin: '0 auto' }}>
+        {/* HEADER */}
+        <div className="flex items-stretch border border-slate-400" style={{ minHeight: '70px' }}>
+          <div className="flex items-center justify-center p-2 border-r border-slate-400" style={{ width: '130px' }}>
+            <img src="/Profile-pic-plihsa-logo-foto.jpg" alt="PLIHSA" className="h-14" />
+          </div>
+          <div className="flex-1 flex items-center justify-center border-r border-slate-400 px-4 text-center">
+            <span className="text-base font-bold text-slate-800">Evaluación del Desempeño Administrativo</span>
+          </div>
+          <div className="border-l border-slate-400 text-xs" style={{ width: '200px' }}>
+            <div className="px-2 py-1 border-b border-slate-400 bg-amber-50">
+              <span style={{ color: BLUE }} className="font-bold">Código:</span> {period.form_code || 'PL-RH-P-002-F02'}
             </div>
-            <div className="text-white">
-              <h1 className="text-2xl font-bold">Evaluación Final del Desempeño Administrativo</h1>
-              <p className="text-blue-100 mt-1">Código: {period.form_code || 'PL-RH-P-002-F02'} | Versión: {period.form_version || '01'}</p>
+            <div className="px-2 py-1 border-b border-slate-400">
+              Versión: {period.form_version || '01'}
+            </div>
+            <div className="px-2 py-1 bg-amber-50">
+              Fecha de Revisión: {new Date().toLocaleDateString('es-HN')}
             </div>
           </div>
         </div>
 
-        <div className="p-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Nombre del Colaborador *</label>
-              <select
-                value={selectedEmployeeId}
-                onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                disabled={isReadOnly || !!editingEvaluationId}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-600"
-              >
-                <option value="">Seleccione un colaborador</option>
-                {employees.map(emp => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.first_name} {emp.last_name} - {emp.position}{emp.id === employee?.id ? ' (Yo)' : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Posición del Colaborador</label>
-              <input
-                type="text"
-                value={selectedEmployee?.position || ''}
-                disabled
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-600"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Departamento</label>
-              <input
-                type="text"
-                value={formData.department}
-                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                disabled={isReadOnly}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Sub-departamento</label>
-              <input
-                type="text"
-                value={formData.sub_department}
-                onChange={(e) => setFormData({ ...formData, sub_department: e.target.value })}
-                disabled={isReadOnly}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Fecha de Ingreso (Antigüedad)</label>
-              <input
-                type="date"
-                value={selectedEmployee?.hire_date || ''}
-                disabled
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-600"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Tiempo en la Posición</label>
-              <input
-                type="text"
-                value={formData.time_in_position}
-                onChange={(e) => setFormData({ ...formData, time_in_position: e.target.value })}
-                disabled={isReadOnly}
-                placeholder="Ej: 2 años, 6 meses"
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Jefe Inmediato</label>
-              <input
-                type="text"
-                value={formData.manager_name}
-                onChange={(e) => setFormData({ ...formData, manager_name: e.target.value })}
-                disabled={isReadOnly}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Fecha de Evaluación</label>
-              <input
-                type="date"
-                value={formData.evaluation_date}
-                onChange={(e) => setFormData({ ...formData, evaluation_date: e.target.value })}
-                disabled={isReadOnly}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50"
-              />
-            </div>
-          </div>
-
-          <div className="mb-8 p-4 bg-slate-50 rounded-lg border border-slate-200">
-            <h3 className="text-sm font-bold text-slate-700 mb-3">ESCALA DE CALIFICACIÓN</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="bg-white rounded-lg p-3 border border-slate-200 text-center">
-                <p className="text-xl font-bold text-green-600">10</p>
-                <p className="text-xs font-semibold text-slate-700">Excede</p>
-              </div>
-              <div className="bg-white rounded-lg p-3 border border-slate-200 text-center">
-                <p className="text-xl font-bold text-blue-600">8-9</p>
-                <p className="text-xs font-semibold text-slate-700">Cumple</p>
-              </div>
-              <div className="bg-white rounded-lg p-3 border border-slate-200 text-center">
-                <p className="text-xl font-bold text-amber-600">6-7</p>
-                <p className="text-xs font-semibold text-slate-700">A Mejorar</p>
-              </div>
-              <div className="bg-white rounded-lg p-3 border border-slate-200 text-center">
-                <p className="text-xl font-bold text-red-600">1-5</p>
-                <p className="text-xs font-semibold text-slate-700">Debajo</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mb-8">
-            <div className="bg-blue-600 text-white px-6 py-3 rounded-lg mb-1 flex items-center gap-2">
-              <Target className="w-5 h-5" />
-              <h2 className="text-lg font-bold">EVALUACIÓN DE METAS INDIVIDUALES (60%)</h2>
-            </div>
-            <p className="text-sm text-slate-600 mb-4">Califique cada meta del 1 al 10 según los resultados obtenidos durante el período.</p>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-blue-50">
-                    <th className="border border-slate-300 px-3 py-3 text-left text-sm font-semibold text-slate-700 w-10">No.</th>
-                    <th className="border border-slate-300 px-3 py-3 text-left text-sm font-semibold text-slate-700 w-32">Calificación</th>
-                    <th className="border border-slate-300 px-3 py-3 text-left text-sm font-semibold text-slate-700">Meta / Medición y Resultados</th>
-                    <th className="border border-slate-300 px-3 py-3 text-left text-sm font-semibold text-slate-700">Comentarios Jefe</th>
-                    <th className="border border-slate-300 px-3 py-3 text-left text-sm font-semibold text-slate-700">Comentarios Colaborador</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {individualGoals.map((goal, index) => (
-                    <tr key={goal.goal_number}>
-                      <td className="border border-slate-300 px-3 py-3 text-center font-medium">{goal.goal_number}</td>
-                      <td className="border border-slate-300 p-2">
-                        <select
-                          value={goal.numeric_score}
-                          onChange={(e) => handleGoalChange(index, 'numeric_score', e.target.value)}
-                          disabled={isReadOnly}
-                          className="w-full px-2 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50 text-sm"
-                        >
-                          {SCORE_OPTIONS.map(opt => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="border border-slate-300 p-2">
-                        <textarea
-                          value={goal.goal_description}
-                          onChange={(e) => handleGoalChange(index, 'goal_description', e.target.value)}
-                          disabled={isReadOnly}
-                          placeholder="Descripción de la meta..."
-                          className="w-full px-3 py-2 border border-slate-200 rounded focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-transparent text-sm mb-2"
-                          rows={2}
-                        />
-                        <textarea
-                          value={goal.measurement_results}
-                          onChange={(e) => handleGoalChange(index, 'measurement_results', e.target.value)}
-                          disabled={isReadOnly}
-                          placeholder="Medición y resultados obtenidos..."
-                          className="w-full px-3 py-2 border border-slate-200 rounded focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-transparent text-sm"
-                          rows={2}
-                        />
-                      </td>
-                      <td className="border border-slate-300 p-2">
-                        <textarea
-                          value={goal.manager_comments}
-                          onChange={(e) => handleGoalChange(index, 'manager_comments', e.target.value)}
-                          disabled={isReadOnly}
-                          className="w-full px-3 py-2 border-0 focus:ring-2 focus:ring-blue-500 rounded resize-none disabled:bg-transparent text-sm"
-                          rows={4}
-                        />
-                      </td>
-                      <td className="border border-slate-300 p-2">
-                        <textarea
-                          value={goal.employee_comments}
-                          onChange={(e) => handleGoalChange(index, 'employee_comments', e.target.value)}
-                          disabled={isReadOnly}
-                          className="w-full px-3 py-2 border-0 focus:ring-2 focus:ring-blue-500 rounded resize-none disabled:bg-transparent text-sm"
-                          rows={4}
-                        />
-                      </td>
-                    </tr>
+        {/* DATOS DEL COLABORADOR */}
+        <table className="w-full border-collapse text-sm" style={{ borderTop: 0 }}>
+          <tbody>
+            <tr>
+              <td className="px-3 py-2 border border-slate-400 font-bold text-white text-xs" style={{ backgroundColor: BLUE, width: '220px' }}>Nombre del Colaborador:</td>
+              <td className="px-3 py-2 border border-slate-400" colSpan={3}>
+                <select
+                  value={selectedEmployeeId}
+                  onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                  disabled={isReadOnly || !!editingEvaluationId}
+                  className="w-full px-2 py-1 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 text-sm disabled:bg-transparent disabled:border-0 disabled:appearance-none"
+                >
+                  <option value="">Seleccione un colaborador</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.first_name} {emp.last_name} - {emp.position}{emp.id === employee?.id ? ' (Yo)' : ''}
+                    </option>
                   ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="mt-3 flex items-center justify-end gap-4 p-3 bg-blue-50 rounded-lg">
-              <span className="text-sm font-medium text-slate-700">Promedio Metas:</span>
-              <span className={`text-2xl font-bold ${getScoreColor(goalsAvg)}`}>
-                {goalsAvg > 0 ? goalsAvg.toFixed(2) : '--'}
-              </span>
-            </div>
-          </div>
-
-          <div className="mb-8">
-            <div className="bg-blue-600 text-white px-6 py-3 rounded-lg mb-1 flex items-center gap-2">
-              <Award className="w-5 h-5" />
-              <h2 className="text-lg font-bold">EVALUACIÓN DE COMPETENCIAS CONDUCTUALES (40%)</h2>
-            </div>
-            <p className="text-sm text-slate-600 mb-4">Califique cada competencia del 1 al 10 según el desempeño observado.</p>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-blue-50">
-                    <th className="border border-slate-300 px-3 py-3 text-left text-sm font-semibold text-slate-700 w-10">No.</th>
-                    <th className="border border-slate-300 px-3 py-3 text-left text-sm font-semibold text-slate-700 w-32">Calificación</th>
-                    <th className="border border-slate-300 px-3 py-3 text-left text-sm font-semibold text-slate-700">Competencia</th>
-                    <th className="border border-slate-300 px-3 py-3 text-left text-sm font-semibold text-slate-700">Comentarios Jefe</th>
-                    <th className="border border-slate-300 px-3 py-3 text-left text-sm font-semibold text-slate-700">Comentarios Colaborador</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {competencies.map((comp, index) => (
-                    <tr key={comp.competency_number}>
-                      <td className="border border-slate-300 px-3 py-3 text-center font-medium">{comp.competency_number}</td>
-                      <td className="border border-slate-300 p-2">
-                        <select
-                          value={comp.numeric_score}
-                          onChange={(e) => handleCompetencyChange(index, 'numeric_score', e.target.value)}
-                          disabled={isReadOnly}
-                          className="w-full px-2 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50 text-sm"
-                        >
-                          {SCORE_OPTIONS.map(opt => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="border border-slate-300 p-2">
-                        <textarea
-                          value={comp.competency_description}
-                          onChange={(e) => handleCompetencyChange(index, 'competency_description', e.target.value)}
-                          disabled={isReadOnly}
-                          placeholder="Descripción de la competencia..."
-                          className="w-full px-3 py-2 border-0 focus:ring-2 focus:ring-blue-500 rounded resize-none disabled:bg-transparent text-sm"
-                          rows={3}
-                        />
-                      </td>
-                      <td className="border border-slate-300 p-2">
-                        <textarea
-                          value={comp.manager_comments}
-                          onChange={(e) => handleCompetencyChange(index, 'manager_comments', e.target.value)}
-                          disabled={isReadOnly}
-                          className="w-full px-3 py-2 border-0 focus:ring-2 focus:ring-blue-500 rounded resize-none disabled:bg-transparent text-sm"
-                          rows={3}
-                        />
-                      </td>
-                      <td className="border border-slate-300 p-2">
-                        <textarea
-                          value={comp.employee_comments}
-                          onChange={(e) => handleCompetencyChange(index, 'employee_comments', e.target.value)}
-                          disabled={isReadOnly}
-                          className="w-full px-3 py-2 border-0 focus:ring-2 focus:ring-blue-500 rounded resize-none disabled:bg-transparent text-sm"
-                          rows={3}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="mt-3 flex items-center justify-end gap-4 p-3 bg-blue-50 rounded-lg">
-              <span className="text-sm font-medium text-slate-700">Promedio Competencias:</span>
-              <span className={`text-2xl font-bold ${getScoreColor(compsAvg)}`}>
-                {compsAvg > 0 ? compsAvg.toFixed(2) : '--'}
-              </span>
-            </div>
-          </div>
-
-          <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Award className="w-8 h-8 text-blue-600" />
-                <div>
-                  <h3 className="text-lg font-bold text-slate-800">CALIFICACIÓN FINAL</h3>
-                  <p className="text-sm text-slate-600">Metas (60%) + Competencias (40%)</p>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td className="px-3 py-2 border border-slate-400 font-bold text-white text-xs" style={{ backgroundColor: BLUE }}>Posición del Colaborador:</td>
+              <td className="px-3 py-2 border border-slate-400" colSpan={3}>
+                <input type="text" value={selectedEmployee?.position || ''} disabled className="w-full bg-transparent border-0 text-sm" />
+              </td>
+            </tr>
+            <tr>
+              <td className="px-3 py-2 border border-slate-400 font-bold text-white text-xs" style={{ backgroundColor: BLUE }}>Departamento:</td>
+              <td className="px-3 py-2 border border-slate-400" style={{ width: '200px' }}>
+                <input type="text" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} disabled={isReadOnly} className="w-full bg-transparent border-0 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 rounded px-1" />
+              </td>
+              <td className="px-3 py-2 border border-slate-400 font-bold text-white text-xs" style={{ backgroundColor: BLUE, width: '160px' }}>Sub-departamento:</td>
+              <td className="px-3 py-2 border border-slate-400">
+                <input type="text" value={formData.sub_department} onChange={(e) => setFormData({ ...formData, sub_department: e.target.value })} disabled={isReadOnly} className="w-full bg-transparent border-0 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 rounded px-1" />
+              </td>
+            </tr>
+            <tr>
+              <td className="px-3 py-2 border border-slate-400 font-bold text-white text-xs" style={{ backgroundColor: BLUE, whiteSpace: 'pre-line', lineHeight: '1.3' }}>Fecha de Antigüedad{'\n'}(Día | Mes | Año)</td>
+              <td className="px-3 py-2 border border-slate-400 text-center">
+                <input type="date" value={selectedEmployee?.hire_date || ''} disabled className="bg-transparent border-0 text-sm text-center" />
+              </td>
+              <td className="px-3 py-2 border border-slate-400 font-bold text-white text-xs" style={{ backgroundColor: BLUE }}>Tiempo en la posición actual:</td>
+              <td className="px-3 py-2 border border-slate-400">
+                <div className="flex items-center gap-2 justify-center">
+                  <div className="flex flex-col items-center">
+                    <span className="text-[9px] text-slate-500">Año</span>
+                    <input type="number" min={0} max={50} value={formData.time_in_position_years} onChange={(e) => setFormData({ ...formData, time_in_position_years: e.target.value })} disabled={isReadOnly} className="w-12 text-center border border-slate-300 rounded px-1 py-0.5 text-sm focus:ring-1 focus:ring-blue-400 disabled:bg-slate-50" />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-[9px] text-slate-500">Meses</span>
+                    <input type="number" min={0} max={11} value={formData.time_in_position_months} onChange={(e) => setFormData({ ...formData, time_in_position_months: e.target.value })} disabled={isReadOnly} className="w-12 text-center border border-slate-300 rounded px-1 py-0.5 text-sm focus:ring-1 focus:ring-blue-400 disabled:bg-slate-50" />
+                  </div>
                 </div>
-              </div>
-              <div className="text-right">
-                <p className={`text-4xl font-bold ${getScoreColor(finalScore)}`}>
-                  {finalScore > 0 ? finalScore.toFixed(2) : '--'}
-                </p>
-                <p className={`text-sm font-semibold ${getScoreColor(finalScore)}`}>
-                  {finalScore > 0 ? getScoreLabel(finalScore) : 'Pendiente'}
-                </p>
-              </div>
-            </div>
+              </td>
+            </tr>
+            <tr>
+              <td className="px-3 py-2 border border-slate-400 font-bold text-white text-xs" style={{ backgroundColor: BLUE }}>Jefe Inmediato:</td>
+              <td className="px-3 py-2 border border-slate-400">
+                <input type="text" value={formData.manager_name} onChange={(e) => setFormData({ ...formData, manager_name: e.target.value })} disabled={isReadOnly} className="w-full bg-transparent border-0 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 rounded px-1" />
+              </td>
+              <td className="px-3 py-2 border border-slate-400 font-bold text-white text-xs" style={{ backgroundColor: BLUE, whiteSpace: 'pre-line', lineHeight: '1.3' }}>Fecha de Evaluación{'\n'}(Día | Mes | Año)</td>
+              <td className="px-3 py-2 border border-slate-400 text-center">
+                <input type="date" value={formData.evaluation_date} onChange={(e) => setFormData({ ...formData, evaluation_date: e.target.value })} disabled={isReadOnly} className="bg-transparent border-0 text-sm text-center focus:outline-none focus:ring-1 focus:ring-blue-400 rounded px-1" />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* ESCALA DE CALIFICACIÓN */}
+        <div className="border border-slate-400 border-t-0">
+          <div className="px-3 py-1.5 text-white text-xs font-bold" style={{ backgroundColor: BLUE }}>
+            Escala de Calificación – Para el Proceso de Evaluación del desempeño
           </div>
-
-          <div className="grid grid-cols-1 gap-6 mb-8">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Comentarios Generales del Jefe</label>
-              <textarea
-                value={formData.overall_comments}
-                onChange={(e) => setFormData({ ...formData, overall_comments: e.target.value })}
-                disabled={isReadOnly}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none disabled:bg-slate-50"
-                rows={4}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Comentarios del Colaborador</label>
-              <textarea
-                value={formData.employee_comments}
-                onChange={(e) => setFormData({ ...formData, employee_comments: e.target.value })}
-                disabled={isReadOnly}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none disabled:bg-slate-50"
-                rows={4}
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">
-            <button
-              onClick={handleSavePDF}
-              disabled={!savedEvaluationId || generatingPDF}
-              className="flex items-center gap-2 px-5 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Download className="w-5 h-5" />
-              {generatingPDF ? 'Generando...' : 'Guardar PDF'}
-            </button>
-            <button
-              onClick={handlePrint}
-              disabled={!savedEvaluationId}
-              className="flex items-center gap-2 px-5 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Printer className="w-5 h-5" />
-              Imprimir
-            </button>
-            {!isReadOnly && (
-              <button
-                onClick={handleSave}
-                disabled={saving || !selectedEmployeeId}
-                className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Save className="w-5 h-5" />
-                {saving ? 'Guardando...' : 'Guardar'}
-              </button>
-            )}
+          <div className="px-3 py-2 text-xs leading-relaxed text-slate-700">
+            <p className="mb-1"><span className="font-bold text-green-600">Excede Expectativas (10):</span> Consistentemente desempeña y cumple los requerimientos más allá de los estándares, entregando resultados de alta calidad y excelencia.</p>
+            <p className="mb-1"><span className="font-bold text-blue-600">Cumple Expectativas (8-9):</span> Consistentemente desempeña y cumple los requerimientos, entregando calidad en los resultados.</p>
+            <p className="mb-1"><span className="font-bold text-amber-600">Desempeño a Mejorar (6-7):</span> No es consistente en el desempeño y cumplimiento de los requerimientos o entrega de resultados, pero demuestra deseo de mejorar su desempeño para cumplir los requerimientos y entregar resultados de calidad.</p>
+            <p><span className="font-bold text-red-600">Debajo de Expectativas (1-5):</span> Falla consistentemente en el desempeño y cumplimiento de los requerimientos y no entrega resultados de calidad.</p>
           </div>
         </div>
+
+        {/* METAS INDIVIDUALES */}
+        <div className="px-3 py-2 text-white text-sm font-bold text-center" style={{ backgroundColor: BLUE }}>
+          EVALUACION METAS INDIVIDUALES (Valor 60%)
+        </div>
+
+        {individualGoals.map((goal, index) => (
+          <div key={goal.goal_number} className="border border-slate-400 border-t-0 mb-0">
+            <table className="w-full border-collapse text-sm">
+              <tbody>
+                {/* Row 1: Score label | score | Meta No. X | description */}
+                <tr>
+                  <td className="px-2 py-2 border border-slate-400 font-bold text-white text-xs align-top" style={{ backgroundColor: BLUE, width: '140px', lineHeight: '1.3' }}>
+                    Calificación Escala<br />Numérica
+                  </td>
+                  <td className="px-2 py-2 border border-slate-400 text-center align-middle" style={{ width: '100px' }}>
+                    <select
+                      value={goal.numeric_score}
+                      onChange={(e) => handleGoalChange(index, 'numeric_score', e.target.value)}
+                      disabled={isReadOnly}
+                      className="w-16 px-1 py-1 border border-slate-300 rounded text-center text-lg font-bold focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
+                      style={{ color: getScoreColorHex(goal.numeric_score ? parseFloat(goal.numeric_score) : 0) }}
+                    >
+                      {SCORE_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-2 py-2 border border-slate-400 font-bold text-white text-xs text-center align-middle" style={{ backgroundColor: BLUE, width: '80px', lineHeight: '1.3' }}>
+                    Meta<br />No. {goal.goal_number}
+                  </td>
+                  <td className="px-2 py-2 border border-slate-400 align-top">
+                    <textarea
+                      value={goal.goal_description}
+                      onChange={(e) => handleGoalChange(index, 'goal_description', e.target.value)}
+                      disabled={isReadOnly}
+                      placeholder="Descripción de la meta..."
+                      className={textareaClass}
+                      rows={2}
+                    />
+                  </td>
+                </tr>
+                {/* Row 2: Calificación según criterio | label | Medición y Resultados */}
+                <tr>
+                  <td className="px-2 py-2 border border-slate-400 font-bold text-white text-xs align-top" style={{ backgroundColor: BLUE, lineHeight: '1.3' }}>
+                    Calificación según el<br />criterio de la escala
+                  </td>
+                  <td className="px-2 py-2 border border-slate-400 text-center align-middle text-xs text-slate-600">
+                    {goal.numeric_score ? getScoreLabel(parseFloat(goal.numeric_score)) : ''}
+                  </td>
+                  <td className="px-2 py-2 border border-slate-400 align-top" colSpan={2}>
+                    <span className="text-xs font-bold text-slate-700">Medición y Resultados:</span>
+                    <textarea
+                      value={goal.measurement_results}
+                      onChange={(e) => handleGoalChange(index, 'measurement_results', e.target.value)}
+                      disabled={isReadOnly}
+                      placeholder="Medición y resultados obtenidos..."
+                      className="w-full mt-1 px-2 py-1 border-0 border-slate-200 rounded focus:ring-1 focus:ring-blue-400 resize-none disabled:bg-transparent text-xs"
+                      rows={2}
+                    />
+                  </td>
+                </tr>
+                {/* Row 3: Comentarios Jefe */}
+                <tr>
+                  <td className="px-2 py-2 border border-slate-400 font-bold text-white text-xs align-top" style={{ backgroundColor: BLUE, lineHeight: '1.3' }}>
+                    Comentarios Jefe<br />Inmediato
+                  </td>
+                  <td className="px-2 py-2 border border-slate-400 align-top" colSpan={3}>
+                    <textarea
+                      value={goal.manager_comments}
+                      onChange={(e) => handleGoalChange(index, 'manager_comments', e.target.value)}
+                      disabled={isReadOnly}
+                      className={textareaClass}
+                      rows={2}
+                    />
+                  </td>
+                </tr>
+                {/* Row 4: Comentarios Colaborador */}
+                <tr>
+                  <td className="px-2 py-2 border border-slate-400 font-bold text-white text-xs align-top" style={{ backgroundColor: BLUE, lineHeight: '1.3' }}>
+                    Comentarios del<br />Colaborador
+                  </td>
+                  <td className="px-2 py-2 border border-slate-400 align-top" colSpan={3}>
+                    <textarea
+                      value={goal.employee_comments}
+                      onChange={(e) => handleGoalChange(index, 'employee_comments', e.target.value)}
+                      disabled={isReadOnly}
+                      className={textareaClass}
+                      rows={2}
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        ))}
+
+        {/* Goals average */}
+        <div className="flex items-center justify-end gap-3 px-3 py-2 border border-slate-400 border-t-0" style={{ backgroundColor: LIGHT_BLUE }}>
+          <span className="text-sm font-bold text-slate-700">Promedio Metas Individuales (60%):</span>
+          <span className="text-lg font-bold" style={{ color: getScoreColorHex(goalsAvg), minWidth: '60px', textAlign: 'center' }}>
+            {goalsAvg > 0 ? goalsAvg.toFixed(2) : '--'}
+          </span>
+        </div>
+
+        {/* COMPETENCIAS CONDUCTUALES */}
+        <div className="px-3 py-2 text-white text-sm font-bold text-center border border-slate-400 border-t-0" style={{ backgroundColor: BLUE }}>
+          EVALUACION COMPETENCIAS CONDUCTUALES (Valor 40%)
+        </div>
+
+        {competencies.map((comp, index) => (
+          <div key={comp.competency_number} className="border border-slate-400 border-t-0 mb-0">
+            <table className="w-full border-collapse text-sm">
+              <tbody>
+                <tr>
+                  <td className="px-2 py-2 border border-slate-400 font-bold text-white text-xs align-top" style={{ backgroundColor: BLUE, width: '140px', lineHeight: '1.3' }}>
+                    Calificación Escala<br />Numérica
+                  </td>
+                  <td className="px-2 py-2 border border-slate-400 text-center align-middle" style={{ width: '100px' }}>
+                    <select
+                      value={comp.numeric_score}
+                      onChange={(e) => handleCompetencyChange(index, 'numeric_score', e.target.value)}
+                      disabled={isReadOnly}
+                      className="w-16 px-1 py-1 border border-slate-300 rounded text-center text-lg font-bold focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
+                      style={{ color: getScoreColorHex(comp.numeric_score ? parseFloat(comp.numeric_score) : 0) }}
+                    >
+                      {SCORE_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-2 py-2 border border-slate-400 font-bold text-white text-xs text-center align-middle" style={{ backgroundColor: BLUE, width: '80px', lineHeight: '1.3' }}>
+                    Competencia<br />No. {comp.competency_number}
+                  </td>
+                  <td className="px-2 py-2 border border-slate-400 align-top">
+                    <textarea
+                      value={comp.competency_description}
+                      onChange={(e) => handleCompetencyChange(index, 'competency_description', e.target.value)}
+                      disabled={isReadOnly}
+                      placeholder="Descripción de la competencia..."
+                      className={textareaClass}
+                      rows={2}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-2 py-2 border border-slate-400 font-bold text-white text-xs align-top" style={{ backgroundColor: BLUE, lineHeight: '1.3' }}>
+                    Calificación según el<br />criterio de la escala
+                  </td>
+                  <td className="px-2 py-2 border border-slate-400 text-center align-middle text-xs text-slate-600">
+                    {comp.numeric_score ? getScoreLabel(parseFloat(comp.numeric_score)) : ''}
+                  </td>
+                  <td className="px-2 py-2 border border-slate-400 align-top" colSpan={2}></td>
+                </tr>
+                <tr>
+                  <td className="px-2 py-2 border border-slate-400 font-bold text-white text-xs align-top" style={{ backgroundColor: BLUE, lineHeight: '1.3' }}>
+                    Comentarios Jefe<br />Inmediato
+                  </td>
+                  <td className="px-2 py-2 border border-slate-400 align-top" colSpan={3}>
+                    <textarea
+                      value={comp.manager_comments}
+                      onChange={(e) => handleCompetencyChange(index, 'manager_comments', e.target.value)}
+                      disabled={isReadOnly}
+                      className={textareaClass}
+                      rows={2}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-2 py-2 border border-slate-400 font-bold text-white text-xs align-top" style={{ backgroundColor: BLUE, lineHeight: '1.3' }}>
+                    Comentarios del<br />Colaborador
+                  </td>
+                  <td className="px-2 py-2 border border-slate-400 align-top" colSpan={3}>
+                    <textarea
+                      value={comp.employee_comments}
+                      onChange={(e) => handleCompetencyChange(index, 'employee_comments', e.target.value)}
+                      disabled={isReadOnly}
+                      className={textareaClass}
+                      rows={2}
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        ))}
+
+        {/* Competencies average + Final score */}
+        <div className="flex items-center justify-end gap-3 px-3 py-2 border border-slate-400 border-t-0" style={{ backgroundColor: LIGHT_BLUE }}>
+          <span className="text-sm font-bold text-slate-700">Promedio Competencias (40%):</span>
+          <span className="text-lg font-bold" style={{ color: getScoreColorHex(compsAvg), minWidth: '60px', textAlign: 'center' }}>
+            {compsAvg > 0 ? compsAvg.toFixed(2) : '--'}
+          </span>
+        </div>
+        <div className="flex items-center justify-end gap-3 px-3 py-2 border border-slate-400 border-t-0" style={{ backgroundColor: BLUE }}>
+          <span className="text-sm font-bold text-white">CALIFICACIÓN FINAL (Metas 60% + Competencias 40%):</span>
+          <span className="text-2xl font-bold text-white" style={{ minWidth: '70px', textAlign: 'center' }}>
+            {finalScore > 0 ? finalScore.toFixed(2) : '--'}
+          </span>
+        </div>
+        {finalScore > 0 && (
+          <div className="px-3 py-1 text-center text-sm font-bold border border-slate-400 border-t-0" style={{ backgroundColor: LIGHT_BLUE, color: getScoreColorHex(finalScore) }}>
+            {getScoreLabel(finalScore)}
+          </div>
+        )}
+
+        {/* Comentarios generales */}
+        <div className="border border-slate-400 border-t-0">
+          <table className="w-full border-collapse text-sm">
+            <tbody>
+              <tr>
+                <td className="px-3 py-2 border border-slate-400 font-bold text-white text-xs align-top" style={{ backgroundColor: BLUE, width: '160px', whiteSpace: 'pre-line', lineHeight: '1.3' }}>Comentarios{'\n'}Generales del Jefe</td>
+                <td className="px-3 py-2 border border-slate-400">
+                  <textarea
+                    value={formData.overall_comments}
+                    onChange={(e) => setFormData({ ...formData, overall_comments: e.target.value })}
+                    disabled={isReadOnly}
+                    className={textareaClass}
+                    rows={3}
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td className="px-3 py-2 border border-slate-400 font-bold text-white text-xs align-top" style={{ backgroundColor: BLUE, whiteSpace: 'pre-line', lineHeight: '1.3' }}>Comentarios del{'\n'}Colaborador</td>
+                <td className="px-3 py-2 border border-slate-400">
+                  <textarea
+                    value={formData.employee_comments}
+                    onChange={(e) => setFormData({ ...formData, employee_comments: e.target.value })}
+                    disabled={isReadOnly}
+                    className={textareaClass}
+                    rows={3}
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Firmas */}
+        <table className="w-full border-collapse text-sm border border-slate-400 border-t-0">
+          <tbody>
+            <tr>
+              <td className="px-3 py-8 border border-slate-400 text-center align-bottom" style={{ width: '33%' }}>
+                <div className="border-t border-slate-700 pt-1">
+                  <p className="font-bold text-xs">Firma del Colaborador</p>
+                  <p className="text-[10px] text-slate-500">{selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : '___________'}</p>
+                  <p className="text-[10px] text-slate-500">Fecha: ___________</p>
+                </div>
+              </td>
+              <td className="px-3 py-8 border border-slate-400 text-center align-bottom" style={{ width: '33%' }}>
+                <div className="border-t border-slate-700 pt-1">
+                  <p className="font-bold text-xs">Firma del Jefe Inmediato</p>
+                  <p className="text-[10px] text-slate-500">{formData.manager_name || '___________'}</p>
+                  <p className="text-[10px] text-slate-500">Fecha: ___________</p>
+                </div>
+              </td>
+              <td className="px-3 py-8 border border-slate-400 text-center align-bottom" style={{ width: '33%' }}>
+                <div className="border-t border-slate-700 pt-1">
+                  <p className="font-bold text-xs">Firma RRHH</p>
+                  <p className="text-[10px] text-slate-500">___________</p>
+                  <p className="text-[10px] text-slate-500">Fecha: ___________</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
+      {/* Action buttons */}
+      <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-200" style={{ maxWidth: '794px', margin: '24px auto 0' }}>
+        <button
+          onClick={handleSavePDF}
+          disabled={!savedEvaluationId || generatingPDF}
+          className="flex items-center gap-2 px-5 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Download className="w-5 h-5" />
+          {generatingPDF ? 'Generando...' : 'Guardar PDF'}
+        </button>
+        <button
+          onClick={handlePrint}
+          disabled={!savedEvaluationId}
+          className="flex items-center gap-2 px-5 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Printer className="w-5 h-5" />
+          Imprimir
+        </button>
+        {!isReadOnly && (
+          <button
+            onClick={handleSave}
+            disabled={saving || !selectedEmployeeId}
+            className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Save className="w-5 h-5" />
+            {saving ? 'Guardando...' : 'Guardar'}
+          </button>
+        )}
+      </div>
+
+      {/* Upload signed document */}
       {savedEvaluationId && !isReadOnly && (
-        <div className="mt-6 bg-white border border-slate-200 rounded-xl shadow-sm p-6">
+        <div className="mt-6 bg-white border border-slate-200 rounded-xl shadow-sm p-6" style={{ maxWidth: '794px', margin: '24px auto' }}>
           <h3 className="text-lg font-semibold text-slate-800 mb-1 flex items-center gap-2">
             <Upload className="w-5 h-5 text-blue-600" />
             Paso Final: Subir Documento Firmado
@@ -1073,9 +1130,7 @@ export function FinalAdministrativeEvaluationForm({ editingEvaluationId, onCance
                 <div>
                   <p className="text-sm font-medium text-green-800">{signedDocumentFilename || 'Documento subido'}</p>
                   {signedDocumentUploadedAt && (
-                    <p className="text-xs text-green-600">
-                      Subido el {new Date(signedDocumentUploadedAt).toLocaleString('es-HN')}
-                    </p>
+                    <p className="text-xs text-green-600">Subido el {new Date(signedDocumentUploadedAt).toLocaleString('es-HN')}</p>
                   )}
                 </div>
               </div>
@@ -1156,7 +1211,7 @@ export function FinalAdministrativeEvaluationForm({ editingEvaluationId, onCance
       )}
 
       {workflowStatus === 'completed' && signedDocumentUrl && (
-        <div className="mt-6 bg-white border border-slate-200 rounded-xl shadow-sm p-6">
+        <div className="mt-6 bg-white border border-slate-200 rounded-xl shadow-sm p-6" style={{ maxWidth: '794px', margin: '24px auto' }}>
           <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-green-600" />
             Documentos de la Evaluación
@@ -1167,9 +1222,7 @@ export function FinalAdministrativeEvaluationForm({ editingEvaluationId, onCance
               <div>
                 <p className="text-sm font-medium text-green-800">{signedDocumentFilename || 'Documento firmado'}</p>
                 {signedDocumentUploadedAt && (
-                  <p className="text-xs text-green-600">
-                    Subido el {new Date(signedDocumentUploadedAt).toLocaleString('es-HN')}
-                  </p>
+                  <p className="text-xs text-green-600">Subido el {new Date(signedDocumentUploadedAt).toLocaleString('es-HN')}</p>
                 )}
               </div>
             </div>
@@ -1223,11 +1276,13 @@ export function FinalAdministrativeEvaluationForm({ editingEvaluationId, onCance
             subDepartment={formData.sub_department}
             hireDate={selectedEmployee.hire_date}
             evaluationDate={formData.evaluation_date}
-            timeInPosition={formData.time_in_position}
+            timeInPositionYears={formData.time_in_position_years}
+            timeInPositionMonths={formData.time_in_position_months}
             managerName={formData.manager_name}
             periodName={period.name}
             formCode={period.form_code || 'PL-RH-P-002-F02'}
             formVersion={period.form_version || '01'}
+            reviewDate={new Date().toLocaleDateString('es-HN')}
             individualGoals={individualGoals}
             competencies={competencies}
             goalsAverage={goalsAvg}
