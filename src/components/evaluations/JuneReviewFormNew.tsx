@@ -1237,17 +1237,17 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
         <div style={{ border: '2px solid #cbd5e1', marginBottom: '8px' }}>
           <div style={{ display: 'table', width: '100%', borderCollapse: 'collapse', borderBottom: '2px solid #cbd5e1' }}>
             <div style={{ display: 'table-row' }}>
-              <div style={{ display: 'table-cell', width: '110px', padding: '4px 6px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
-                <img src="/Logo_PLIHSA_BLUE.png" alt="PLIHSA" style={{ maxWidth: '90px', maxHeight: '42px', objectFit: 'contain', height: 'auto', display: 'block', margin: '0 auto' }} />
+              <div style={{ display: 'table-cell', width: '125px', padding: '5px 8px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
+                <img src="/Logo_PLIHSA_BLUE.png" alt="Logo PLIHSA" style={{ width: '105px', height: '48px', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
               </div>
-              <div style={{ display: 'table-cell', padding: '4px 8px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
-                <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#1e293b' }}>
+              <div style={{ display: 'table-cell', padding: '5px 12px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
+                <span style={{ display: 'block', width: '100%', fontSize: '13px', fontWeight: '700', color: '#1e293b', textAlign: 'center' }}>
                   {employeeType === 'operativo'
                     ? 'Revisión del Desempeño Operativo'
                     : 'Revisión del Desempeño Administrativo'}
                 </span>
               </div>
-              <div style={{ display: 'table-cell', width: '150px', verticalAlign: 'middle', fontSize: '8px' }}>
+              <div style={{ display: 'table-cell', width: '170px', verticalAlign: 'middle', fontSize: '9px', textAlign: 'left' }}>
                 <div style={{ borderBottom: '1px solid #cbd5e1', padding: '3px 7px' }}>
                   <span style={{ fontWeight: '700' }}>Codigo:</span> {'PL-RH-P-002-F01'}
                 </div>
