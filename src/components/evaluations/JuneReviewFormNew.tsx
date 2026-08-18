@@ -514,31 +514,51 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
   };
 
   const renderFormToCanvas = async (): Promise<HTMLCanvasElement> => {
-    const el = formRef.current;
-    if (!el) throw new Error('El formulario no está disponible');
+    const source = pdfRef.current;
+    if (!source) throw new Error('El formulario no está disponible');
 
-    return html2canvas(el, {
-      scale: 2.5,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      backgroundColor: '#ffffff',
-      windowWidth: el.scrollWidth,
-      windowHeight: el.scrollHeight,
-      scrollX: 0,
-      scrollY: 0,
-      onclone: (clonedDoc) => {
-        clonedDoc.querySelectorAll('style, link[rel="stylesheet"]').forEach(s => s.remove());
-        const style = clonedDoc.createElement('style');
-        style.textContent = `
-          .rating-checkbox { appearance: none; -webkit-appearance: none; width: 18px; height: 18px; border: 2px solid #1e3a5f; background: white; display: block; margin: 0 auto; position: relative; }
-          .rating-checkbox:checked { background: white; border-color: #1e3a5f; }
-          .rating-checkbox:checked::after { content: ''; position: absolute; top: 1px; left: 4px; width: 6px; height: 10px; border: 2.5px solid #1e3a5f; border-top: none; border-left: none; transform: rotate(45deg); }
-          .rating-checkbox:disabled { opacity: 1; }
-        `;
-        clonedDoc.head.appendChild(style);
-      },
-    });
+    const frame = document.createElement('iframe');
+    frame.setAttribute('aria-hidden', 'true');
+    frame.style.position = 'fixed';
+    frame.style.left = '-10000px';
+    frame.style.top = '0';
+    frame.style.width = '900px';
+    frame.style.height = `${source.scrollHeight + 50}px`;
+    frame.style.border = '0';
+    document.body.appendChild(frame);
+
+    try {
+      const frameDocument = frame.contentDocument;
+      if (!frameDocument) throw new Error('No se pudo preparar el documento PDF');
+
+      frameDocument.open();
+      frameDocument.write(`<!doctype html><html><head><style>
+        html,body{margin:0;padding:0;background:#fff;font-family:Arial,Helvetica,sans-serif}
+        .rating-checkbox{appearance:auto;-webkit-appearance:auto;width:16px;height:16px}
+      </style></head><body></body></html>`);
+      frameDocument.close();
+
+      const clone = source.cloneNode(true) as HTMLDivElement;
+      clone.style.position = 'static';
+      clone.style.left = '0';
+      clone.style.top = '0';
+      frameDocument.body.appendChild(clone);
+
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      return await html2canvas(clone, {
+        scale: 2.5,
+        backgroundColor: '#ffffff',
+        width: clone.scrollWidth,
+        height: clone.scrollHeight,
+        windowWidth: 900,
+        windowHeight: clone.scrollHeight,
+        scrollX: 0,
+        scrollY: 0,
+      });
+    } finally {
+      frame.remove();
+    }
   };
 
   const canvasToPdfBlob = (canvas: HTMLCanvasElement): Blob => {
