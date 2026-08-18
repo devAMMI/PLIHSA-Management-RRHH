@@ -513,26 +513,32 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
     }
   };
 
-  const generatePdfUrl = async (): Promise<string | null> => {
-    const el = pdfRef.current;
-    if (!el) return null;
-    try {
-      const canvas = await html2canvas(el, {
-        scale: 2.5,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        windowWidth: el.offsetWidth,
-        windowHeight: el.offsetHeight,
-        scrollX: 0,
-        scrollY: 0,
-      });
-      const imgWidth = 215.9;
+  const generatePdfUrl = async (): Promise<string> => {
+    const el = formRef.current;
+    if (!el) throw new Error('El formulario no está disponible');
+
+    const canvas = await html2canvas(el, {
+      scale: 2.5,
+      useCORS: false,
+      allowTaint: false,
+      logging: false,
+      backgroundColor: '#ffffff',
+      width: el.scrollWidth,
+      height: el.scrollHeight,
+      windowWidth: el.scrollWidth,
+      windowHeight: el.scrollHeight,
+      scrollX: 0,
+      scrollY: 0,
+    });
+    if (canvas.width === 0 || canvas.height === 0) {
+      throw new Error('El formulario está vacío');
+    }
+
+    const imgWidth = 215.9;
       const pageHeight = 279.4;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'letter');
+      const imgData = canvas.toDataURL('image/png');
       if (imgHeight <= pageHeight) {
         pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
       } else {
@@ -547,11 +553,7 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
           first = false;
         }
       }
-      const pdfBlob = pdf.output('blob');
-      return URL.createObjectURL(pdfBlob);
-    } catch {
-      return null;
-    }
+    return URL.createObjectURL(pdf.output('blob'));
   };
 
   const handleDownloadPDF = async () => {
@@ -565,15 +567,17 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
         : 'Revision';
       const typeLabel = employeeType === 'operativo' ? 'Operativo' : 'Administrativo';
       const fileName = `Revision_Junio_${typeLabel}_${empName}_${reviewDate || 'borrador'}.pdf`;
-      window.open(pdfUrl, '_blank');
       const link = document.createElement('a');
       link.href = pdfUrl;
       link.download = fileName;
+      document.body.appendChild(link);
       link.click();
-      setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(pdfUrl), 1000);
       setToast({ message: 'PDF descargado correctamente', type: 'success' });
-    } catch {
-      setToast({ message: 'Error al generar el PDF', type: 'error' });
+    } catch (error) {
+      console.error('Error al generar el PDF:', error);
+      setToast({ message: error instanceof Error ? error.message : 'Error al generar el PDF', type: 'error' });
     } finally {
       setGeneratingPDF(false);
     }
