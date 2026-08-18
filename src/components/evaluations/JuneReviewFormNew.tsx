@@ -519,12 +519,10 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
 
     const canvas = await html2canvas(el, {
       scale: 2.5,
-      useCORS: false,
-      allowTaint: false,
+      useCORS: true,
+      allowTaint: true,
       logging: false,
       backgroundColor: '#ffffff',
-      width: el.scrollWidth,
-      height: el.scrollHeight,
       windowWidth: el.scrollWidth,
       windowHeight: el.scrollHeight,
       scrollX: 0,
@@ -535,6 +533,43 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
     }
 
     const imgWidth = 215.9;
+    const pageHeight = 279.4;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const pdf = new jsPDF('p', 'mm', 'letter');
+    const imgData = canvas.toDataURL('image/png');
+    if (imgHeight <= pageHeight) {
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+    } else {
+      let position = 0;
+      let remaining = imgHeight;
+      let first = true;
+      while (remaining > 0) {
+        if (!first) pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, -position, imgWidth, imgHeight);
+        position += pageHeight;
+        remaining -= pageHeight;
+        first = false;
+      }
+    }
+    return URL.createObjectURL(pdf.output('blob'));
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!formRef.current) return;
+    setGeneratingPDF(true);
+    try {
+      const canvas = await html2canvas(formRef.current, {
+        scale: 2.5,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: formRef.current.scrollWidth,
+        windowHeight: formRef.current.scrollHeight,
+        scrollX: 0,
+        scrollY: 0,
+      });
+      const imgWidth = 215.9;
       const pageHeight = 279.4;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       const pdf = new jsPDF('p', 'mm', 'letter');
@@ -553,27 +588,12 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
           first = false;
         }
       }
-    return URL.createObjectURL(pdf.output('blob'));
-  };
-
-  const handleDownloadPDF = async () => {
-    if (!pdfRef.current) return;
-    setGeneratingPDF(true);
-    try {
-      const pdfUrl = await generatePdfUrl();
-      if (!pdfUrl) throw new Error('No se pudo generar el PDF');
       const empName = selectedEmployee
         ? `${selectedEmployee.first_name}_${selectedEmployee.last_name}`
         : 'Revision';
       const typeLabel = employeeType === 'operativo' ? 'Operativo' : 'Administrativo';
       const fileName = `Revision_Junio_${typeLabel}_${empName}_${reviewDate || 'borrador'}.pdf`;
-      const link = document.createElement('a');
-      link.href = pdfUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(pdfUrl), 1000);
+      pdf.save(fileName);
       setToast({ message: 'PDF descargado correctamente', type: 'success' });
     } catch (error) {
       console.error('Error al generar el PDF:', error);
@@ -601,13 +621,13 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
-    if (printWindow && pdfRef.current) {
+    if (printWindow && formRef.current) {
       const styles = Array.from(document.styleSheets)
         .map(ss => {
           try { return Array.from(ss.cssRules).map(r => r.cssText).join('\n'); }
           catch { return ''; }
         }).join('\n');
-      printWindow.document.write(`<html><head><title>Revision Junio</title><style>${styles}body{margin:0;padding:20px}@media print{body{margin:0;padding:0}}</style></head><body>${pdfRef.current.innerHTML}</body></html>`);
+      printWindow.document.write(`<html><head><title>Revision Junio</title><style>${styles}body{margin:0;padding:20px}@media print{body{margin:0;padding:0}}</style></head><body>${formRef.current.innerHTML}</body></html>`);
       printWindow.document.close();
       setTimeout(() => printWindow.print(), 500);
     }
