@@ -1169,7 +1169,7 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
           <div style={{ display: 'table', width: '100%', borderCollapse: 'collapse', borderBottom: '2px solid #cbd5e1' }}>
             <div style={{ display: 'table-row' }}>
               <div style={{ display: 'table-cell', width: '110px', padding: '4px 6px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
-                <img src="https://i.imgur.com/hii0TM1.png" alt="PLIHSA" crossOrigin="anonymous" style={{ maxWidth: '90px', height: 'auto', display: 'block', margin: '0 auto' }} />
+                <img src="/Profile-pic-plihsa-logo-foto.jpg" alt="PLIHSA" style={{ maxWidth: '90px', height: 'auto', display: 'block', margin: '0 auto' }} />
               </div>
               <div style={{ display: 'table-cell', padding: '4px 8px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
                 <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#1e293b' }}>
