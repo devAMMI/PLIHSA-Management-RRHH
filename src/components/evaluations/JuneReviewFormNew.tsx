@@ -513,7 +513,12 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
     }
   };
 
-  const renderFormToCanvas = async (): Promise<HTMLCanvasElement> => {
+  type PdfRender = {
+    canvas: HTMLCanvasElement;
+    splitY: number;
+  };
+
+  const renderFormToCanvas = async (): Promise<PdfRender> => {
     const source = pdfRef.current;
     if (!source) throw new Error('El formulario no está disponible');
 
@@ -552,7 +557,12 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
         });
       }));
 
-      return await html2canvas(clone, {
+      const pageBreak = clone.querySelector('[data-pdf-page-break]');
+      const cloneTop = clone.getBoundingClientRect().top;
+      const splitCssY = pageBreak
+        ? pageBreak.getBoundingClientRect().top - cloneTop
+        : 0;
+      const canvas = await html2canvas(clone, {
         scale: 2.5,
         backgroundColor: '#ffffff',
         width: clone.scrollWidth,
@@ -562,53 +572,60 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
         scrollX: 0,
         scrollY: 0,
       });
+      const scale = canvas.width / clone.scrollWidth;
+      return { canvas, splitY: Math.round(splitCssY * scale) };
     } finally {
       frame.remove();
     }
   };
 
-  const canvasToPdfBlob = (canvas: HTMLCanvasElement): Blob => {
-    const imgWidth = 215.9;
-    const pageHeight = 279.4;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  const canvasToPdfBlob = ({ canvas, splitY }: PdfRender): Blob => {
     const pdf = new jsPDF('p', 'mm', 'letter');
-    const imgData = canvas.toDataURL('image/png');
-    if (imgHeight <= pageHeight) {
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+    const pageWidth = 195;
+    const pageX = (215.9 - pageWidth) / 2;
+    const addSlice = (startY: number, endY: number, addPage: boolean) => {
+      if (addPage) pdf.addPage();
+      const slice = document.createElement('canvas');
+      slice.width = canvas.width;
+      slice.height = endY - startY;
+      const context = slice.getContext('2d');
+      if (!context) throw new Error('No se pudo preparar la página PDF');
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, slice.width, slice.height);
+      context.drawImage(canvas, 0, startY, canvas.width, slice.height, 0, 0, slice.width, slice.height);
+      const height = (slice.height * pageWidth) / slice.width;
+      pdf.addImage(slice.toDataURL('image/png'), 'PNG', pageX, 10, pageWidth, height);
+    };
+
+    if (splitY > 0 && splitY < canvas.height) {
+      addSlice(0, splitY, false);
+      addSlice(splitY, canvas.height, true);
     } else {
-      let position = 0;
-      let remaining = imgHeight;
-      let first = true;
-      while (remaining > 0) {
-        if (!first) pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, -position, imgWidth, imgHeight);
-        position += pageHeight;
-        remaining -= pageHeight;
-        first = false;
-      }
+      addSlice(0, canvas.height, false);
     }
+
     return pdf.output('blob');
   };
 
   const generatePdfUrl = async (): Promise<string> => {
-    const canvas = await renderFormToCanvas();
-    if (canvas.width === 0 || canvas.height === 0) {
+    const rendered = await renderFormToCanvas();
+    if (rendered.canvas.width === 0 || rendered.canvas.height === 0) {
       throw new Error('El formulario está vacío');
     }
-    return URL.createObjectURL(canvasToPdfBlob(canvas));
+    return URL.createObjectURL(canvasToPdfBlob(rendered));
   };
 
   const handleDownloadPDF = async () => {
     if (!formRef.current) return;
     setGeneratingPDF(true);
     try {
-      const canvas = await renderFormToCanvas();
+      const rendered = await renderFormToCanvas();
       const empName = selectedEmployee
         ? `${selectedEmployee.first_name}_${selectedEmployee.last_name}`
         : 'Revision';
       const typeLabel = employeeType === 'operativo' ? 'Operativo' : 'Administrativo';
       const fileName = `Revision_Junio_${typeLabel}_${empName}_${reviewDate || 'borrador'}.pdf`;
-      const blob = canvasToPdfBlob(canvas);
+      const blob = canvasToPdfBlob(rendered);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -1357,7 +1374,7 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
         </div>
 
         {/* Competencies section */}
-        <div style={{ background: '#1e3a5f', color: 'white', padding: '5px 14px', fontWeight: 'bold', fontSize: '12px', textAlign: 'center', marginTop: '8px', letterSpacing: '0.5px' }}>
+        <div data-pdf-page-break style={{ background: '#1e3a5f', color: 'white', padding: '5px 14px', fontWeight: 'bold', fontSize: '12px', textAlign: 'center', marginTop: '8px', letterSpacing: '0.5px' }}>
           REVISION DE FACTORES CONDUCTUALES Y HABILIDADES TECNICAS
         </div>
 
