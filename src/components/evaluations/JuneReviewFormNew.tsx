@@ -579,31 +579,26 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
     }
   };
 
-  const canvasToPdfBlob = ({ canvas, splitY }: PdfRender): Blob => {
+  const canvasToPdfBlob = ({ canvas }: PdfRender): Blob => {
+    const imgWidth = 215.9;
+    const pageHeight = 279.4;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
     const pdf = new jsPDF('p', 'mm', 'letter');
-    const pageWidth = 195;
-    const pageX = (215.9 - pageWidth) / 2;
-    const addSlice = (startY: number, endY: number, addPage: boolean) => {
-      if (addPage) pdf.addPage();
-      const slice = document.createElement('canvas');
-      slice.width = canvas.width;
-      slice.height = endY - startY;
-      const context = slice.getContext('2d');
-      if (!context) throw new Error('No se pudo preparar la página PDF');
-      context.fillStyle = '#ffffff';
-      context.fillRect(0, 0, slice.width, slice.height);
-      context.drawImage(canvas, 0, startY, canvas.width, slice.height, 0, 0, slice.width, slice.height);
-      const height = (slice.height * pageWidth) / slice.width;
-      pdf.addImage(slice.toDataURL('image/png'), 'PNG', pageX, 10, pageWidth, height);
-    };
-
-    if (splitY > 0 && splitY < canvas.height) {
-      addSlice(0, splitY, false);
-      addSlice(splitY, canvas.height, true);
+    const imgData = canvas.toDataURL('image/png');
+    if (imgHeight <= pageHeight) {
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
     } else {
-      addSlice(0, canvas.height, false);
+      let position = 0;
+      let remaining = imgHeight;
+      let first = true;
+      while (remaining > 0) {
+        if (!first) pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, -position, imgWidth, imgHeight);
+        position += pageHeight;
+        remaining -= pageHeight;
+        first = false;
+      }
     }
-
     return pdf.output('blob');
   };
 
@@ -1374,7 +1369,7 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
         </div>
 
         {/* Competencies section */}
-        <div data-pdf-page-break style={{ background: '#1e3a5f', color: 'white', padding: '5px 14px', fontWeight: 'bold', fontSize: '12px', textAlign: 'center', marginTop: '8px', letterSpacing: '0.5px' }}>
+        <div style={{ background: '#1e3a5f', color: 'white', padding: '5px 14px', fontWeight: 'bold', fontSize: '12px', textAlign: 'center', marginTop: '8px', letterSpacing: '0.5px' }}>
           REVISION DE FACTORES CONDUCTUALES Y HABILIDADES TECNICAS
         </div>
 
