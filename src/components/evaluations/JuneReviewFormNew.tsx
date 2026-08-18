@@ -513,11 +513,11 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
     }
   };
 
-  const generatePdfUrl = async (): Promise<string> => {
+  const renderFormToCanvas = async (): Promise<HTMLCanvasElement> => {
     const el = formRef.current;
     if (!el) throw new Error('El formulario no está disponible');
 
-    const canvas = await html2canvas(el, {
+    return html2canvas(el, {
       scale: 2.5,
       useCORS: true,
       allowTaint: true,
@@ -527,11 +527,21 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
       windowHeight: el.scrollHeight,
       scrollX: 0,
       scrollY: 0,
+      onclone: (clonedDoc) => {
+        clonedDoc.querySelectorAll('style, link[rel="stylesheet"]').forEach(s => s.remove());
+        const style = clonedDoc.createElement('style');
+        style.textContent = `
+          .rating-checkbox { appearance: none; -webkit-appearance: none; width: 18px; height: 18px; border: 2px solid #1e3a5f; background: white; display: block; margin: 0 auto; position: relative; }
+          .rating-checkbox:checked { background: white; border-color: #1e3a5f; }
+          .rating-checkbox:checked::after { content: ''; position: absolute; top: 1px; left: 4px; width: 6px; height: 10px; border: 2.5px solid #1e3a5f; border-top: none; border-left: none; transform: rotate(45deg); }
+          .rating-checkbox:disabled { opacity: 1; }
+        `;
+        clonedDoc.head.appendChild(style);
+      },
     });
-    if (canvas.width === 0 || canvas.height === 0) {
-      throw new Error('El formulario está vacío');
-    }
+  };
 
+  const canvasToPdfBlob = (canvas: HTMLCanvasElement): Blob => {
     const imgWidth = 215.9;
     const pageHeight = 279.4;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
@@ -551,49 +561,36 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
         first = false;
       }
     }
-    return URL.createObjectURL(pdf.output('blob'));
+    return pdf.output('blob');
+  };
+
+  const generatePdfUrl = async (): Promise<string> => {
+    const canvas = await renderFormToCanvas();
+    if (canvas.width === 0 || canvas.height === 0) {
+      throw new Error('El formulario está vacío');
+    }
+    return URL.createObjectURL(canvasToPdfBlob(canvas));
   };
 
   const handleDownloadPDF = async () => {
     if (!formRef.current) return;
     setGeneratingPDF(true);
     try {
-      const canvas = await html2canvas(formRef.current, {
-        scale: 2.5,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        windowWidth: formRef.current.scrollWidth,
-        windowHeight: formRef.current.scrollHeight,
-        scrollX: 0,
-        scrollY: 0,
-      });
-      const imgWidth = 215.9;
-      const pageHeight = 279.4;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      const pdf = new jsPDF('p', 'mm', 'letter');
-      const imgData = canvas.toDataURL('image/png');
-      if (imgHeight <= pageHeight) {
-        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-      } else {
-        let position = 0;
-        let remaining = imgHeight;
-        let first = true;
-        while (remaining > 0) {
-          if (!first) pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, -position, imgWidth, imgHeight);
-          position += pageHeight;
-          remaining -= pageHeight;
-          first = false;
-        }
-      }
+      const canvas = await renderFormToCanvas();
       const empName = selectedEmployee
         ? `${selectedEmployee.first_name}_${selectedEmployee.last_name}`
         : 'Revision';
       const typeLabel = employeeType === 'operativo' ? 'Operativo' : 'Administrativo';
       const fileName = `Revision_Junio_${typeLabel}_${empName}_${reviewDate || 'borrador'}.pdf`;
-      pdf.save(fileName);
+      const blob = canvasToPdfBlob(canvas);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
       setToast({ message: 'PDF descargado correctamente', type: 'success' });
     } catch (error) {
       console.error('Error al generar el PDF:', error);
