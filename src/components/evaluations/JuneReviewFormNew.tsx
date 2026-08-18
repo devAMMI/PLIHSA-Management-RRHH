@@ -544,7 +544,13 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
       clone.style.top = '0';
       frameDocument.body.appendChild(clone);
 
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await Promise.all(Array.from(clone.querySelectorAll('img')).map((image) => {
+        if (image.complete) return Promise.resolve();
+        return new Promise<void>((resolve) => {
+          image.addEventListener('load', () => resolve(), { once: true });
+          image.addEventListener('error', () => resolve(), { once: true });
+        });
+      }));
 
       return await html2canvas(clone, {
         scale: 2.5,
@@ -773,8 +779,18 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
       >
         <div style={{ padding: '16px' }}>
 
-          <div style={{ background: '#1e3a5f', color: 'white', padding: '6px 12px', fontWeight: 'bold', fontSize: '12px', textAlign: 'center' }}>
-            REVISION DE METAS INDIVIDUALES
+          <div style={{ display: 'table', width: '100%', borderCollapse: 'collapse', border: '1px solid #cbd5e1', marginBottom: '8px' }}>
+            <div style={{ display: 'table-row' }}>
+              <div style={{ display: 'table-cell', width: '150px', padding: '8px 12px', verticalAlign: 'middle', textAlign: 'center', borderRight: '1px solid #cbd5e1' }}>
+                <img src="/Logo_PLIHSA_BLUE.png" alt="PLIHSA" style={{ width: '120px', maxHeight: '44px', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
+              </div>
+              <div style={{ display: 'table-cell', padding: '8px 14px', verticalAlign: 'middle', textAlign: 'center' }}>
+                <div style={{ color: '#1e3a5f', fontWeight: 'bold', fontSize: '13px' }}>REVISION DE METAS INDIVIDUALES</div>
+                <div style={{ color: '#475569', fontSize: '11px', marginTop: '4px' }}>
+                  Colaborador: <strong style={{ color: '#1e293b' }}>{selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : 'Seleccione un colaborador'}</strong>
+                </div>
+              </div>
+            </div>
           </div>
 
           <table style={{ width: '100%', borderCollapse: 'collapse', borderLeft: '1px solid #1e3a5f', borderRight: '1px solid #1e3a5f', borderBottom: '1px solid #1e3a5f' }}>
@@ -1210,7 +1226,7 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
           <div style={{ display: 'table', width: '100%', borderCollapse: 'collapse', borderBottom: '2px solid #cbd5e1' }}>
             <div style={{ display: 'table-row' }}>
               <div style={{ display: 'table-cell', width: '110px', padding: '4px 6px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
-                <img src="/Profile-pic-plihsa-logo-foto.jpg" alt="PLIHSA" style={{ maxWidth: '90px', height: 'auto', display: 'block', margin: '0 auto' }} />
+                <img src="/Logo_PLIHSA_BLUE.png" alt="PLIHSA" style={{ maxWidth: '90px', maxHeight: '42px', objectFit: 'contain', height: 'auto', display: 'block', margin: '0 auto' }} />
               </div>
               <div style={{ display: 'table-cell', padding: '4px 8px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
                 <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#1e293b' }}>
