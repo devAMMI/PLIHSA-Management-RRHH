@@ -29,6 +29,7 @@ interface CompetencyRow {
 interface JuneReviewFormNewProps {
   reviewId: string | null;
   employeeType?: 'administrativo' | 'operativo';
+  viewOnly?: boolean;
   onCancel: () => void;
   onSaved: () => void;
 }
@@ -64,7 +65,7 @@ const emptyCompetencies = (): CompetencyRow[] =>
     rating: null,
   }));
 
-export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', onCancel, onSaved }: JuneReviewFormNewProps) {
+export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', viewOnly = false, onCancel, onSaved }: JuneReviewFormNewProps) {
   const formRef = useRef<HTMLDivElement>(null);
   const { employee, systemUser } = useAuth();
   const pdfRef = useRef<HTMLDivElement>(null);
@@ -100,7 +101,7 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
   const [showDocViewer, setShowDocViewer] = useState(false);
   const [digitalPdfUrl, setDigitalPdfUrl] = useState<string | null>(null);
 
-  const isReadOnly = status === 'completed';
+  const isReadOnly = viewOnly || status === 'completed';
   const isEditing = reviewId !== null;
 
   useEffect(() => {

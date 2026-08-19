@@ -35,6 +35,7 @@ interface JuneReviewsListProps {
   onBack: () => void;
   onNew: () => void;
   onEdit: (id: string) => void;
+  onView: (id: string) => void;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -61,6 +62,7 @@ export function JuneReviewsList({
   onBack,
   onNew,
   onEdit,
+  onView,
 }: JuneReviewsListProps) {
   const { systemUser } = useAuth();
   const [reviews, setReviews] = useState<JuneReview[]>([]);
@@ -290,10 +292,16 @@ export function JuneReviewsList({
                           )}
                         </div>
                         <div className="flex gap-2 flex-shrink-0">
-                          <button onClick={() => onEdit(review.id)} className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition ${review.status === 'completed' ? accentHover : 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100'}`}>
+                          <button onClick={() => onView(review.id)} className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition ${accentHover}`}>
                             <Eye className="w-4 h-4" />
-                            {review.status === 'completed' ? 'Ver' : 'Editar'}
+                            Ver
                           </button>
+                          {review.status !== 'completed' && (
+                            <button onClick={() => onEdit(review.id)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition">
+                              <FileText className="w-4 h-4" />
+                              Editar
+                            </button>
+                          )}
                           <button onClick={() => handleDelete(review.id, review.employee_name)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition">
                             <Trash2 className="w-4 h-4" />
                             Eliminar
