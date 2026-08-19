@@ -196,6 +196,7 @@ export function JuneReviewsList({
   );
 
   const accentBg = employeeType === 'operativo' ? 'bg-orange-600' : 'bg-teal-600';
+  const accentGradient = employeeType === 'operativo' ? 'from-orange-600 to-orange-700' : 'from-teal-600 to-teal-700';
   const accentText = employeeType === 'operativo' ? 'text-orange-500' : 'text-teal-500';
   const accentHover = employeeType === 'operativo' ? 'text-orange-700 bg-orange-50 hover:bg-orange-100' : 'text-teal-700 bg-teal-50 hover:bg-teal-100';
   const accentSpinner = employeeType === 'operativo' ? 'border-orange-500' : 'border-teal-500';
