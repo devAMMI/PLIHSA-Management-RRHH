@@ -519,22 +519,42 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
   };
 
   const renderFormToCanvas = async (): Promise<PdfRender> => {
-    const source = formRef.current;
+    const source = pdfRef.current;
     if (!source) throw new Error('El formulario no está disponible');
 
-    const canvas = await html2canvas(source, {
-      scale: 2.5,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      backgroundColor: '#ffffff',
-      windowWidth: source.scrollWidth,
-      windowHeight: source.scrollHeight,
-      scrollX: 0,
-      scrollY: 0,
-    });
+    source.style.position = 'fixed';
+    source.style.top = '0';
+    source.style.left = '0';
 
-    return { canvas, splitY: 0 };
+    try {
+      await Promise.all(Array.from(source.querySelectorAll('img')).map((img) => {
+        if (img.complete) return Promise.resolve();
+        return new Promise<void>((resolve) => {
+          img.addEventListener('load', () => resolve(), { once: true });
+          img.addEventListener('error', () => resolve(), { once: true });
+        });
+      }));
+
+      const canvas = await html2canvas(source, {
+        scale: 2.5,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        width: source.scrollWidth,
+        height: source.scrollHeight,
+        windowWidth: source.scrollWidth,
+        windowHeight: source.scrollHeight,
+        scrollX: 0,
+        scrollY: 0,
+      });
+
+      return { canvas, splitY: 0 };
+    } finally {
+      source.style.position = 'fixed';
+      source.style.top = '-9999px';
+      source.style.left = '-9999px';
+    }
   };
 
   const canvasToPdfBlob = ({ canvas }: PdfRender): Blob => {
