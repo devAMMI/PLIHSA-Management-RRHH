@@ -524,10 +524,14 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
 
     const canvas = await html2canvas(source, {
       scale: 2.5,
-      backgroundColor: '#ffffff',
       useCORS: true,
+      allowTaint: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      windowWidth: source.scrollWidth,
+      windowHeight: source.scrollHeight,
       scrollX: 0,
-      scrollY: -window.scrollY,
+      scrollY: 0,
     });
 
     return { canvas, splitY: 0 };
@@ -549,33 +553,45 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
     return pdf.output('blob');
   };
 
-  const generatePdfUrl = async (): Promise<string> => {
-    const rendered = await renderFormToCanvas();
-    if (rendered.canvas.width === 0 || rendered.canvas.height === 0) {
-      throw new Error('El formulario está vacío');
+  const generatePdfBlob = async (): Promise<{ url: string; fileName: string } | null> => {
+    try {
+      const rendered = await renderFormToCanvas();
+      if (rendered.canvas.width === 0 || rendered.canvas.height === 0) {
+        throw new Error('El formulario está vacío');
+      }
+
+      const pdfBlob = canvasToPdfBlob(rendered);
+      const empName = selectedEmployee
+        ? `${selectedEmployee.first_name}_${selectedEmployee.last_name}`
+        : 'Revision';
+      const typeLabel = employeeType === 'operativo' ? 'Operativo' : 'Administrativo';
+      const fileName = `Revision_Junio_${typeLabel}_${empName}_${reviewDate || 'borrador'}.pdf`;
+      return { url: URL.createObjectURL(pdfBlob), fileName };
+    } catch (error) {
+      console.error('Error al generar el PDF:', error);
+      return null;
     }
-    return URL.createObjectURL(canvasToPdfBlob(rendered));
+  };
+
+  const generatePdfUrl = async (): Promise<string | null> => {
+    const result = await generatePdfBlob();
+    return result?.url ?? null;
   };
 
   const handleDownloadPDF = async () => {
     if (!formRef.current) return;
     setGeneratingPDF(true);
     try {
-      const rendered = await renderFormToCanvas();
-      const empName = selectedEmployee
-        ? `${selectedEmployee.first_name}_${selectedEmployee.last_name}`
-        : 'Revision';
-      const typeLabel = employeeType === 'operativo' ? 'Operativo' : 'Administrativo';
-      const fileName = `Revision_Junio_${typeLabel}_${empName}_${reviewDate || 'borrador'}.pdf`;
-      const blob = canvasToPdfBlob(rendered);
-      const url = URL.createObjectURL(blob);
+      const result = await generatePdfBlob();
+      if (!result) throw new Error('No se pudo generar el PDF');
+
       const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
+      link.href = result.url;
+      link.download = result.fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setTimeout(() => URL.revokeObjectURL(result.url), 1000);
       setToast({ message: 'PDF descargado correctamente', type: 'success' });
     } catch (error) {
       console.error('Error al generar el PDF:', error);
@@ -589,11 +605,10 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
     setGeneratingPDF(true);
     try {
       const url = await generatePdfUrl();
-      if (url) {
-        if (embeddedPdfUrl) URL.revokeObjectURL(embeddedPdfUrl);
-        setEmbeddedPdfUrl(url);
-        setShowEmbeddedPdf(true);
-      }
+      if (!url) throw new Error('No se pudo generar el PDF');
+      if (embeddedPdfUrl) URL.revokeObjectURL(embeddedPdfUrl);
+      setEmbeddedPdfUrl(url);
+      setShowEmbeddedPdf(true);
     } catch {
       setToast({ message: 'Error al generar la vista previa', type: 'error' });
     } finally {
@@ -601,22 +616,38 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
     }
   };
 
-  const handlePrint = async () => {
-    try {
-      const { canvas } = await renderFormToCanvas();
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) throw new Error('No se pudo abrir la ventana de impresión');
-      const imageUrl = canvas.toDataURL('image/png');
-      printWindow.document.write(`<html><head><title>Revision Junio</title><style>
-        @page{size:letter portrait;margin:0}
-        html,body{width:8.5in;height:11in;margin:0;padding:0;background:#fff}
-        body{display:flex;align-items:center;justify-content:center;overflow:hidden}
-        img{display:block;max-width:100%;max-height:100%;width:auto;height:auto}
-      </style></head><body><img src="${imageUrl}" alt="Revision de metas" /></body></html>`);
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow && formRef.current) {
+      const styles = Array.from(document.styleSheets)
+        .map(styleSheet => {
+          try {
+            return Array.from(styleSheet.cssRules)
+              .map(rule => rule.cssText)
+              .join('\n');
+          } catch {
+            return '';
+          }
+        })
+        .join('\n');
+
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Imprimir Revisión de Metas</title>
+            <style>
+              ${styles}
+              body { margin: 0; padding: 20px; }
+              @media print {
+                body { margin: 0; padding: 0; }
+              }
+            </style>
+          </head>
+          <body>${formRef.current.innerHTML}</body>
+        </html>
+      `);
       printWindow.document.close();
       setTimeout(() => printWindow.print(), 500);
-    } catch (error) {
-      setToast({ message: error instanceof Error ? error.message : 'Error al preparar la impresión', type: 'error' });
     }
   };
 
