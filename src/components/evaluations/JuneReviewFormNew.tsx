@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Save, Download, Printer, Upload, CheckCircle, Eye, FileText } from 'lucide-react';
+import { ArrowLeft, Save, Download, Printer, Upload, CheckCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { buildStoragePath, storagePathToProxyUrl, BUCKET } from '../../lib/storagePaths';
 import { useAuth } from '../../contexts/AuthContext';
@@ -99,8 +99,6 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showDocViewer, setShowDocViewer] = useState(false);
   const [digitalPdfUrl, setDigitalPdfUrl] = useState<string | null>(null);
-  const [embeddedPdfUrl, setEmbeddedPdfUrl] = useState<string | null>(null);
-  const [showEmbeddedPdf, setShowEmbeddedPdf] = useState(false);
 
   const isReadOnly = status === 'completed';
   const isEditing = reviewId !== null;
@@ -519,57 +517,46 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
   };
 
   const renderFormToCanvas = async (): Promise<PdfRender> => {
-    const source = pdfRef.current;
+    const source = formRef.current;
     if (!source) throw new Error('El formulario no está disponible');
 
-    source.style.position = 'fixed';
-    source.style.top = '0';
-    source.style.left = '0';
+    const canvas = await html2canvas(source, {
+      scale: 2.5,
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      windowWidth: source.scrollWidth,
+      windowHeight: source.scrollHeight,
+      scrollX: 0,
+      scrollY: 0,
+    });
 
-    try {
-      await Promise.all(Array.from(source.querySelectorAll('img')).map((img) => {
-        if (img.complete) return Promise.resolve();
-        return new Promise<void>((resolve) => {
-          img.addEventListener('load', () => resolve(), { once: true });
-          img.addEventListener('error', () => resolve(), { once: true });
-        });
-      }));
-
-      const canvas = await html2canvas(source, {
-        scale: 2.5,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        width: source.scrollWidth,
-        height: source.scrollHeight,
-        windowWidth: source.scrollWidth,
-        windowHeight: source.scrollHeight,
-        scrollX: 0,
-        scrollY: 0,
-      });
-
-      return { canvas, splitY: 0 };
-    } finally {
-      source.style.position = 'fixed';
-      source.style.top = '-9999px';
-      source.style.left = '-9999px';
-    }
+    return { canvas, splitY: 0 };
   };
 
   const canvasToPdfBlob = ({ canvas }: PdfRender): Blob => {
-    const pageWidth = 215.9;
+    const imgWidth = 215.9;
     const pageHeight = 279.4;
-    const margin = 7;
-    const availableWidth = pageWidth - margin * 2;
-    const availableHeight = pageHeight - margin * 2;
-    const scale = Math.min(availableWidth / canvas.width, availableHeight / canvas.height);
-    const imageWidth = canvas.width * scale;
-    const imageHeight = canvas.height * scale;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const imgData = canvas.toDataURL('image/png');
+
     const pdf = new jsPDF('p', 'mm', 'letter');
-    const imageX = (pageWidth - imageWidth) / 2;
-    const imageY = (pageHeight - imageHeight) / 2;
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', imageX, imageY, imageWidth, imageHeight);
+
+    if (imgHeight <= pageHeight) {
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+    } else {
+      let position = 0;
+      let remainingHeight = imgHeight;
+      let firstPage = true;
+      while (remainingHeight > 0) {
+        if (!firstPage) pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, -position, imgWidth, imgHeight);
+        position += pageHeight;
+        remainingHeight -= pageHeight;
+        firstPage = false;
+      }
+    }
     return pdf.output('blob');
   };
 
@@ -593,13 +580,11 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
     }
   };
 
-  const generatePdfUrl = async (): Promise<string | null> => {
-    const result = await generatePdfBlob();
-    return result?.url ?? null;
-  };
-
   const handleDownloadPDF = async () => {
-    if (!formRef.current) return;
+    if (!pdfRef.current || !selectedEmployee) {
+      setToast({ message: 'Seleccione un colaborador antes de generar el PDF', type: 'error' });
+      return;
+    }
     setGeneratingPDF(true);
     try {
       const result = await generatePdfBlob();
@@ -616,21 +601,6 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
     } catch (error) {
       console.error('Error al generar el PDF:', error);
       setToast({ message: error instanceof Error ? error.message : 'Error al generar el PDF', type: 'error' });
-    } finally {
-      setGeneratingPDF(false);
-    }
-  };
-
-  const handleViewPDF = async () => {
-    setGeneratingPDF(true);
-    try {
-      const url = await generatePdfUrl();
-      if (!url) throw new Error('No se pudo generar el PDF');
-      if (embeddedPdfUrl) URL.revokeObjectURL(embeddedPdfUrl);
-      setEmbeddedPdfUrl(url);
-      setShowEmbeddedPdf(true);
-    } catch {
-      setToast({ message: 'Error al generar la vista previa', type: 'error' });
     } finally {
       setGeneratingPDF(false);
     }
@@ -690,14 +660,6 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
           <span className="font-medium">Volver a la lista</span>
         </button>
         <div className="flex items-center gap-3">
-          <button
-            onClick={handleViewPDF}
-            disabled={generatingPDF}
-            className="flex items-center gap-2 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition disabled:opacity-50"
-          >
-            <Eye className="w-4 h-4" />
-            {generatingPDF ? 'Generando...' : 'Ver PDF'}
-          </button>
           <button
             onClick={handleDownloadPDF}
             disabled={generatingPDF}
@@ -1158,54 +1120,6 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
               )}
             </>
           )}
-        </div>
-      )}
-
-      {showEmbeddedPdf && embeddedPdfUrl && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[92vh] flex flex-col">
-            <div className="bg-[#1e3a5f] text-white px-6 py-4 flex items-center justify-between rounded-t-xl">
-              <div className="flex items-center gap-3">
-                <FileText className="w-6 h-6" />
-                <div>
-                  <h2 className="text-lg font-bold">Vista Previa del PDF</h2>
-                  <p className="text-sm text-blue-200">
-                    {selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : 'Revision de Junio'}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleDownloadPDF}
-                  disabled={generatingPDF}
-                  className="flex items-center gap-2 px-4 py-2 bg-white text-[#1e3a5f] rounded-lg hover:bg-blue-50 transition font-medium text-sm disabled:opacity-50"
-                >
-                  <Download className="w-4 h-4" />
-                  Descargar
-                </button>
-                <button
-                  onClick={handlePrint}
-                  className="flex items-center gap-2 px-4 py-2 bg-white text-[#1e3a5f] rounded-lg hover:bg-blue-50 transition font-medium text-sm"
-                >
-                  <Printer className="w-4 h-4" />
-                  Imprimir
-                </button>
-                <button
-                  onClick={() => { setShowEmbeddedPdf(false); URL.revokeObjectURL(embeddedPdfUrl); setEmbeddedPdfUrl(null); }}
-                  className="p-2 hover:bg-blue-800 rounded-lg transition"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-            <div className="flex-1 bg-slate-100 p-2 overflow-hidden">
-              <iframe
-                src={embeddedPdfUrl}
-                className="w-full h-full rounded border border-slate-300 bg-white"
-                title="Vista previa PDF"
-              />
-            </div>
-          </div>
         </div>
       )}
 
