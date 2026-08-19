@@ -519,86 +519,33 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
   };
 
   const renderFormToCanvas = async (): Promise<PdfRender> => {
-    const source = pdfRef.current;
+    const source = formRef.current;
     if (!source) throw new Error('El formulario no está disponible');
 
-    const frame = document.createElement('iframe');
-    frame.setAttribute('aria-hidden', 'true');
-    frame.style.position = 'fixed';
-    frame.style.left = '-10000px';
-    frame.style.top = '0';
-    frame.style.width = '900px';
-    frame.style.height = `${source.scrollHeight + 50}px`;
-    frame.style.border = '0';
-    document.body.appendChild(frame);
+    const canvas = await html2canvas(source, {
+      scale: 2.5,
+      backgroundColor: '#ffffff',
+      useCORS: true,
+      scrollX: 0,
+      scrollY: -window.scrollY,
+    });
 
-    try {
-      const frameDocument = frame.contentDocument;
-      if (!frameDocument) throw new Error('No se pudo preparar el documento PDF');
-
-      frameDocument.open();
-      frameDocument.write(`<!doctype html><html><head><style>
-        html,body{margin:0;padding:0;background:#fff;font-family:Arial,Helvetica,sans-serif}
-        .rating-checkbox{appearance:auto;-webkit-appearance:auto;width:16px;height:16px}
-      </style></head><body></body></html>`);
-      frameDocument.close();
-
-      const clone = source.cloneNode(true) as HTMLDivElement;
-      clone.style.position = 'static';
-      clone.style.left = '0';
-      clone.style.top = '0';
-      frameDocument.body.appendChild(clone);
-
-      await Promise.all(Array.from(clone.querySelectorAll('img')).map((image) => {
-        if (image.complete) return Promise.resolve();
-        return new Promise<void>((resolve) => {
-          image.addEventListener('load', () => resolve(), { once: true });
-          image.addEventListener('error', () => resolve(), { once: true });
-        });
-      }));
-
-      const pageBreak = clone.querySelector('[data-pdf-page-break]');
-      const cloneTop = clone.getBoundingClientRect().top;
-      const splitCssY = pageBreak
-        ? pageBreak.getBoundingClientRect().top - cloneTop
-        : 0;
-      const canvas = await html2canvas(clone, {
-        scale: 2.5,
-        backgroundColor: '#ffffff',
-        width: clone.scrollWidth,
-        height: clone.scrollHeight,
-        windowWidth: 900,
-        windowHeight: clone.scrollHeight,
-        scrollX: 0,
-        scrollY: 0,
-      });
-      const scale = canvas.width / clone.scrollWidth;
-      return { canvas, splitY: Math.round(splitCssY * scale) };
-    } finally {
-      frame.remove();
-    }
+    return { canvas, splitY: 0 };
   };
 
   const canvasToPdfBlob = ({ canvas }: PdfRender): Blob => {
-    const imgWidth = 215.9;
+    const pageWidth = 215.9;
     const pageHeight = 279.4;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const margin = 7;
+    const availableWidth = pageWidth - margin * 2;
+    const availableHeight = pageHeight - margin * 2;
+    const scale = Math.min(availableWidth / canvas.width, availableHeight / canvas.height);
+    const imageWidth = canvas.width * scale;
+    const imageHeight = canvas.height * scale;
     const pdf = new jsPDF('p', 'mm', 'letter');
-    const imgData = canvas.toDataURL('image/png');
-    if (imgHeight <= pageHeight) {
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-    } else {
-      let position = 0;
-      let remaining = imgHeight;
-      let first = true;
-      while (remaining > 0) {
-        if (!first) pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, -position, imgWidth, imgHeight);
-        position += pageHeight;
-        remaining -= pageHeight;
-        first = false;
-      }
-    }
+    const imageX = (pageWidth - imageWidth) / 2;
+    const imageY = (pageHeight - imageHeight) / 2;
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', imageX, imageY, imageWidth, imageHeight);
     return pdf.output('blob');
   };
 
@@ -654,17 +601,22 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', o
     }
   };
 
-  const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
-    if (printWindow && formRef.current) {
-      const styles = Array.from(document.styleSheets)
-        .map(ss => {
-          try { return Array.from(ss.cssRules).map(r => r.cssText).join('\n'); }
-          catch { return ''; }
-        }).join('\n');
-      printWindow.document.write(`<html><head><title>Revision Junio</title><style>${styles}body{margin:0;padding:20px}@media print{body{margin:0;padding:0}}</style></head><body>${formRef.current.innerHTML}</body></html>`);
+  const handlePrint = async () => {
+    try {
+      const { canvas } = await renderFormToCanvas();
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) throw new Error('No se pudo abrir la ventana de impresión');
+      const imageUrl = canvas.toDataURL('image/png');
+      printWindow.document.write(`<html><head><title>Revision Junio</title><style>
+        @page{size:letter portrait;margin:0}
+        html,body{width:8.5in;height:11in;margin:0;padding:0;background:#fff}
+        body{display:flex;align-items:center;justify-content:center;overflow:hidden}
+        img{display:block;max-width:100%;max-height:100%;width:auto;height:auto}
+      </style></head><body><img src="${imageUrl}" alt="Revision de metas" /></body></html>`);
       printWindow.document.close();
       setTimeout(() => printWindow.print(), 500);
+    } catch (error) {
+      setToast({ message: error instanceof Error ? error.message : 'Error al preparar la impresión', type: 'error' });
     }
   };
 
