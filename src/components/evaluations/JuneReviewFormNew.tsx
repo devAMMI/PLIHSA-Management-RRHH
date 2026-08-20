@@ -538,31 +538,19 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
     const source = pdfRef.current;
     if (!source) throw new Error('El formulario no está disponible');
 
-    const clone = source.cloneNode(true) as HTMLDivElement;
-    const container = document.createElement('div');
-    container.style.position = 'fixed';
-    container.style.top = '0';
-    container.style.left = '-99999px';
-    container.style.width = '860px';
-    container.style.background = '#ffffff';
-    container.style.zIndex = '-1';
-    container.appendChild(clone);
-    document.body.appendChild(container);
+    const canvas = await html2canvas(source, {
+      scale: 2.5,
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      windowWidth: source.scrollWidth,
+      windowHeight: source.scrollHeight,
+      scrollX: 0,
+      scrollY: 0,
+    });
 
-    try {
-      const canvas = await html2canvas(clone, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        width: 860,
-        windowWidth: 860,
-      });
-
-      return { canvas, splitY: 0 };
-    } finally {
-      document.body.removeChild(container);
-    }
+    return { canvas, splitY: 0 };
   };
 
   const canvasToPdfBlob = ({ canvas }: PdfRender): Blob => {
@@ -1079,15 +1067,17 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
       <div
         ref={pdfRef}
         style={{
-          position: 'fixed',
-          top: '-9999px',
+          position: 'absolute',
           left: '-9999px',
+          top: '0',
           width: '860px',
           fontFamily: 'Arial, Helvetica, sans-serif',
           fontSize: '10px',
           background: 'white',
           padding: '14px 18px',
           boxSizing: 'border-box',
+          opacity: '1',
+          pointerEvents: 'none',
         }}
         aria-hidden="true"
       >
