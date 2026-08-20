@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Save, Download, Printer, Upload, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Save, Download, Printer, Upload, CheckCircle, Eye, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { buildStoragePath, storagePathToProxyUrl, BUCKET } from '../../lib/storagePaths';
 import { useAuth } from '../../contexts/AuthContext';

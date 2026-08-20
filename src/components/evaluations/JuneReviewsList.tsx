@@ -321,9 +321,9 @@ export function JuneReviewsList({
       </div>
 
       {modalReviewId && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-slate-50 rounded-xl shadow-xl max-w-7xl w-full my-8">
-            <div className={`bg-blue-900 text-white px-6 py-4 flex items-center justify-between rounded-t-xl`}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-50 rounded-xl shadow-xl max-w-7xl w-full max-h-[calc(100vh-32px)] overflow-hidden relative">
+            <div className="bg-blue-900 text-white px-6 py-4 flex items-center justify-between rounded-t-xl">
               <h2 className="text-xl font-bold flex items-center gap-2">
                 <FileText className="w-5 h-5" />
                 Revisión de Metas
@@ -338,7 +338,7 @@ export function JuneReviewsList({
                 </button>
               </div>
             </div>
-            <div className="p-6 overflow-y-auto max-h-[calc(100vh-120px)]">
+            <div className="overflow-y-auto max-h-[calc(100vh-120px)] p-6">
               <JuneReviewFormNew
                 reviewId={modalReviewId}
                 employeeType={employeeType}
