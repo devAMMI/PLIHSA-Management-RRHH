@@ -635,7 +635,31 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
-    if (printWindow && formRef.current) {
+    const source = formRef.current;
+    if (printWindow && source) {
+      const printableForm = source.cloneNode(true) as HTMLDivElement;
+      const sourceControls = source.querySelectorAll('input, textarea, select');
+      const printableControls = printableForm.querySelectorAll('input, textarea, select');
+
+      sourceControls.forEach((control, index) => {
+        const printableControl = printableControls[index];
+        if (control instanceof HTMLInputElement && printableControl instanceof HTMLInputElement) {
+          printableControl.checked = control.checked;
+          printableControl.value = control.value;
+          if (control.checked) printableControl.setAttribute('checked', '');
+          else printableControl.removeAttribute('checked');
+          printableControl.setAttribute('value', control.value);
+        } else if (control instanceof HTMLTextAreaElement && printableControl instanceof HTMLTextAreaElement) {
+          printableControl.value = control.value;
+          printableControl.textContent = control.value;
+        } else if (control instanceof HTMLSelectElement && printableControl instanceof HTMLSelectElement) {
+          printableControl.value = control.value;
+          Array.from(printableControl.options).forEach(option => {
+            option.toggleAttribute('selected', option.value === control.value);
+          });
+        }
+      });
+
       const styles = Array.from(document.styleSheets)
         .map(styleSheet => {
           try {
@@ -660,7 +684,7 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
               }
             </style>
           </head>
-          <body>${formRef.current.innerHTML}</body>
+          <body>${printableForm.innerHTML}</body>
         </html>
       `);
       printWindow.document.close();
