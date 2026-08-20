@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Plus, User, Building2, Calendar, Clock, CheckCircle, AlertCircle, Eye, FileText, Trash2, Search } from 'lucide-react';
+import { ArrowLeft, Plus, User, Building2, Calendar, Clock, CheckCircle, AlertCircle, Eye, FileText, Trash2, Search, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { JuneReviewFormNew } from './JuneReviewFormNew';
 
 interface JuneReview {
   id: string;
@@ -69,6 +70,8 @@ export function JuneReviewsList({
   const [auditMap, setAuditMap] = useState<Record<string, AuditInfo>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [modalReviewId, setModalReviewId] = useState<string | null>(null);
+  const [modalViewOnly, setModalViewOnly] = useState(false);
 
   const titleMap: Record<string, string> = {
     all: 'Todas las Revisiones',
@@ -292,12 +295,12 @@ export function JuneReviewsList({
                           )}
                         </div>
                         <div className="flex gap-2 flex-shrink-0">
-                          <button onClick={() => onView(review.id)} className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition ${accentHover}`}>
+                          <button onClick={() => { setModalReviewId(review.id); setModalViewOnly(true); }} className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition ${accentHover}`}>
                             <Eye className="w-4 h-4" />
                             Ver
                           </button>
                           {review.status !== 'completed' && (
-                            <button onClick={() => onEdit(review.id)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition">
+                            <button onClick={() => { setModalReviewId(review.id); setModalViewOnly(false); }} className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition">
                               <FileText className="w-4 h-4" />
                               Editar
                             </button>
@@ -316,6 +319,28 @@ export function JuneReviewsList({
           </div>
         </div>
       </div>
+
+      {modalReviewId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-slate-50 rounded-xl shadow-xl max-w-6xl w-full my-4 relative">
+            <button
+              onClick={() => setModalReviewId(null)}
+              className="absolute top-4 right-4 z-10 p-2 bg-white rounded-lg shadow hover:bg-slate-100 transition"
+            >
+              <X className="w-5 h-5 text-slate-600" />
+            </button>
+            <div className="max-h-[calc(100vh-32px)] overflow-y-auto">
+              <JuneReviewFormNew
+                reviewId={modalReviewId}
+                employeeType={employeeType}
+                viewOnly={modalViewOnly}
+                onCancel={() => setModalReviewId(null)}
+                onSaved={() => { setModalReviewId(null); loadReviews(); }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
