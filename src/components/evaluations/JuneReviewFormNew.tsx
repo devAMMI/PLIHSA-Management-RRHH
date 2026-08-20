@@ -558,11 +558,6 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
       scrollX: 0,
       scrollY: 0,
       onclone: (clonedDoc: Document) => {
-        clonedDoc.querySelectorAll('style, link[rel="stylesheet"]').forEach(el => el.remove());
-        const clonedForm = clonedDoc.querySelector('[data-pdf-form]');
-        if (clonedForm) {
-          clonedForm.removeAttribute('class');
-        }
         clonedDoc.querySelectorAll('.rating-checkbox').forEach((el) => {
           const cb = el as HTMLInputElement;
           cb.setAttribute('style', `width:14px;height:14px;accent-color:#1e3a5f;${cb.checked ? 'background:#1e3a5f;' : ''}`);
