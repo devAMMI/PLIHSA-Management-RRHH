@@ -1103,9 +1103,9 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
             </tbody>
           </table>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', padding: '32px 16px 12px', gap: '24px', marginTop: '4px' }}>
+          <div style={{ display: 'flex', padding: '32px 16px 12px', marginTop: '4px' }}>
             {['Firma Colaborador', 'Firma Jefe Inmediato', 'Firma RRHH'].map(label => (
-              <div key={label} style={{ textAlign: 'center' }}>
+              <div key={label} style={{ flex: '1 1 0', textAlign: 'center', marginRight: '24px' }}>
                 <div style={{ borderTop: '1px solid #1e293b', paddingTop: '4px', marginTop: '24px' }}>
                   <p style={{ fontSize: '10px', fontWeight: '600', color: '#1e293b' }}>{label}</p>
                 </div>
