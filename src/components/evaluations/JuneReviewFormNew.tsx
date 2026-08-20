@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
-import { ArrowLeft, Save, Download, Printer, Upload, CheckCircle, Eye, FileText } from 'lucide-react';
+import { ArrowLeft, Save, Download, Printer, CheckCircle, Eye } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { buildStoragePath, storagePathToProxyUrl, BUCKET } from '../../lib/storagePaths';
 import { useAuth } from '../../contexts/AuthContext';
 import { Toast } from '../ui/Toast';
 import { SignedDocumentViewer } from '../goals/SignedDocumentViewer';
+import { GoalWorkflowStatus, WorkflowStatus } from '../goals/GoalWorkflowStatus';
+import { SignedDocumentUpload } from '../goals/SignedDocumentUpload';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -105,6 +107,7 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showDocViewer, setShowDocViewer] = useState(false);
   const [digitalPdfUrl, setDigitalPdfUrl] = useState<string | null>(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
   const isReadOnly = viewOnly || status === 'completed';
   const isEditing = reviewId !== null;
@@ -515,6 +518,15 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
     } finally {
       setCompleting(false);
     }
+  };
+
+  const handleUploadSuccess = async () => {
+    setShowUploadModal(false);
+    setSelectedFile(null);
+    if (reviewId) {
+      await loadReview(reviewId);
+    }
+    setToast({ message: 'Documento firmado subido exitosamente', type: 'success' });
   };
 
   type PdfRender = {
@@ -1003,156 +1015,53 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
       </div>
 
       {reviewId && (
-        <div className="mt-6 bg-white border border-slate-200 rounded-xl shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              {status === 'completed' ? (
-                <CheckCircle className="w-6 h-6 text-green-600" />
-              ) : status === 'pending_signature' ? (
-                <Upload className="w-6 h-6 text-amber-500" />
-              ) : (
-                <FileText className="w-6 h-6 text-slate-500" />
-              )}
-              <div>
-                <h3 className="font-semibold text-slate-800">Estado del Documento</h3>
-                <p className="text-sm text-slate-500">
-                  {status === 'completed' ? 'Firmado y finalizado' : status === 'pending_signature' ? 'Esperando firma manual' : 'En edicion'}
-                </p>
-              </div>
-            </div>
-            <span className={`px-4 py-2 rounded-full border font-medium text-sm ${
-              status === 'completed' ? 'bg-green-100 text-green-700 border-green-300'
-              : status === 'pending_signature' ? 'bg-amber-100 text-amber-700 border-amber-300'
-              : 'bg-slate-100 text-slate-700 border-slate-300'
-            }`}>
-              {status === 'completed' ? 'Completado' : status === 'pending_signature' ? 'Pendiente Firma' : 'Borrador'}
-            </span>
-          </div>
+        <div className="mt-6">
+          <GoalWorkflowStatus
+            status={status as WorkflowStatus}
+            signedDocumentUrl={signedDocUrl}
+            onPrint={handlePrint}
+            onDownloadPDF={handleDownloadPDF}
+            onUploadSigned={!isReadOnly ? () => setShowUploadModal(true) : undefined}
+            onMarkAsCompleted={!isReadOnly ? handleFinalize : undefined}
+          />
 
-          {status !== 'completed' && (
-            <div className={`rounded-lg p-4 mb-4 ${signedDocUrl ? 'bg-amber-50 border border-amber-200' : 'bg-blue-50 border border-blue-200'}`}>
-              {!signedDocUrl ? (
-                <>
-                  <p className="text-sm text-blue-800 mb-3">
-                    <strong>Siguiente paso:</strong> Descarga el PDF, firmalo a mano, escanealo y subelo aqui.
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    <button onClick={handleDownloadPDF} disabled={generatingPDF}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium disabled:opacity-50">
-                      <Download className="w-4 h-4" />
-                      Descargar PDF
-                    </button>
-                    <button onClick={handlePrint}
-                      className="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition text-sm font-medium">
-                      <Printer className="w-4 h-4" />
-                      Imprimir
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 p-3 rounded-lg border border-green-200">
-                    <CheckCircle className="w-4 h-4" />
-                    <span className="font-medium">Documento firmado subido. Presiona "Finalizar Revision" para completar el proceso.</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      onClick={async () => {
-                        const url = await generatePdfUrl();
-                        setDigitalPdfUrl(url);
-                        setShowDocViewer(true);
-                      }}
-                      className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition text-sm font-medium"
-                    >
-                      <Eye className="w-4 h-4" />
-                      Ver Ambos Documentos
-                    </button>
-                    {!isReadOnly && (
-                      <button
-                        onClick={handleFinalize}
-                        disabled={completing}
-                        className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-semibold shadow-sm disabled:opacity-50"
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                        {completing ? 'Finalizando...' : 'Finalizar Revision'}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {status === 'completed' && signedDocUrl && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-              <p className="text-sm text-green-800 mb-3">
-                <strong>Proceso completado:</strong> El documento ha sido firmado y finalizado exitosamente.
-              </p>
+          {(status === 'pending_signature' || status === 'completed') && signedDocUrl && (
+            <div className="mt-4 flex justify-center">
               <button
                 onClick={async () => {
                   const url = await generatePdfUrl();
                   setDigitalPdfUrl(url);
                   setShowDocViewer(true);
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition text-sm font-medium"
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition text-sm font-medium"
               >
                 <Eye className="w-4 h-4" />
                 Ver Ambos Documentos
               </button>
             </div>
           )}
-
-          {!isReadOnly && (
-            <>
-              {signedDocUrl && (
-                <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-                  <FileText className="w-5 h-5 text-green-600 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-green-800 truncate">{signedDocFilename || 'Documento firmado'}</p>
-                    {signedDocUploadedAt && (
-                      <p className="text-xs text-green-600">Subido el {new Date(signedDocUploadedAt).toLocaleString('es-HN')}</p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <div className="border-2 border-dashed border-slate-300 rounded-lg p-5 text-center hover:border-teal-400 transition">
-                <input type="file" id="june-review-signed-doc" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileSelect} className="hidden" />
-                <label htmlFor="june-review-signed-doc" className="cursor-pointer flex flex-col items-center gap-2">
-                  {selectedFile ? (
-                    <>
-                      <FileText className="w-9 h-9 text-teal-600" />
-                      <div className="text-sm text-slate-700">
-                        <p className="font-medium">{selectedFile.name}</p>
-                        <p className="text-slate-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
-                      </div>
-                      <button type="button" onClick={(e) => { e.preventDefault(); setSelectedFile(null); }}
-                        className="text-sm text-red-600 hover:text-red-700">Eliminar archivo</button>
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-9 h-9 text-slate-400" />
-                      <div className="text-sm text-slate-600">
-                        <p className="font-medium">{signedDocUrl ? 'Reemplazar documento firmado' : 'Haz clic para seleccionar el documento firmado'}</p>
-                        <p className="text-slate-500 mt-1">PDF, JPG o PNG (maximo 10MB)</p>
-                      </div>
-                    </>
-                  )}
-                </label>
-              </div>
-
-              {selectedFile && (
-                <div className="mt-3">
-                  <button onClick={handleUploadSignedDoc} disabled={uploadingDoc}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-medium disabled:opacity-50">
-                    <Upload className="w-4 h-4" />
-                    {uploadingDoc ? 'Subiendo...' : 'Subir Documento Firmado'}
-                  </button>
-                </div>
-              )}
-            </>
-          )}
         </div>
+      )}
+
+      {showUploadModal && reviewId && (
+        <SignedDocumentUpload
+          goalDefinitionId={reviewId}
+          definitionType={employeeType === 'operativo' ? 'operative' : 'administrative'}
+          evalYear={new Date().getFullYear()}
+          employee={selectedEmployee ? {
+            id: selectedEmployee.id,
+            employee_code: selectedEmployee.employee_code,
+            first_name: selectedEmployee.first_name,
+            last_name: selectedEmployee.last_name
+          } : undefined}
+          currentDocumentUrl={signedDocUrl || undefined}
+          onSuccess={handleUploadSuccess}
+          onCancel={() => setShowUploadModal(false)}
+          tableName="june_reviews"
+          docKind="revision-junio"
+          phaseLabel="Revision de Metas"
+          evalPhase={2}
+        />
       )}
 
       {showDocViewer && signedDocUrl && (
