@@ -14,29 +14,21 @@ type ViewType =
 
 export function EvaluacionJunio() {
   const [currentView, setCurrentView] = useState<ViewType>('home');
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<EmployeeType>('administrativo');
 
-  const handleEdit = (id: string) => {
-    setEditingId(id);
-    setCurrentView('review-new');
-  };
-
   const handleBackFromForm = () => {
-    setEditingId(null);
     setCurrentView('review-list');
   };
 
   const openView = (view: ViewType, type: EmployeeType) => {
     setActiveType(type);
-    setEditingId(null);
     setCurrentView(view);
   };
 
   if (currentView === 'review-new') {
     return (
       <JuneReviewFormNew
-        reviewId={editingId}
+        reviewId={null}
         employeeType={activeType}
         onCancel={handleBackFromForm}
         onSaved={handleBackFromForm}
@@ -50,8 +42,9 @@ export function EvaluacionJunio() {
         employeeType={activeType}
         statusFilter="all"
         onBack={() => setCurrentView('home')}
-        onNew={() => { setEditingId(null); setCurrentView('review-new'); }}
-        onEdit={handleEdit}
+        onNew={() => setCurrentView('review-new')}
+        onEdit={() => {}}
+        onView={() => {}}
       />
     );
   }
@@ -62,8 +55,9 @@ export function EvaluacionJunio() {
         employeeType={activeType}
         statusFilter="draft"
         onBack={() => setCurrentView('home')}
-        onNew={() => { setEditingId(null); setCurrentView('review-new'); }}
-        onEdit={handleEdit}
+        onNew={() => setCurrentView('review-new')}
+        onEdit={() => {}}
+        onView={() => {}}
       />
     );
   }
@@ -74,8 +68,9 @@ export function EvaluacionJunio() {
         employeeType={activeType}
         statusFilter="completed"
         onBack={() => setCurrentView('home')}
-        onNew={() => { setEditingId(null); setCurrentView('review-new'); }}
-        onEdit={handleEdit}
+        onNew={() => setCurrentView('review-new')}
+        onEdit={() => {}}
+        onView={() => {}}
       />
     );
   }

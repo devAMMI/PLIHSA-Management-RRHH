@@ -18,6 +18,10 @@ interface SignedDocumentUploadProps {
   currentDocumentUrl?: string;
   onSuccess: () => void;
   onCancel: () => void;
+  tableName?: string;
+  docKind?: string;
+  phaseLabel?: string;
+  evalPhase?: number;
 }
 
 const PHASE_1_LABEL = 'Definicion de Metas';
@@ -29,7 +33,11 @@ export function SignedDocumentUpload({
   employee,
   currentDocumentUrl,
   onSuccess,
-  onCancel
+  onCancel,
+  tableName,
+  docKind = 'definicion-metas',
+  phaseLabel = PHASE_1_LABEL,
+  evalPhase = 1
 }: SignedDocumentUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,14 +80,14 @@ export function SignedDocumentUpload({
       let storagePath: string;
       if (employee) {
         storagePath = buildStoragePath({
-          docKind: 'definicion-metas',
+          docKind,
           empType,
           year,
           employee,
           fileExt
         });
       } else {
-        storagePath = `PLIHSA/definicion-metas/${empType}/${year}/${goalDefinitionId}.${fileExt}`;
+        storagePath = `PLIHSA/${docKind}/${empType}/${year}/${goalDefinitionId}.${fileExt}`;
       }
 
       const { error: uploadError } = await supabase.storage
@@ -93,20 +101,23 @@ export function SignedDocumentUpload({
 
       const proxyUrl = storagePathToProxyUrl(storagePath);
 
-      const tableName = definitionType === 'administrative'
+      const targetTable = tableName || (definitionType === 'administrative'
         ? 'goal_definitions'
-        : 'operative_goal_definitions';
+        : 'operative_goal_definitions');
+      const statusColumn = targetTable === 'june_reviews' ? 'status' : 'workflow_status';
+
+      const updateData: Record<string, unknown> = {
+        signed_document_url: proxyUrl,
+        signed_document_filename: selectedFile.name,
+        signed_document_mime_type: selectedFile.type,
+        signed_document_uploaded_at: new Date().toISOString(),
+        signed_document_uploaded_by: user.id
+      };
+      updateData[statusColumn] = 'pending_signature';
 
       const { error: updateError } = await supabase
-        .from(tableName)
-        .update({
-          signed_document_url: proxyUrl,
-          signed_document_filename: selectedFile.name,
-          signed_document_mime_type: selectedFile.type,
-          signed_document_uploaded_at: new Date().toISOString(),
-          signed_document_uploaded_by: user.id,
-          workflow_status: 'pending_signature'
-        })
+        .from(targetTable)
+        .update(updateData)
         .eq('id', goalDefinitionId);
 
       if (updateError) throw updateError;
@@ -123,7 +134,7 @@ export function SignedDocumentUpload({
             eval_phase: 1,
             phase_label: PHASE_1_LABEL,
             employee_type: definitionType,
-            source_table: tableName,
+            source_table: targetTable,
             source_record_id: goalDefinitionId,
             document_url: proxyUrl,
             document_filename: selectedFile.name,
@@ -182,7 +193,7 @@ export function SignedDocumentUpload({
                 <span className="text-slate-400 mx-2">·</span>
                 <span className="text-slate-500">{employee.employee_code}</span>
                 <span className="text-slate-400 mx-2">·</span>
-                <span className="text-slate-500">Definicion de Metas {evalYear || new Date().getFullYear()}</span>
+                <span className="text-slate-500">{phaseLabel} {evalYear || new Date().getFullYear()}</span>
               </div>
             </div>
           )}
@@ -193,7 +204,7 @@ export function SignedDocumentUpload({
               <div className="text-sm text-blue-800">
                 <p className="font-medium mb-2">Instrucciones:</p>
                 <ol className="list-decimal list-inside space-y-1">
-                  <li>Imprime el documento de definicion de metas</li>
+                  <li>Imprime el documento de {phaseLabel.toLowerCase()}</li>
                   <li>Firma el documento a puno y letra</li>
                   <li>Escanea o toma una foto clara del documento firmado</li>
                   <li>Sube el archivo aqui (PDF, JPG o PNG, maximo 10MB)</li>

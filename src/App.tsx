@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { FinalEvaluationContainer } from './components/evaluations/FinalEvaluationContainer';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CompanyProvider } from './contexts/CompanyContext';
@@ -24,11 +25,41 @@ import { EvaluacionJunio } from './components/evaluations/EvaluacionJunio';
 import { EvaluationAuditLog } from './components/audit/EvaluationAuditLog';
 import { ReportesView } from './components/reports/ReportesView';
 
+const ROUTE_TITLES: Record<string, string> = {
+  '/plihsa/empresa/Dashboard': 'Dashboard',
+  '/plihsa/empresa/Empleados': 'Gestión de Empleados',
+  '/plihsa/empresa/1_Definicionmetas': 'Definición de Metas',
+  '/plihsa/empresa/2_Revisionmetas': 'Revisión de Metas',
+  '/plihsa/empresa/3_Evaluacionfinal': 'Evaluación Final',
+  '/plihsa/empresa/Evaluaciones': 'Evaluaciones Guardadas',
+  '/plihsa/empresa/Evaluacion-admin': 'Evaluación Administrativa',
+  '/plihsa/empresa/Evaluacion-operativa': 'Evaluación Operativa',
+  '/plihsa/empresa/Usuarios': 'Usuarios del Sistema',
+  '/plihsa/empresa/Reportes': 'Reportes',
+  '/plihsa/empresa/Configuracion': 'Configuración',
+  '/plihsa/empresa/Perfil': 'Mi Perfil',
+  '/plihsa/empresa/Datos-raw': 'Evaluaciones Hechas (Raw Data)',
+  '/plihsa/empresa/SQL': 'SQL Evaluaciones',
+  '/plihsa/empresa/Registro-actividad': 'Registro de Actividad',
+};
+
+function getCurrentTitle(pathname: string): string {
+  if (ROUTE_TITLES[pathname]) return ROUTE_TITLES[pathname];
+  if (pathname.includes('/evaluaciones/editar/')) return 'Editar Evaluación';
+  return 'Dashboard';
+}
+
 function AppContent() {
   const { user, loading } = useAuth();
-  const [currentView, setCurrentView] = useState('dashboard');
-  const [showRegister, setShowRegister] = useState(false);
-  const [editingEvaluationId, setEditingEvaluationId] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const showRegister = location.pathname === '/registro';
+
+  useEffect(() => {
+    if (!user && location.pathname !== '/registro' && !location.pathname.startsWith('/plihsa')) {
+      navigate('/', { replace: true });
+    }
+  }, [user, location.pathname, navigate]);
 
   if (loading) {
     return (
@@ -40,134 +71,95 @@ function AppContent() {
 
   if (!user) {
     if (showRegister) {
-      return <RegisterForm onBackToLogin={() => setShowRegister(false)} />;
+      return <RegisterForm onBackToLogin={() => navigate('/')} />;
     }
-    return <LoginForm onSwitchToRegister={() => setShowRegister(true)} />;
+    return <LoginForm onSwitchToRegister={() => navigate('/registro')} />;
   }
 
-  const getViewTitle = () => {
-    switch (currentView) {
-      case 'dashboard':
-        return 'Dashboard';
-      case 'employees':
-        return 'Gestión de Empleados';
-      case 'evaluaciones-plihsa':
-        return 'Evaluaciones Administrativas PLIHSA';
-      case 'evaluacion-administrativa-nueva':
-        return 'Nueva Evaluación Administrativa';
-      case 'evaluations-list':
-        return 'Evaluaciones Guardadas';
-      case 'nueva-evaluacion-administrativa':
-        return 'Nueva Evaluación Administrativa';
-      case 'evaluation-admin-enero':
-        return 'Evaluación Administrativo - Marzo 2026';
-      case 'evaluation-operative-enero':
-        return 'Evaluación Operativo - Marzo 2026';
-      case 'system-users':
-        return 'Usuarios del Sistema';
-      case 'reportes':
-        return 'Reportes';
-      case 'settings':
-        return 'Configuración';
-      case 'profile':
-        return 'Mi Perfil';
-      case 'raw-evaluations':
-        return 'Evaluaciones Hechas (Raw Data)';
-      case 'sql-executor':
-        return 'SQL Evaluaciones';
-      case 'goal-definition-enero':
-        return 'Definición de Metas';
-      case 'goal-definitions-list':
-        return 'Definiciones de Metas Guardadas';
-      case 'evaluacion-junio':
-        return 'Revisión de Metas';
-      case 'evaluacion-final':
-        return 'Evaluación Final';
-      case 'audit-log':
-        return 'Registro de Actividad';
-      default:
-        return 'Dashboard';
-    }
+  const handleViewChange = (view: string) => {
+    const routeMap: Record<string, string> = {
+      'dashboard': '/plihsa/empresa/Dashboard',
+      'employees': '/plihsa/empresa/Empleados',
+      'goal-definition-enero': '/plihsa/empresa/1_Definicionmetas',
+      'evaluacion-junio': '/plihsa/empresa/2_Revisionmetas',
+      'evaluacion-final': '/plihsa/empresa/3_Evaluacionfinal',
+      'evaluations-list': '/plihsa/empresa/Evaluaciones',
+      'evaluation-admin-enero': '/plihsa/empresa/Evaluacion-admin',
+      'evaluation-operative-enero': '/plihsa/empresa/Evaluacion-operativa',
+      'system-users': '/plihsa/empresa/Usuarios',
+      'reportes': '/plihsa/empresa/Reportes',
+      'settings': '/plihsa/empresa/Configuracion',
+      'profile': '/plihsa/empresa/Perfil',
+      'raw-evaluations': '/plihsa/empresa/Datos-raw',
+      'sql-executor': '/plihsa/empresa/SQL',
+      'audit-log': '/plihsa/empresa/Registro-actividad',
+    };
+    const route = routeMap[view] || '/plihsa/empresa/Dashboard';
+    navigate(route);
   };
 
+  const currentPath = location.pathname;
+  const currentViewKey = Object.entries({
+    'dashboard': currentPath === '/plihsa/empresa/Dashboard',
+    'employees': currentPath === '/plihsa/empresa/Empleados',
+    'goal-definition-enero': currentPath === '/plihsa/empresa/1_Definicionmetas',
+    'evaluacion-junio': currentPath === '/plihsa/empresa/2_Revisionmetas',
+    'evaluacion-final': currentPath === '/plihsa/empresa/3_Evaluacionfinal',
+    'evaluations-list': currentPath === '/plihsa/empresa/Evaluaciones',
+    'evaluation-admin-enero': currentPath.startsWith('/plihsa/empresa/Evaluacion-admin'),
+    'evaluation-operative-enero': currentPath.startsWith('/plihsa/empresa/Evaluacion-operativa'),
+    'system-users': currentPath === '/plihsa/empresa/Usuarios',
+    'reportes': currentPath === '/plihsa/empresa/Reportes',
+    'settings': currentPath === '/plihsa/empresa/Configuracion',
+    'profile': currentPath === '/plihsa/empresa/Perfil',
+    'raw-evaluations': currentPath === '/plihsa/empresa/Datos-raw',
+    'sql-executor': currentPath === '/plihsa/empresa/SQL',
+    'audit-log': currentPath === '/plihsa/empresa/Registro-actividad',
+  }).find(([, v]) => v)?.[0] || 'dashboard';
+
+  const editingEvaluationId = location.pathname.match(/\/(Evaluacion-admin|Evaluacion-operativa)\/editar\/([^/]+)/)?.[2] || null;
+
   const handleEditEvaluation = (evaluationId: string, employeeType: string) => {
-    setEditingEvaluationId(evaluationId);
-    if (employeeType === 'administrativo') {
-      setCurrentView('evaluation-admin-enero');
-    } else {
-      setCurrentView('evaluation-operative-enero');
-    }
+    const route = employeeType === 'administrativo'
+      ? `/plihsa/empresa/Evaluacion-admin/editar/${evaluationId}`
+      : `/plihsa/empresa/Evaluacion-operativa/editar/${evaluationId}`;
+    navigate(route);
   };
 
   const handleBackToList = () => {
-    setEditingEvaluationId(null);
-    setCurrentView('evaluations-list');
+    navigate('/plihsa/empresa/Evaluaciones');
   };
 
-  const renderView = () => {
-    switch (currentView) {
-      case 'dashboard':
-        return <Dashboard />;
-      case 'employees':
-        return <EmployeeList />;
-      case 'evaluacion-administrativa-nueva':
-        return <EvaluacionAdministrativa />;
-      case 'evaluations-list':
-        return <EvaluationsList onEditEvaluation={handleEditEvaluation} />;
-      case 'nueva-evaluacion-administrativa':
-        return <NuevaEvaluacionAdministrativa />;
-      case 'evaluation-admin-enero':
-        return <AdministrativeEvaluationContainer editingEvaluationId={editingEvaluationId} onBack={handleBackToList} />;
-      case 'evaluation-operative-enero':
-        return <OperativeEvaluationContainer editingEvaluationId={editingEvaluationId} onBack={handleBackToList} />;
-      case 'system-users':
-        return <UserList />;
-      case 'profile':
-        return <UserProfile />;
-      case 'raw-evaluations':
-        return <RawEvaluations />;
-      case 'sql-executor':
-        return <SQLExecutor />;
-      case 'reportes':
-        return <ReportesView />;
-      case 'settings':
-        return (
-          <div className="text-center py-12">
-            <p className="text-slate-600">Configuración en desarrollo</p>
-          </div>
-        );
-      case 'goal-definition-enero':
-        return <GoalDefinitionsHome />;
-      case 'goal-definitions-list':
-        return <GoalDefinitionsList />;
-      case 'evaluacion-junio':
-        return <EvaluacionJunio />;
-      case 'audit-log':
-        return <EvaluationAuditLog />;
-      case 'evaluacion-final':
-        return <FinalEvaluationContainer />;
-      default:
-        return <Dashboard />;
-    }
-  };
+  const overflowClass = ['employees', 'evaluation-admin-enero', 'evaluation-operative-enero'].includes(currentViewKey)
+    ? 'overflow-hidden'
+    : 'overflow-y-auto';
 
   return (
     <div className="flex h-screen bg-slate-100">
-      <Sidebar currentView={currentView} onViewChange={setCurrentView} />
+      <Sidebar currentView={currentViewKey} onViewChange={handleViewChange} />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header title={getViewTitle()} />
-        <main className={`flex-1 bg-slate-50 ${[
-          'employees',
-          'evaluation-admin-enero',
-          'evaluation-operative-enero',
-          'evaluacion-administrativa-nueva',
-          'nueva-evaluacion-administrativa',
-        ].includes(currentView) ? 'overflow-hidden' : [
-          'evaluacion-junio',
-          'goal-definition-enero',
-          'evaluacion-final',
-        ].includes(currentView) ? 'overflow-y-auto' : ['dashboard', 'audit-log'].includes(currentView) ? 'overflow-y-auto' : 'overflow-y-auto p-8'}`}>
-          {renderView()}
+        <Header title={getCurrentTitle(currentPath)} />
+        <main className={`flex-1 bg-slate-50 ${overflowClass}`}>
+          <Routes>
+            <Route path="/plihsa/empresa/Dashboard" element={<Dashboard />} />
+            <Route path="/plihsa/empresa/Empleados" element={<EmployeeList />} />
+            <Route path="/plihsa/empresa/1_Definicionmetas" element={<GoalDefinitionsHome />} />
+            <Route path="/plihsa/empresa/2_Revisionmetas" element={<EvaluacionJunio />} />
+            <Route path="/plihsa/empresa/3_Evaluacionfinal" element={<FinalEvaluationContainer />} />
+            <Route path="/plihsa/empresa/Evaluaciones" element={<EvaluationsList onEditEvaluation={handleEditEvaluation} />} />
+            <Route path="/plihsa/empresa/Evaluacion-admin" element={<AdministrativeEvaluationContainer editingEvaluationId={editingEvaluationId} onBack={handleBackToList} />} />
+            <Route path="/plihsa/empresa/Evaluacion-admin/editar/:evalId" element={<AdministrativeEvaluationContainer editingEvaluationId={editingEvaluationId} onBack={handleBackToList} />} />
+            <Route path="/plihsa/empresa/Evaluacion-operativa" element={<OperativeEvaluationContainer editingEvaluationId={editingEvaluationId} onBack={handleBackToList} />} />
+            <Route path="/plihsa/empresa/Evaluacion-operativa/editar/:evalId" element={<OperativeEvaluationContainer editingEvaluationId={editingEvaluationId} onBack={handleBackToList} />} />
+            <Route path="/plihsa/empresa/Usuarios" element={<UserList />} />
+            <Route path="/plihsa/empresa/Reportes" element={<ReportesView />} />
+            <Route path="/plihsa/empresa/Configuracion" element={<div className="text-center py-12"><p className="text-slate-600">Configuración en desarrollo</p></div>} />
+            <Route path="/plihsa/empresa/Perfil" element={<UserProfile />} />
+            <Route path="/plihsa/empresa/Datos-raw" element={<RawEvaluations />} />
+            <Route path="/plihsa/empresa/SQL" element={<SQLExecutor />} />
+            <Route path="/plihsa/empresa/Registro-actividad" element={<EvaluationAuditLog />} />
+            <Route path="*" element={<Navigate to="/plihsa/empresa/Dashboard" replace />} />
+          </Routes>
         </main>
       </div>
 
@@ -201,7 +193,9 @@ function App() {
   return (
     <AuthProvider>
       <CompanyProvider>
-        <AppContent />
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
       </CompanyProvider>
     </AuthProvider>
   );
