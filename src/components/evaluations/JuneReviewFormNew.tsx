@@ -523,17 +523,27 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
   };
 
   const renderFormToCanvas = async (): Promise<PdfRender> => {
-    const source = formRef.current;
+    const source = pdfRef.current;
     if (!source) throw new Error('El formulario no está disponible');
 
-    const canvas = await html2canvas(source, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#ffffff',
-    });
+    source.style.left = '0';
+    source.style.top = '0';
 
-    return { canvas, splitY: 0 };
+    try {
+      const canvas = await html2canvas(source, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        width: 860,
+        windowWidth: 860,
+      });
+
+      return { canvas, splitY: 0 };
+    } finally {
+      source.style.left = '-9999px';
+      source.style.top = '-9999px';
+    }
   };
 
   const canvasToPdfBlob = ({ canvas }: PdfRender): Blob => {
@@ -609,7 +619,7 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
-    if (printWindow && formRef.current) {
+    if (printWindow && pdfRef.current) {
       const styles = Array.from(document.styleSheets)
         .map(styleSheet => {
           try {
@@ -634,7 +644,7 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
               }
             </style>
           </head>
-          <body>${formRef.current.innerHTML}</body>
+          <body>${pdfRef.current.innerHTML}</body>
         </html>
       `);
       printWindow.document.close();
