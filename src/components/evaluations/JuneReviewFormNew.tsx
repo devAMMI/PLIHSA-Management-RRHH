@@ -526,11 +526,19 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
     const source = pdfRef.current;
     if (!source) throw new Error('El formulario no está disponible');
 
-    source.style.left = '0';
-    source.style.top = '0';
+    const clone = source.cloneNode(true) as HTMLDivElement;
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.top = '0';
+    container.style.left = '-99999px';
+    container.style.width = '860px';
+    container.style.background = '#ffffff';
+    container.style.zIndex = '-1';
+    container.appendChild(clone);
+    document.body.appendChild(container);
 
     try {
-      const canvas = await html2canvas(source, {
+      const canvas = await html2canvas(clone, {
         scale: 2,
         useCORS: true,
         logging: false,
@@ -541,8 +549,7 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
 
       return { canvas, splitY: 0 };
     } finally {
-      source.style.left = '-9999px';
-      source.style.top = '-9999px';
+      document.body.removeChild(container);
     }
   };
 
@@ -571,7 +578,7 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
     return pdf.output('blob');
   };
 
-  const generatePdfBlob = async (): Promise<{ url: string; fileName: string } | null> => {
+  const generatePdfBlob = async (): Promise<{ blob: Blob; fileName: string } | null> => {
     try {
       const rendered = await renderFormToCanvas();
       if (rendered.canvas.width === 0 || rendered.canvas.height === 0) {
@@ -584,11 +591,16 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
         : 'Revision';
       const typeLabel = employeeType === 'operativo' ? 'Operativo' : 'Administrativo';
       const fileName = `Revision_Junio_${typeLabel}_${empName}_${reviewDate || 'borrador'}.pdf`;
-      return { url: URL.createObjectURL(pdfBlob), fileName };
+      return { blob: pdfBlob, fileName };
     } catch (error) {
       console.error('Error al generar el PDF:', error);
       return null;
     }
+  };
+
+  const generatePdfUrl = async (): Promise<string | null> => {
+    const result = await generatePdfBlob();
+    return result ? URL.createObjectURL(result.blob) : null;
   };
 
   const handleDownloadPDF = async () => {
@@ -601,13 +613,17 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
       const result = await generatePdfBlob();
       if (!result) throw new Error('No se pudo generar el PDF');
 
+      const url = URL.createObjectURL(result.blob);
       const link = document.createElement('a');
-      link.href = result.url;
+      link.href = url;
       link.download = result.fileName;
+      link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(result.url), 1000);
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 2000);
       setToast({ message: 'PDF descargado correctamente', type: 'success' });
     } catch (error) {
       console.error('Error al generar el PDF:', error);
