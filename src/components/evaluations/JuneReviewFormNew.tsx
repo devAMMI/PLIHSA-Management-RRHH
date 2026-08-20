@@ -535,7 +535,7 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
   };
 
   const renderFormToCanvas = async (): Promise<PdfRender> => {
-    const source = pdfRef.current;
+    const source = formRef.current;
     if (!source) throw new Error('El formulario no está disponible');
 
     const canvas = await html2canvas(source, {
@@ -604,7 +604,7 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
   };
 
   const handleDownloadPDF = async () => {
-    if (!pdfRef.current || !selectedEmployee) {
+    if (!formRef.current || !selectedEmployee) {
       setToast({ message: 'Seleccione un colaborador antes de generar el PDF', type: 'error' });
       return;
     }
@@ -635,7 +635,7 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
-    if (printWindow && pdfRef.current) {
+    if (printWindow && formRef.current) {
       const styles = Array.from(document.styleSheets)
         .map(styleSheet => {
           try {
@@ -660,7 +660,7 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
               }
             </style>
           </head>
-          <body>${pdfRef.current.innerHTML}</body>
+          <body>${formRef.current.innerHTML}</body>
         </html>
       `);
       printWindow.document.close();
