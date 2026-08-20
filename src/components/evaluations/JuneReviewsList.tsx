@@ -322,14 +322,23 @@ export function JuneReviewsList({
 
       {modalReviewId && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-slate-50 rounded-xl shadow-xl max-w-6xl w-full my-4 relative">
-            <button
-              onClick={() => setModalReviewId(null)}
-              className="absolute top-4 right-4 z-10 p-2 bg-white rounded-lg shadow hover:bg-slate-100 transition"
-            >
-              <X className="w-5 h-5 text-slate-600" />
-            </button>
-            <div className="max-h-[calc(100vh-32px)] overflow-y-auto">
+          <div className="bg-slate-50 rounded-xl shadow-xl max-w-7xl w-full my-8">
+            <div className={`bg-blue-900 text-white px-6 py-4 flex items-center justify-between rounded-t-xl`}>
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Revisión de Metas
+              </h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setModalReviewId(null)}
+                  className="p-2 hover:bg-blue-800 rounded-lg transition"
+                  title="Cerrar"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[calc(100vh-120px)]">
               <JuneReviewFormNew
                 reviewId={modalReviewId}
                 employeeType={employeeType}
