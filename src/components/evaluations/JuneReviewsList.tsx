@@ -1,8 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { ArrowLeft, Plus, User, Building2, Calendar, Clock, CheckCircle, AlertCircle, Eye, FileText, Trash2, Search, X, Download, Printer } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { ArrowLeft, Plus, User, Building2, Calendar, Clock, CheckCircle, AlertCircle, Eye, FileText, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { JuneReviewFormNew, JuneReviewFormNewRef } from './JuneReviewFormNew';
 
 interface JuneReview {
   id: string;
@@ -36,7 +35,6 @@ interface JuneReviewsListProps {
   onBack: () => void;
   onNew: () => void;
   onEdit: (id: string) => void;
-  onView: (id: string) => void;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -63,16 +61,12 @@ export function JuneReviewsList({
   onBack,
   onNew,
   onEdit,
-  onView,
 }: JuneReviewsListProps) {
   const { systemUser } = useAuth();
   const [reviews, setReviews] = useState<JuneReview[]>([]);
   const [auditMap, setAuditMap] = useState<Record<string, AuditInfo>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [modalReviewId, setModalReviewId] = useState<string | null>(null);
-  const [modalViewOnly, setModalViewOnly] = useState(false);
-  const formRef = useRef<JuneReviewFormNewRef>(null);
 
   const titleMap: Record<string, string> = {
     all: 'Todas las Revisiones',
@@ -201,171 +195,188 @@ export function JuneReviewsList({
       (r.department || '').toLowerCase().includes(search.toLowerCase())
   );
 
-  const accentBg = employeeType === 'operativo' ? 'bg-orange-600' : 'bg-teal-600';
-  const accentGradient = employeeType === 'operativo' ? 'from-orange-600 to-orange-700' : 'from-teal-600 to-teal-700';
-  const accentText = employeeType === 'operativo' ? 'text-orange-500' : 'text-teal-500';
-  const accentHover = employeeType === 'operativo' ? 'text-orange-700 bg-orange-50 hover:bg-orange-100' : 'text-teal-700 bg-teal-50 hover:bg-teal-100';
-  const accentSpinner = employeeType === 'operativo' ? 'border-orange-500' : 'border-teal-500';
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="mb-6">
-          <button onClick={onBack} className="flex items-center text-slate-600 hover:text-slate-800 transition-colors">
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            <span className="font-medium">Volver</span>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center gap-4 mb-6">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 text-slate-600 hover:text-slate-800 transition font-medium"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Volver
+          </button>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-slate-800">
+              {titleMap[statusFilter]} &mdash;{' '}
+              {employeeType === 'operativo' ? 'Operativo' : 'Administrativo'}
+            </h1>
+            <p className="text-sm text-slate-500">2da Evaluacion &mdash; Revision Junio 2026</p>
+          </div>
+          <button
+            onClick={onNew}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-white font-semibold transition shadow-sm ${
+              employeeType === 'operativo'
+                ? 'bg-orange-600 hover:bg-orange-700'
+                : 'bg-teal-600 hover:bg-teal-700'
+            }`}
+          >
+            <Plus className="w-4 h-4" />
+            Nueva Revision
           </button>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className={`bg-gradient-to-r ${accentGradient} px-8 py-6`}>
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-                  <FileText className="w-8 h-8" />
-                  Revisión de Metas — {employeeType === 'operativo' ? 'Operativo' : 'Administrativo'}
-                </h1>
-                <p className="text-white/80 mt-1">
-                  {titleMap[statusFilter]} · {reviews.length} revisión{reviews.length !== 1 ? 'es' : ''} registrada{reviews.length !== 1 ? 's' : ''}
-                  {filtered.length !== reviews.length && <span className="ml-2 text-white/60">({filtered.length} mostradas)</span>}
-                </p>
-              </div>
-              <button onClick={onNew} className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white text-slate-700 hover:bg-slate-100 font-semibold transition shadow-sm">
-                <Plus className="w-4 h-4" />
-                Nueva Revisión
-              </button>
-            </div>
+          <div className="p-4 border-b border-slate-100">
+            <input
+              type="text"
+              placeholder="Buscar por nombre, codigo o departamento..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+            />
           </div>
 
-          <div className="p-6">
-            <div className="relative mb-6">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Buscar por nombre, código o departamento..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-400 bg-white"
-              />
+          {loading ? (
+            <div className="p-12 text-center text-slate-500">Cargando revisiones...</div>
+          ) : filtered.length === 0 ? (
+            <div className="p-12 text-center">
+              <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-500 font-medium">No se encontraron revisiones</p>
+              <p className="text-slate-400 text-sm mt-1">
+                {search
+                  ? 'Intenta con otro termino de busqueda'
+                  : 'Crea una nueva revision para comenzar'}
+              </p>
             </div>
-
-            {loading ? (
-              <div className="text-center py-12">
-                <div className={`inline-block animate-spin rounded-full h-12 w-12 border-4 ${accentSpinner} border-t-transparent`} />
-                <p className="mt-4 text-slate-600">Cargando revisiones...</p>
-              </div>
-            ) : filtered.length === 0 ? (
-              <div className="text-center py-12 bg-slate-50 rounded-lg">
-                <FileText className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-                <p className="text-slate-600 text-lg font-medium">{search ? 'No se encontraron resultados' : 'No hay revisiones registradas'}</p>
-                <p className="text-slate-500 mt-2">{search ? 'Intenta con otro término de búsqueda' : 'Las revisiones aparecerán aquí una vez sean guardadas'}</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filtered.map((review, index) => {
-                  const statusInfo = STATUS_CONFIG[review.status] || STATUS_CONFIG.draft;
-                  const reviewDate = review.review_date
-                    ? new Date(review.review_date + 'T00:00:00').toLocaleDateString('es-HN')
-                    : new Date(review.created_at).toLocaleDateString('es-HN');
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100">
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Colaborador
+                  </th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Codigo
+                  </th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Departamento
+                  </th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Fecha Revision
+                  </th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Estado
+                  </th>
+                  <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {filtered.map((review) => {
+                  const statusInfo = STATUS_CONFIG[review.status] || STATUS_CONFIG['draft'];
                   return (
-                    <div key={review.id} className="border border-slate-200 rounded-lg p-6 hover:shadow-md transition">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-2 flex-wrap">
-                            <span className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${accentBg}`}>#{reviews.length - index}</span>
-                            <h3 className="text-lg font-bold text-slate-800">{review.employee_name}</h3>
-                            <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${statusInfo.color}`}>
-                              {statusInfo.icon}
-                              {statusInfo.label}
-                            </span>
+                    <tr key={review.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
+                              employeeType === 'operativo' ? 'bg-orange-100' : 'bg-teal-100'
+                            }`}
+                          >
+                            <User
+                              className={`w-4 h-4 ${
+                                employeeType === 'operativo' ? 'text-orange-600' : 'text-teal-600'
+                              }`}
+                            />
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-slate-600 mb-3">
-                            <div className="flex items-center gap-2"><User className={`w-4 h-4 ${accentText}`} /><span>{review.position || 'Sin puesto'}</span></div>
-                            <div className="flex items-center gap-2"><Building2 className={`w-4 h-4 ${accentText}`} /><span>{review.department || 'Sin departamento'}</span></div>
-                            <div className="flex items-center gap-2"><Calendar className={`w-4 h-4 ${accentText}`} /><span>{reviewDate}</span></div>
+                          <div>
+                            <p className="text-sm font-semibold text-slate-800">
+                              {review.employee_name}
+                            </p>
+                            <p className="text-xs text-slate-500">{review.position || '\u2014'}</p>
+                            {auditMap[review.id] && (
+                              <div className="flex items-center gap-1 mt-1">
+                                <User className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                                <span className="text-xs text-slate-500">
+                                  Evaluado por:{' '}
+                                  <span className="font-semibold text-slate-700">{auditMap[review.id].evaluator_name}</span>
+                                  {' \u2014 '}
+                                  {(() => {
+                                    const { date, time } = formatGMT6(auditMap[review.id].performed_at);
+                                    return <span>{date}, {time} (GMT-6)</span>;
+                                  })()}
+                                </span>
+                              </div>
+                            )}
                           </div>
-                          <div className="flex flex-wrap gap-4 text-xs text-slate-500">
-                            <span>Código: {review.review_code || '—'}</span>
-                            <span>Tipo: {employeeType === 'operativo' ? 'Operativo' : 'Administrativo'}</span>
-                          </div>
-                          {auditMap[review.id] && (
-                            <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
-                              <User className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-                              <span>Evaluado por: <span className="font-semibold text-slate-700">{auditMap[review.id].evaluator_name}</span> — {(() => { const { date, time } = formatGMT6(auditMap[review.id].performed_at); return <span>{date}, {time} (GMT-6)</span>; })()}</span>
-                            </div>
-                          )}
                         </div>
-                        <div className="flex gap-2 flex-shrink-0">
-                          <button onClick={() => { setModalReviewId(review.id); setModalViewOnly(true); }} className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition ${accentHover}`}>
-                            <Eye className="w-4 h-4" />
-                            Ver
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className="text-sm text-slate-600 font-mono">
+                          {review.review_code || '\u2014'}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-1.5 text-sm text-slate-600">
+                          <Building2 className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                          {review.department || '\u2014'}
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-1.5 text-sm text-slate-600">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                          {review.review_date
+                            ? new Date(review.review_date + 'T00:00:00').toLocaleDateString('es-HN')
+                            : new Date(review.created_at).toLocaleDateString('es-HN')}
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${statusInfo.color}`}
+                        >
+                          {statusInfo.icon}
+                          {statusInfo.label}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => onEdit(review.id)}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                              employeeType === 'operativo'
+                                ? 'bg-orange-50 text-orange-700 hover:bg-orange-100'
+                                : 'bg-teal-50 text-teal-700 hover:bg-teal-100'
+                            }`}
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            {review.status === 'completed' ? 'Ver' : 'Editar'}
                           </button>
-                          {review.status !== 'completed' && (
-                            <button onClick={() => { setModalReviewId(review.id); setModalViewOnly(false); }} className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition">
-                              <FileText className="w-4 h-4" />
-                              Editar
-                            </button>
-                          )}
-                          <button onClick={() => handleDelete(review.id, review.employee_name)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition">
-                            <Trash2 className="w-4 h-4" />
+                          <button
+                            onClick={() => handleDelete(review.id, review.employee_name)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-red-50 text-red-600 hover:bg-red-100"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
                             Eliminar
                           </button>
                         </div>
-                      </div>
-                    </div>
+                      </td>
+                    </tr>
                   );
                 })}
-              </div>
-            )}
+              </tbody>
+            </table>
+          )}
+
+          <div className="px-5 py-3 border-t border-slate-100 bg-slate-50">
+            <p className="text-xs text-slate-500">
+              {filtered.length} registro{filtered.length !== 1 ? 's' : ''} encontrado
+              {filtered.length !== 1 ? 's' : ''}
+            </p>
           </div>
         </div>
       </div>
-
-      {modalReviewId && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-50 rounded-xl shadow-xl max-w-7xl w-full max-h-[calc(100vh-32px)] overflow-hidden relative">
-            <div className="bg-blue-900 text-white px-6 py-4 flex items-center justify-between rounded-t-xl">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                Revisión de Metas
-              </h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => formRef.current?.downloadPDF()}
-                  className="p-2 hover:bg-blue-800 rounded-lg transition"
-                  title="Descargar PDF"
-                >
-                  <Download className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => formRef.current?.print()}
-                  className="p-2 hover:bg-blue-800 rounded-lg transition"
-                  title="Imprimir"
-                >
-                  <Printer className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setModalReviewId(null)}
-                  className="p-2 hover:bg-blue-800 rounded-lg transition"
-                  title="Cerrar"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-            <div className="overflow-y-auto max-h-[calc(100vh-120px)] p-6">
-              <JuneReviewFormNew
-                ref={formRef}
-                reviewId={modalReviewId}
-                employeeType={employeeType}
-                viewOnly={modalViewOnly}
-                onCancel={() => setModalReviewId(null)}
-                onSaved={() => { setModalReviewId(null); loadReviews(); }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
