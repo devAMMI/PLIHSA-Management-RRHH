@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { ArrowLeft, Save, Download, Printer, Upload, CheckCircle, Eye, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { buildStoragePath, storagePathToProxyUrl, BUCKET } from '../../lib/storagePaths';
@@ -65,7 +65,12 @@ const emptyCompetencies = (): CompetencyRow[] =>
     rating: null,
   }));
 
-export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', viewOnly = false, onCancel, onSaved }: JuneReviewFormNewProps) {
+export interface JuneReviewFormNewRef {
+  downloadPDF: () => Promise<void>;
+  print: () => void;
+}
+
+export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewFormNewProps>(function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', viewOnly = false, onCancel, onSaved }, ref) {
   const formRef = useRef<HTMLDivElement>(null);
   const { employee, systemUser } = useAuth();
   const pdfRef = useRef<HTMLDivElement>(null);
@@ -522,15 +527,10 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', v
     if (!source) throw new Error('El formulario no está disponible');
 
     const canvas = await html2canvas(source, {
-      scale: 2.5,
+      scale: 2,
       useCORS: true,
-      allowTaint: true,
       logging: false,
       backgroundColor: '#ffffff',
-      windowWidth: source.scrollWidth,
-      windowHeight: source.scrollHeight,
-      scrollX: 0,
-      scrollY: 0,
     });
 
     return { canvas, splitY: 0 };
@@ -641,6 +641,11 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', v
       setTimeout(() => printWindow.print(), 500);
     }
   };
+
+  useImperativeHandle(ref, () => ({
+    downloadPDF: handleDownloadPDF,
+    print: handlePrint,
+  }));
 
   if (loading) {
     return (
@@ -1388,4 +1393,4 @@ export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', v
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
-}
+});

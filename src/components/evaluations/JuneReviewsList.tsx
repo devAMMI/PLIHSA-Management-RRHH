@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Plus, User, Building2, Calendar, Clock, CheckCircle, AlertCircle, Eye, FileText, Trash2, Search, X } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { ArrowLeft, Plus, User, Building2, Calendar, Clock, CheckCircle, AlertCircle, Eye, FileText, Trash2, Search, X, Download, Printer } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { JuneReviewFormNew } from './JuneReviewFormNew';
+import { JuneReviewFormNew, JuneReviewFormNewRef } from './JuneReviewFormNew';
 
 interface JuneReview {
   id: string;
@@ -72,6 +72,7 @@ export function JuneReviewsList({
   const [search, setSearch] = useState('');
   const [modalReviewId, setModalReviewId] = useState<string | null>(null);
   const [modalViewOnly, setModalViewOnly] = useState(false);
+  const formRef = useRef<JuneReviewFormNewRef>(null);
 
   const titleMap: Record<string, string> = {
     all: 'Todas las Revisiones',
@@ -330,6 +331,20 @@ export function JuneReviewsList({
               </h2>
               <div className="flex gap-2">
                 <button
+                  onClick={() => formRef.current?.downloadPDF()}
+                  className="p-2 hover:bg-blue-800 rounded-lg transition"
+                  title="Descargar PDF"
+                >
+                  <Download className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => formRef.current?.print()}
+                  className="p-2 hover:bg-blue-800 rounded-lg transition"
+                  title="Imprimir"
+                >
+                  <Printer className="w-5 h-5" />
+                </button>
+                <button
                   onClick={() => setModalReviewId(null)}
                   className="p-2 hover:bg-blue-800 rounded-lg transition"
                   title="Cerrar"
@@ -340,6 +355,7 @@ export function JuneReviewsList({
             </div>
             <div className="overflow-y-auto max-h-[calc(100vh-120px)] p-6">
               <JuneReviewFormNew
+                ref={formRef}
                 reviewId={modalReviewId}
                 employeeType={employeeType}
                 viewOnly={modalViewOnly}
