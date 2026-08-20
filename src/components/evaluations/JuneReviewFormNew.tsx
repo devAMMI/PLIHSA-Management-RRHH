@@ -557,12 +557,6 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
       windowHeight: source.scrollHeight,
       scrollX: 0,
       scrollY: 0,
-      onclone: (clonedDoc: Document) => {
-        clonedDoc.querySelectorAll('.rating-checkbox').forEach((el) => {
-          const cb = el as HTMLInputElement;
-          cb.setAttribute('style', `width:14px;height:14px;accent-color:#1e3a5f;${cb.checked ? 'background:#1e3a5f;' : ''}`);
-        });
-      },
     });
 
     return { canvas, splitY: 0 };
@@ -905,7 +899,7 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
           <div style={{ display: 'table', width: '100%', borderCollapse: 'collapse', border: '1px solid #cbd5e1', marginBottom: '8px' }}>
             <div style={{ display: 'table-row' }}>
               <div style={{ display: 'table-cell', width: '150px', padding: '8px 12px', verticalAlign: 'middle', textAlign: 'center', borderRight: '1px solid #cbd5e1' }}>
-                <img src="/Logo_PLIHSA_BLUE.png" alt="PLIHSA" style={{ width: '120px', maxHeight: '44px', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
+                <img src="/Logo_PLIHSA_BLUE.png" alt="PLIHSA" style={{ width: '120px', height: '44px', display: 'block', margin: '0 auto' }} />
               </div>
               <div style={{ display: 'table-cell', padding: '8px 14px', verticalAlign: 'middle', textAlign: 'center' }}>
                 <div style={{ color: '#1e3a5f', fontWeight: 'bold', fontSize: '13px' }}>REVISION DE METAS INDIVIDUALES</div>
