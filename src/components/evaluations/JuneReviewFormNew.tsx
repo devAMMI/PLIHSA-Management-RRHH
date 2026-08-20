@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
-import { ArrowLeft, Save, Download, Printer, CheckCircle, Eye } from 'lucide-react';
+import { ArrowLeft, Save, Download, Printer, CheckCircle, Eye, FileCheck } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { buildStoragePath, storagePathToProxyUrl, BUCKET } from '../../lib/storagePaths';
 import { useAuth } from '../../contexts/AuthContext';
@@ -108,6 +108,9 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
   const [showDocViewer, setShowDocViewer] = useState(false);
   const [digitalPdfUrl, setDigitalPdfUrl] = useState<string | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
+  const [generatedPdfAt, setGeneratedPdfAt] = useState<string | null>(null);
+  const [savingPdf, setSavingPdf] = useState(false);
 
   const isReadOnly = viewOnly || status === 'completed';
   const isEditing = reviewId !== null;
@@ -246,6 +249,10 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
         setSignedDocFilename(rev.signed_document_filename);
         setSignedDocMimeType(rev.signed_document_mime_type);
         setSignedDocUploadedAt(rev.signed_document_uploaded_at);
+      }
+      if (rev.generated_pdf_url) {
+        setGeneratedPdfUrl(rev.generated_pdf_url);
+        setGeneratedPdfAt(rev.generated_pdf_uploaded_at);
       }
 
       const { data: goalsData } = await supabase
@@ -633,6 +640,68 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
     }
   };
 
+  const handleDownloadAndSavePDF = async () => {
+    if (!formRef.current || !selectedEmployee) {
+      setToast({ message: 'Seleccione un colaborador antes de generar el PDF', type: 'error' });
+      return;
+    }
+    if (!reviewId) {
+      setToast({ message: 'Guarde la revisión antes de generar el PDF', type: 'error' });
+      return;
+    }
+    setSavingPdf(true);
+    try {
+      const result = await generatePdfBlob();
+      if (!result) throw new Error('No se pudo generar el PDF');
+
+      const year = new Date().getFullYear();
+      const filePath = buildStoragePath({
+        docKind: 'revision-junio',
+        empType: employeeType === 'operativo' ? 'operativo' : 'administrativo',
+        year,
+        employee: { employee_code: selectedEmployee.employee_code || 'sincodigo', last_name: selectedEmployee.last_name || '' },
+        fileExt: 'pdf',
+      });
+
+      const { error: uploadErr } = await supabase.storage
+        .from(BUCKET)
+        .upload(filePath, result.blob, { cacheControl: '3600', upsert: true });
+      if (uploadErr) throw uploadErr;
+
+      const proxyUrl = storagePathToProxyUrl(filePath);
+      const now = new Date().toISOString();
+      const { error: dbErr } = await supabase
+        .from('june_reviews')
+        .update({
+          generated_pdf_url: proxyUrl,
+          generated_pdf_uploaded_at: now,
+        })
+        .eq('id', reviewId);
+      if (dbErr) throw dbErr;
+
+      setGeneratedPdfUrl(proxyUrl);
+      setGeneratedPdfAt(now);
+
+      const url = URL.createObjectURL(result.blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = result.fileName;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 2000);
+      setToast({ message: 'PDF generado, guardado y descargado correctamente', type: 'success' });
+    } catch (error) {
+      console.error('Error al guardar el PDF:', error);
+      setToast({ message: error instanceof Error ? error.message : 'Error al guardar el PDF', type: 'error' });
+    } finally {
+      setSavingPdf(false);
+    }
+  };
+
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
     const source = formRef.current;
@@ -697,6 +766,9 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
     print: handlePrint,
   }));
 
+  const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const resolveDocUrl = (url: string) => isLocalDev ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${url.replace(/^\/docs\//, '')}` : url;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -715,7 +787,17 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
           <ArrowLeft className="w-5 h-5 mr-2" />
           <span className="font-medium">Volver a la lista</span>
         </button>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          {reviewId && (
+            <button
+              onClick={handleDownloadAndSavePDF}
+              disabled={savingPdf || generatingPDF}
+              className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition disabled:opacity-50"
+            >
+              <FileCheck className="w-4 h-4" />
+              {savingPdf ? 'Guardando PDF...' : 'Descargar y Guardar PDF'}
+            </button>
+          )}
           <button
             onClick={handleDownloadPDF}
             disabled={generatingPDF}
@@ -1028,6 +1110,26 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
 
       {reviewId && (
         <div className="mt-6">
+          {generatedPdfUrl && (
+            <div className="mb-4 bg-teal-50 border border-teal-200 rounded-xl p-4 flex items-center gap-3">
+              <FileCheck className="w-5 h-5 text-teal-600 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-teal-800">PDF guardado en el sistema</p>
+                <p className="text-xs text-teal-600 mt-0.5">
+                  Generado el {generatedPdfAt ? new Date(generatedPdfAt).toLocaleString('es-HN') : ''}
+                </p>
+              </div>
+              <a
+                href={resolveDocUrl(generatedPdfUrl)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-teal-700 bg-white border border-teal-300 rounded-lg hover:bg-teal-50 transition"
+              >
+                <Eye className="w-4 h-4" />
+                Ver PDF
+              </a>
+            </div>
+          )}
           <GoalWorkflowStatus
             status={status as WorkflowStatus}
             signedDocumentUrl={signedDocUrl}
