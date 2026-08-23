@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Save, Printer, Pencil, X, ArrowLeft, Download, FileText, Eye } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { GoalWorkflowStatus } from './GoalWorkflowStatus';
 import { SignedDocumentUpload } from './SignedDocumentUpload';
 import { SignedDocumentViewer } from './SignedDocumentViewer';
@@ -195,162 +195,44 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
   };
 
   const generatePdfBlob = async (): Promise<{ url: string; fileName: string } | null> => {
+    if (!formRef.current) return null;
+
     try {
-      const doc = new jsPDF('p', 'mm', 'letter');
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 10;
-      const contentWidth = pageWidth - margin * 2;
-
-      let logoData: string | null = null;
-      try {
-        const resp = await fetch('/Logo_PLIHSA_BLUE.png');
-        if (resp.ok) {
-          const blob = await resp.blob();
-          logoData = await new Promise<string | null>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = () => resolve(null);
-            reader.readAsDataURL(blob);
-          });
-        }
-      } catch { /* skip logo */ }
-
-      let y = margin;
-
-      if (logoData) {
-        doc.addImage(logoData, 'PNG', margin, y, 25, 16);
-      }
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Definición de Factores y Revisión del', pageWidth / 2, y + 5, { align: 'center' });
-      doc.text('Desempeño Operativo', pageWidth / 2, y + 11, { align: 'center' });
-
-      doc.setFontSize(7);
-      doc.setFont('helvetica', 'normal');
-      doc.text('Código: PL-RH-P-002-F04', pageWidth - margin, y + 4, { align: 'right' });
-      doc.text('Versión: 01', pageWidth - margin, y + 9, { align: 'right' });
-      doc.text('Fecha Rev: 09/07/2025', pageWidth - margin, y + 14, { align: 'right' });
-
-      y += 20;
-      doc.setLineWidth(0.5);
-      doc.line(margin, y, pageWidth - margin, y);
-      y += 5;
-
-      const emp = definition.employee;
-      const rightCol = pageWidth / 2 + 5;
-      doc.setFontSize(9);
-
-      const leftFields: [string, string][] = [
-        ['Código:', emp.employee_code],
-        ['Nombre:', `${emp.first_name} ${emp.last_name}`],
-        ['Puesto:', emp.position],
-        ['Departamento:', emp.department?.name || 'N/A'],
-        ['Sub Depto:', subDepartment || ''],
-      ];
-      const rightFields: [string, string][] = [
-        ['Fecha de Ingreso:', new Date(emp.hire_date + 'T00:00:00').toLocaleDateString('es-HN')],
-        ['Jefe Inmediato:', emp.manager ? `${emp.manager.first_name} ${emp.manager.last_name}` : 'N/A'],
-        ['Fecha Definición:', new Date(definitionDate + 'T00:00:00').toLocaleDateString('es-HN')],
-      ];
-
-      const maxRows = Math.max(leftFields.length, rightFields.length);
-      for (let i = 0; i < maxRows; i++) {
-        if (i < leftFields.length) {
-          doc.setFont('helvetica', 'bold');
-          doc.text(leftFields[i][0], margin, y + i * 5);
-          doc.setFont('helvetica', 'normal');
-          doc.text(leftFields[i][1], margin + 24, y + i * 5);
-        }
-        if (i < rightFields.length) {
-          doc.setFont('helvetica', 'bold');
-          doc.text(rightFields[i][0], rightCol, y + i * 5);
-          doc.setFont('helvetica', 'normal');
-          doc.text(rightFields[i][1], rightCol + 30, y + i * 5);
-        }
-      }
-      y += maxRows * 5 + 5;
-
-      doc.setFillColor(30, 58, 138);
-      doc.rect(margin, y, contentWidth, 7, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.text('DEFINICIÓN DE FACTORES FUNCIONALES', margin + 2, y + 5);
-      doc.setTextColor(0, 0, 0);
-      y += 7;
-
-      autoTable(doc, {
-        head: [['No.', 'Funciones del Puesto', 'Resultados Esperados']],
-        body: functionalFactors.map(f => [String(f.number), f.jobFunction || '-', f.expectedResults || '-']),
-        startY: y,
-        margin: { left: margin, right: margin },
-        styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' as const },
-        headStyles: { fillColor: [241, 245, 249], textColor: 0, fontStyle: 'bold' as const },
-        columnStyles: { 0: { cellWidth: 12, halign: 'center' as const } },
+      const canvas = await html2canvas(formRef.current, {
+        scale: 2.5,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: formRef.current.scrollWidth,
+        windowHeight: formRef.current.scrollHeight,
+        scrollX: 0,
+        scrollY: 0
       });
-      y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 5;
 
-      doc.setFillColor(30, 58, 138);
-      doc.rect(margin, y, contentWidth, 7, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.text('DEFINICIÓN DE COMPETENCIAS CONDUCTUALES Y HABILIDADES TÉCNICAS', margin + 2, y + 5);
-      doc.setTextColor(0, 0, 0);
-      y += 7;
+      const imgWidth = 215.9;
+      const pageHeight = 279.4;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const imgData = canvas.toDataURL('image/png');
 
-      autoTable(doc, {
-        head: [['No.', 'Conductas y Habilidades Técnicas (Definir las 5 Principales)']],
-        body: behavioralCompetencies.map(c => [String(c.number), c.description || '-']),
-        startY: y,
-        margin: { left: margin, right: margin },
-        styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' as const },
-        headStyles: { fillColor: [241, 245, 249], textColor: 0, fontStyle: 'bold' as const },
-        columnStyles: { 0: { cellWidth: 12, halign: 'center' as const } },
-      });
-      y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 5;
+      const pdf = new jsPDF('p', 'mm', 'letter');
 
-      if (y > pageHeight - 60) {
-        doc.addPage();
-        y = margin;
+      if (imgHeight <= pageHeight) {
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      } else {
+        let position = 0;
+        let remainingHeight = imgHeight;
+        let firstPage = true;
+        while (remainingHeight > 0) {
+          if (!firstPage) pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, -position, imgWidth, imgHeight);
+          position += pageHeight;
+          remainingHeight -= pageHeight;
+          firstPage = false;
+        }
       }
 
-      const commentWidth = (contentWidth - 5) / 2;
-      doc.setFillColor(30, 58, 138);
-      doc.rect(margin, y, commentWidth, 6, 'F');
-      doc.rect(margin + commentWidth + 5, y, commentWidth, 6, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Comentarios Jefe Inmediato', margin + 2, y + 4);
-      doc.text('Comentarios del Colaborador', margin + commentWidth + 7, y + 4);
-      doc.setTextColor(0, 0, 0);
-      y += 6;
-
-      doc.setDrawColor(0, 0, 0);
-      doc.rect(margin, y, commentWidth, 30);
-      doc.rect(margin + commentWidth + 5, y, commentWidth, 30);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      doc.text(doc.splitTextToSize(managerComments || '', commentWidth - 4), margin + 2, y + 4);
-      doc.text(doc.splitTextToSize(employeeComments || '', commentWidth - 4), margin + commentWidth + 7, y + 4);
-      y += 35;
-
-      if (y > pageHeight - 30) {
-        doc.addPage();
-        y = margin;
-      }
-      y += 20;
-      doc.setLineWidth(0.5);
-      doc.line(margin + 10, y, margin + commentWidth - 10, y);
-      doc.line(margin + commentWidth + 15, y, pageWidth - margin - 10, y);
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Firma Colaborador', margin + commentWidth / 2, y + 5, { align: 'center' });
-      doc.text('Firma Jefe Inmediato', margin + commentWidth + 5 + commentWidth / 2, y + 5, { align: 'center' });
-
-      const pdfBlob = doc.output('blob');
+      const pdfBlob = pdf.output('blob');
       const url = URL.createObjectURL(pdfBlob);
       const fileName = `Definicion_Factores_Operativo_${definition.employee.first_name}_${definition.employee.last_name}_${new Date().toISOString().split('T')[0]}.pdf`;
       return { url, fileName };

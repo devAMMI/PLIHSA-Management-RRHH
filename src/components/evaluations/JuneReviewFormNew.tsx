@@ -1,12 +1,10 @@
-import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
-import { ArrowLeft, Save, Download, Printer, CheckCircle, Eye, FileCheck } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ArrowLeft, Save, Download, Printer, Upload, CheckCircle, Eye, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { buildStoragePath, storagePathToProxyUrl, BUCKET } from '../../lib/storagePaths';
 import { useAuth } from '../../contexts/AuthContext';
 import { Toast } from '../ui/Toast';
 import { SignedDocumentViewer } from '../goals/SignedDocumentViewer';
-import { GoalWorkflowStatus, WorkflowStatus } from '../goals/GoalWorkflowStatus';
-import { SignedDocumentUpload } from '../goals/SignedDocumentUpload';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -31,7 +29,6 @@ interface CompetencyRow {
 interface JuneReviewFormNewProps {
   reviewId: string | null;
   employeeType?: 'administrativo' | 'operativo';
-  viewOnly?: boolean;
   onCancel: () => void;
   onSaved: () => void;
 }
@@ -67,12 +64,7 @@ const emptyCompetencies = (): CompetencyRow[] =>
     rating: null,
   }));
 
-export interface JuneReviewFormNewRef {
-  downloadPDF: () => Promise<void>;
-  print: () => void;
-}
-
-export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewFormNewProps>(function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', viewOnly = false, onCancel, onSaved }, ref) {
+export function JuneReviewFormNew({ reviewId, employeeType = 'administrativo', onCancel, onSaved }: JuneReviewFormNewProps) {
   const formRef = useRef<HTMLDivElement>(null);
   const { employee, systemUser } = useAuth();
   const pdfRef = useRef<HTMLDivElement>(null);
@@ -107,12 +99,10 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showDocViewer, setShowDocViewer] = useState(false);
   const [digitalPdfUrl, setDigitalPdfUrl] = useState<string | null>(null);
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
-  const [generatedPdfAt, setGeneratedPdfAt] = useState<string | null>(null);
-  const [savingPdf, setSavingPdf] = useState(false);
+  const [embeddedPdfUrl, setEmbeddedPdfUrl] = useState<string | null>(null);
+  const [showEmbeddedPdf, setShowEmbeddedPdf] = useState(false);
 
-  const isReadOnly = viewOnly || status === 'completed';
+  const isReadOnly = status === 'completed';
   const isEditing = reviewId !== null;
 
   useEffect(() => {
@@ -249,10 +239,6 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
         setSignedDocFilename(rev.signed_document_filename);
         setSignedDocMimeType(rev.signed_document_mime_type);
         setSignedDocUploadedAt(rev.signed_document_uploaded_at);
-      }
-      if (rev.generated_pdf_url) {
-        setGeneratedPdfUrl(rev.generated_pdf_url);
-        setGeneratedPdfAt(rev.generated_pdf_uploaded_at);
       }
 
       const { data: goalsData } = await supabase
@@ -527,249 +513,101 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
     }
   };
 
-  const handleUploadSuccess = async () => {
-    setShowUploadModal(false);
-    setSelectedFile(null);
-    if (reviewId) {
-      await loadReview(reviewId);
-    }
-    setToast({ message: 'Documento firmado subido exitosamente', type: 'success' });
-  };
-
-  type PdfRender = {
-    canvas: HTMLCanvasElement;
-    splitY: number;
-  };
-
-  const renderFormToCanvas = async (): Promise<PdfRender> => {
-    const source = formRef.current;
-    if (!source) throw new Error('El formulario no está disponible');
-
-    source.setAttribute('data-pdf-form', 'true');
-
-    const canvas = await html2canvas(source, {
-      scale: 2.5,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      backgroundColor: '#ffffff',
-      windowWidth: source.scrollWidth,
-      windowHeight: source.scrollHeight,
-      scrollX: 0,
-      scrollY: 0,
-    });
-
-    return { canvas, splitY: 0 };
-  };
-
-  const canvasToPdfBlob = ({ canvas }: PdfRender): Blob => {
-    const imgWidth = 215.9;
-    const pageHeight = 279.4;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    const imgData = canvas.toDataURL('image/png');
-
-    const pdf = new jsPDF('p', 'mm', 'letter');
-
-    if (imgHeight <= pageHeight) {
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-    } else {
-      let position = 0;
-      let remainingHeight = imgHeight;
-      let firstPage = true;
-      while (remainingHeight > 0) {
-        if (!firstPage) pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, -position, imgWidth, imgHeight);
-        position += pageHeight;
-        remainingHeight -= pageHeight;
-        firstPage = false;
-      }
-    }
-    return pdf.output('blob');
-  };
-
-  const generatePdfBlob = async (): Promise<{ blob: Blob; fileName: string } | null> => {
+  const generatePdfUrl = async (): Promise<string | null> => {
+    const el = pdfRef.current;
+    if (!el) return null;
     try {
-      const rendered = await renderFormToCanvas();
-      if (rendered.canvas.width === 0 || rendered.canvas.height === 0) {
-        throw new Error('El formulario está vacío');
+      const canvas = await html2canvas(el, {
+        scale: 2.5,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: el.offsetWidth,
+        windowHeight: el.offsetHeight,
+        scrollX: 0,
+        scrollY: 0,
+      });
+      const imgWidth = 215.9;
+      const pageHeight = 279.4;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'letter');
+      if (imgHeight <= pageHeight) {
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      } else {
+        let position = 0;
+        let remaining = imgHeight;
+        let first = true;
+        while (remaining > 0) {
+          if (!first) pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, -position, imgWidth, imgHeight);
+          position += pageHeight;
+          remaining -= pageHeight;
+          first = false;
+        }
       }
+      const pdfBlob = pdf.output('blob');
+      return URL.createObjectURL(pdfBlob);
+    } catch {
+      return null;
+    }
+  };
 
-      const pdfBlob = canvasToPdfBlob(rendered);
+  const handleDownloadPDF = async () => {
+    if (!pdfRef.current) return;
+    setGeneratingPDF(true);
+    try {
+      const pdfUrl = await generatePdfUrl();
+      if (!pdfUrl) throw new Error('No se pudo generar el PDF');
       const empName = selectedEmployee
         ? `${selectedEmployee.first_name}_${selectedEmployee.last_name}`
         : 'Revision';
       const typeLabel = employeeType === 'operativo' ? 'Operativo' : 'Administrativo';
       const fileName = `Revision_Junio_${typeLabel}_${empName}_${reviewDate || 'borrador'}.pdf`;
-      return { blob: pdfBlob, fileName };
-    } catch (error) {
-      console.error('Error al generar el PDF:', error);
-      return null;
-    }
-  };
-
-  const generatePdfUrl = async (): Promise<string | null> => {
-    const result = await generatePdfBlob();
-    return result ? URL.createObjectURL(result.blob) : null;
-  };
-
-  const handleDownloadPDF = async () => {
-    if (!formRef.current || !selectedEmployee) {
-      setToast({ message: 'Seleccione un colaborador antes de generar el PDF', type: 'error' });
-      return;
-    }
-    setGeneratingPDF(true);
-    try {
-      const result = await generatePdfBlob();
-      if (!result) throw new Error('No se pudo generar el PDF');
-
-      const url = URL.createObjectURL(result.blob);
+      window.open(pdfUrl, '_blank');
       const link = document.createElement('a');
-      link.href = url;
-      link.download = result.fileName;
-      link.style.display = 'none';
-      document.body.appendChild(link);
+      link.href = pdfUrl;
+      link.download = fileName;
       link.click();
-      setTimeout(() => {
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }, 2000);
+      setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
       setToast({ message: 'PDF descargado correctamente', type: 'success' });
-    } catch (error) {
-      console.error('Error al generar el PDF:', error);
-      setToast({ message: error instanceof Error ? error.message : 'Error al generar el PDF', type: 'error' });
+    } catch {
+      setToast({ message: 'Error al generar el PDF', type: 'error' });
     } finally {
       setGeneratingPDF(false);
     }
   };
 
-  const handleDownloadAndSavePDF = async () => {
-    if (!formRef.current || !selectedEmployee) {
-      setToast({ message: 'Seleccione un colaborador antes de generar el PDF', type: 'error' });
-      return;
-    }
-    if (!reviewId) {
-      setToast({ message: 'Guarde la revisión antes de generar el PDF', type: 'error' });
-      return;
-    }
-    setSavingPdf(true);
+  const handleViewPDF = async () => {
+    setGeneratingPDF(true);
     try {
-      const result = await generatePdfBlob();
-      if (!result) throw new Error('No se pudo generar el PDF');
-
-      const year = new Date().getFullYear();
-      const filePath = buildStoragePath({
-        docKind: 'revision-junio',
-        empType: employeeType === 'operativo' ? 'operativo' : 'administrativo',
-        year,
-        employee: { employee_code: selectedEmployee.employee_code || 'sincodigo', last_name: selectedEmployee.last_name || '' },
-        fileExt: 'pdf',
-      });
-
-      const { error: uploadErr } = await supabase.storage
-        .from(BUCKET)
-        .upload(filePath, result.blob, { cacheControl: '3600', upsert: true });
-      if (uploadErr) throw uploadErr;
-
-      const proxyUrl = storagePathToProxyUrl(filePath);
-      const now = new Date().toISOString();
-      const { error: dbErr } = await supabase
-        .from('june_reviews')
-        .update({
-          generated_pdf_url: proxyUrl,
-          generated_pdf_uploaded_at: now,
-        })
-        .eq('id', reviewId);
-      if (dbErr) throw dbErr;
-
-      setGeneratedPdfUrl(proxyUrl);
-      setGeneratedPdfAt(now);
-
-      const url = URL.createObjectURL(result.blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = result.fileName;
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      setTimeout(() => {
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }, 2000);
-      setToast({ message: 'PDF generado, guardado y descargado correctamente', type: 'success' });
-    } catch (error) {
-      console.error('Error al guardar el PDF:', error);
-      setToast({ message: error instanceof Error ? error.message : 'Error al guardar el PDF', type: 'error' });
+      const url = await generatePdfUrl();
+      if (url) {
+        if (embeddedPdfUrl) URL.revokeObjectURL(embeddedPdfUrl);
+        setEmbeddedPdfUrl(url);
+        setShowEmbeddedPdf(true);
+      }
+    } catch {
+      setToast({ message: 'Error al generar la vista previa', type: 'error' });
     } finally {
-      setSavingPdf(false);
+      setGeneratingPDF(false);
     }
   };
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
-    const source = formRef.current;
-    if (printWindow && source) {
-      const printableForm = source.cloneNode(true) as HTMLDivElement;
-      const sourceControls = source.querySelectorAll('input, textarea, select');
-      const printableControls = printableForm.querySelectorAll('input, textarea, select');
-
-      sourceControls.forEach((control, index) => {
-        const printableControl = printableControls[index];
-        if (control instanceof HTMLInputElement && printableControl instanceof HTMLInputElement) {
-          printableControl.checked = control.checked;
-          printableControl.value = control.value;
-          if (control.checked) printableControl.setAttribute('checked', '');
-          else printableControl.removeAttribute('checked');
-          printableControl.setAttribute('value', control.value);
-        } else if (control instanceof HTMLTextAreaElement && printableControl instanceof HTMLTextAreaElement) {
-          printableControl.value = control.value;
-          printableControl.textContent = control.value;
-        } else if (control instanceof HTMLSelectElement && printableControl instanceof HTMLSelectElement) {
-          printableControl.value = control.value;
-          Array.from(printableControl.options).forEach(option => {
-            option.toggleAttribute('selected', option.value === control.value);
-          });
-        }
-      });
-
+    if (printWindow && pdfRef.current) {
       const styles = Array.from(document.styleSheets)
-        .map(styleSheet => {
-          try {
-            return Array.from(styleSheet.cssRules)
-              .map(rule => rule.cssText)
-              .join('\n');
-          } catch {
-            return '';
-          }
-        })
-        .join('\n');
-
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Imprimir Revisión de Metas</title>
-            <style>
-              ${styles}
-              body { margin: 0; padding: 20px; }
-              @media print {
-                body { margin: 0; padding: 0; }
-              }
-            </style>
-          </head>
-          <body>${printableForm.innerHTML}</body>
-        </html>
-      `);
+        .map(ss => {
+          try { return Array.from(ss.cssRules).map(r => r.cssText).join('\n'); }
+          catch { return ''; }
+        }).join('\n');
+      printWindow.document.write(`<html><head><title>Revision Junio</title><style>${styles}body{margin:0;padding:20px}@media print{body{margin:0;padding:0}}</style></head><body>${pdfRef.current.innerHTML}</body></html>`);
       printWindow.document.close();
       setTimeout(() => printWindow.print(), 500);
     }
   };
-
-  useImperativeHandle(ref, () => ({
-    downloadPDF: handleDownloadPDF,
-    print: handlePrint,
-  }));
-
-  const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  const resolveDocUrl = (url: string) => isLocalDev ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${url.replace(/^\/docs\//, '')}` : url;
 
   if (loading) {
     return (
@@ -789,17 +627,15 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
           <ArrowLeft className="w-5 h-5 mr-2" />
           <span className="font-medium">Volver a la lista</span>
         </button>
-        <div className="flex items-center gap-3 flex-wrap">
-          {reviewId && (
-            <button
-              onClick={handleDownloadAndSavePDF}
-              disabled={savingPdf || generatingPDF}
-              className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition disabled:opacity-50"
-            >
-              <FileCheck className="w-4 h-4" />
-              {savingPdf ? 'Guardando PDF...' : 'Descargar y Guardar PDF'}
-            </button>
-          )}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleViewPDF}
+            disabled={generatingPDF}
+            className="flex items-center gap-2 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition disabled:opacity-50"
+          >
+            <Eye className="w-4 h-4" />
+            {generatingPDF ? 'Generando...' : 'Ver PDF'}
+          </button>
           <button
             onClick={handleDownloadPDF}
             disabled={generatingPDF}
@@ -896,18 +732,8 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
       >
         <div style={{ padding: '16px' }}>
 
-          <div style={{ display: 'table', width: '100%', borderCollapse: 'collapse', border: '1px solid #cbd5e1', marginBottom: '8px' }}>
-            <div style={{ display: 'table-row' }}>
-              <div style={{ display: 'table-cell', width: '150px', padding: '8px 12px', verticalAlign: 'middle', textAlign: 'center', borderRight: '1px solid #cbd5e1' }}>
-                <img src="/Logo_PLIHSA_BLUE.png" alt="PLIHSA" style={{ width: '120px', height: '44px', display: 'block', margin: '0 auto' }} />
-              </div>
-              <div style={{ display: 'table-cell', padding: '8px 14px', verticalAlign: 'middle', textAlign: 'center' }}>
-                <div style={{ color: '#1e3a5f', fontWeight: 'bold', fontSize: '13px' }}>REVISION DE METAS INDIVIDUALES</div>
-                <div style={{ color: '#475569', fontSize: '11px', marginTop: '4px' }}>
-                  Colaborador: <strong style={{ color: '#1e293b' }}>{selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : 'Seleccione un colaborador'}</strong>
-                </div>
-              </div>
-            </div>
+          <div style={{ background: '#1e3a5f', color: 'white', padding: '6px 12px', fontWeight: 'bold', fontSize: '12px', textAlign: 'center' }}>
+            REVISION DE METAS INDIVIDUALES
           </div>
 
           <table style={{ width: '100%', borderCollapse: 'collapse', borderLeft: '1px solid #1e3a5f', borderRight: '1px solid #1e3a5f', borderBottom: '1px solid #1e3a5f' }}>
@@ -1097,9 +923,9 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
             </tbody>
           </table>
 
-          <div style={{ display: 'flex', padding: '32px 16px 12px', marginTop: '4px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', padding: '32px 16px 12px', gap: '24px', marginTop: '4px' }}>
             {['Firma Colaborador', 'Firma Jefe Inmediato', 'Firma RRHH'].map(label => (
-              <div key={label} style={{ flex: '1 1 0', textAlign: 'center', marginRight: '24px' }}>
+              <div key={label} style={{ textAlign: 'center' }}>
                 <div style={{ borderTop: '1px solid #1e293b', paddingTop: '4px', marginTop: '24px' }}>
                   <p style={{ fontSize: '10px', fontWeight: '600', color: '#1e293b' }}>{label}</p>
                 </div>
@@ -1111,73 +937,204 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
       </div>
 
       {reviewId && (
-        <div className="mt-6">
-          {generatedPdfUrl && (
-            <div className="mb-4 bg-teal-50 border border-teal-200 rounded-xl p-4 flex items-center gap-3">
-              <FileCheck className="w-5 h-5 text-teal-600 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-teal-800">PDF guardado en el sistema</p>
-                <p className="text-xs text-teal-600 mt-0.5">
-                  Generado el {generatedPdfAt ? new Date(generatedPdfAt).toLocaleString('es-HN') : ''}
+        <div className="mt-6 bg-white border border-slate-200 rounded-xl shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              {status === 'completed' ? (
+                <CheckCircle className="w-6 h-6 text-green-600" />
+              ) : status === 'pending_signature' ? (
+                <Upload className="w-6 h-6 text-amber-500" />
+              ) : (
+                <FileText className="w-6 h-6 text-slate-500" />
+              )}
+              <div>
+                <h3 className="font-semibold text-slate-800">Estado del Documento</h3>
+                <p className="text-sm text-slate-500">
+                  {status === 'completed' ? 'Firmado y finalizado' : status === 'pending_signature' ? 'Esperando firma manual' : 'En edicion'}
                 </p>
               </div>
-              <a
-                href={resolveDocUrl(generatedPdfUrl)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-teal-700 bg-white border border-teal-300 rounded-lg hover:bg-teal-50 transition"
-              >
-                <Eye className="w-4 h-4" />
-                Ver PDF
-              </a>
+            </div>
+            <span className={`px-4 py-2 rounded-full border font-medium text-sm ${
+              status === 'completed' ? 'bg-green-100 text-green-700 border-green-300'
+              : status === 'pending_signature' ? 'bg-amber-100 text-amber-700 border-amber-300'
+              : 'bg-slate-100 text-slate-700 border-slate-300'
+            }`}>
+              {status === 'completed' ? 'Completado' : status === 'pending_signature' ? 'Pendiente Firma' : 'Borrador'}
+            </span>
+          </div>
+
+          {status !== 'completed' && (
+            <div className={`rounded-lg p-4 mb-4 ${signedDocUrl ? 'bg-amber-50 border border-amber-200' : 'bg-blue-50 border border-blue-200'}`}>
+              {!signedDocUrl ? (
+                <>
+                  <p className="text-sm text-blue-800 mb-3">
+                    <strong>Siguiente paso:</strong> Descarga el PDF, firmalo a mano, escanealo y subelo aqui.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={handleDownloadPDF} disabled={generatingPDF}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium disabled:opacity-50">
+                      <Download className="w-4 h-4" />
+                      Descargar PDF
+                    </button>
+                    <button onClick={handlePrint}
+                      className="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition text-sm font-medium">
+                      <Printer className="w-4 h-4" />
+                      Imprimir
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 p-3 rounded-lg border border-green-200">
+                    <CheckCircle className="w-4 h-4" />
+                    <span className="font-medium">Documento firmado subido. Presiona "Finalizar Revision" para completar el proceso.</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={async () => {
+                        const url = await generatePdfUrl();
+                        setDigitalPdfUrl(url);
+                        setShowDocViewer(true);
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition text-sm font-medium"
+                    >
+                      <Eye className="w-4 h-4" />
+                      Ver Ambos Documentos
+                    </button>
+                    {!isReadOnly && (
+                      <button
+                        onClick={handleFinalize}
+                        disabled={completing}
+                        className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-semibold shadow-sm disabled:opacity-50"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        {completing ? 'Finalizando...' : 'Finalizar Revision'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
-          <GoalWorkflowStatus
-            status={status as WorkflowStatus}
-            signedDocumentUrl={signedDocUrl}
-            onPrint={handlePrint}
-            onDownloadPDF={handleDownloadPDF}
-            onUploadSigned={!isReadOnly ? () => setShowUploadModal(true) : undefined}
-            onMarkAsCompleted={!isReadOnly ? handleFinalize : undefined}
-          />
 
-          {(status === 'pending_signature' || status === 'completed') && signedDocUrl && (
-            <div className="mt-4 flex justify-center">
+          {status === 'completed' && signedDocUrl && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+              <p className="text-sm text-green-800 mb-3">
+                <strong>Proceso completado:</strong> El documento ha sido firmado y finalizado exitosamente.
+              </p>
               <button
                 onClick={async () => {
                   const url = await generatePdfUrl();
                   setDigitalPdfUrl(url);
                   setShowDocViewer(true);
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition text-sm font-medium"
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition text-sm font-medium"
               >
                 <Eye className="w-4 h-4" />
                 Ver Ambos Documentos
               </button>
             </div>
           )}
+
+          {!isReadOnly && (
+            <>
+              {signedDocUrl && (
+                <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                  <FileText className="w-5 h-5 text-green-600 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-green-800 truncate">{signedDocFilename || 'Documento firmado'}</p>
+                    {signedDocUploadedAt && (
+                      <p className="text-xs text-green-600">Subido el {new Date(signedDocUploadedAt).toLocaleString('es-HN')}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="border-2 border-dashed border-slate-300 rounded-lg p-5 text-center hover:border-teal-400 transition">
+                <input type="file" id="june-review-signed-doc" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileSelect} className="hidden" />
+                <label htmlFor="june-review-signed-doc" className="cursor-pointer flex flex-col items-center gap-2">
+                  {selectedFile ? (
+                    <>
+                      <FileText className="w-9 h-9 text-teal-600" />
+                      <div className="text-sm text-slate-700">
+                        <p className="font-medium">{selectedFile.name}</p>
+                        <p className="text-slate-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                      </div>
+                      <button type="button" onClick={(e) => { e.preventDefault(); setSelectedFile(null); }}
+                        className="text-sm text-red-600 hover:text-red-700">Eliminar archivo</button>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-9 h-9 text-slate-400" />
+                      <div className="text-sm text-slate-600">
+                        <p className="font-medium">{signedDocUrl ? 'Reemplazar documento firmado' : 'Haz clic para seleccionar el documento firmado'}</p>
+                        <p className="text-slate-500 mt-1">PDF, JPG o PNG (maximo 10MB)</p>
+                      </div>
+                    </>
+                  )}
+                </label>
+              </div>
+
+              {selectedFile && (
+                <div className="mt-3">
+                  <button onClick={handleUploadSignedDoc} disabled={uploadingDoc}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-medium disabled:opacity-50">
+                    <Upload className="w-4 h-4" />
+                    {uploadingDoc ? 'Subiendo...' : 'Subir Documento Firmado'}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 
-      {showUploadModal && reviewId && (
-        <SignedDocumentUpload
-          goalDefinitionId={reviewId}
-          definitionType={employeeType === 'operativo' ? 'operative' : 'administrative'}
-          evalYear={new Date().getFullYear()}
-          employee={selectedEmployee ? {
-            id: selectedEmployee.id,
-            employee_code: selectedEmployee.employee_code,
-            first_name: selectedEmployee.first_name,
-            last_name: selectedEmployee.last_name
-          } : undefined}
-          currentDocumentUrl={signedDocUrl || undefined}
-          onSuccess={handleUploadSuccess}
-          onCancel={() => setShowUploadModal(false)}
-          tableName="june_reviews"
-          docKind="revision-junio"
-          phaseLabel="Revision de Metas"
-          evalPhase={2}
-        />
+      {showEmbeddedPdf && embeddedPdfUrl && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[92vh] flex flex-col">
+            <div className="bg-[#1e3a5f] text-white px-6 py-4 flex items-center justify-between rounded-t-xl">
+              <div className="flex items-center gap-3">
+                <FileText className="w-6 h-6" />
+                <div>
+                  <h2 className="text-lg font-bold">Vista Previa del PDF</h2>
+                  <p className="text-sm text-blue-200">
+                    {selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : 'Revision de Junio'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={generatingPDF}
+                  className="flex items-center gap-2 px-4 py-2 bg-white text-[#1e3a5f] rounded-lg hover:bg-blue-50 transition font-medium text-sm disabled:opacity-50"
+                >
+                  <Download className="w-4 h-4" />
+                  Descargar
+                </button>
+                <button
+                  onClick={handlePrint}
+                  className="flex items-center gap-2 px-4 py-2 bg-white text-[#1e3a5f] rounded-lg hover:bg-blue-50 transition font-medium text-sm"
+                >
+                  <Printer className="w-4 h-4" />
+                  Imprimir
+                </button>
+                <button
+                  onClick={() => { setShowEmbeddedPdf(false); URL.revokeObjectURL(embeddedPdfUrl); setEmbeddedPdfUrl(null); }}
+                  className="p-2 hover:bg-blue-800 rounded-lg transition"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 bg-slate-100 p-2 overflow-hidden">
+              <iframe
+                src={embeddedPdfUrl}
+                className="w-full h-full rounded border border-slate-300 bg-white"
+                title="Vista previa PDF"
+              />
+            </div>
+          </div>
+        </div>
       )}
 
       {showDocViewer && signedDocUrl && (
@@ -1195,17 +1152,15 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
       <div
         ref={pdfRef}
         style={{
-          position: 'absolute',
+          position: 'fixed',
+          top: '-9999px',
           left: '-9999px',
-          top: '0',
           width: '860px',
           fontFamily: 'Arial, Helvetica, sans-serif',
           fontSize: '10px',
           background: 'white',
           padding: '14px 18px',
           boxSizing: 'border-box',
-          opacity: '1',
-          pointerEvents: 'none',
         }}
         aria-hidden="true"
       >
@@ -1213,17 +1168,17 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
         <div style={{ border: '2px solid #cbd5e1', marginBottom: '8px' }}>
           <div style={{ display: 'table', width: '100%', borderCollapse: 'collapse', borderBottom: '2px solid #cbd5e1' }}>
             <div style={{ display: 'table-row' }}>
-              <div style={{ display: 'table-cell', width: '125px', padding: '5px 8px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
-                <img src="/Logo_PLIHSA_BLUE.png" alt="Logo PLIHSA" style={{ width: '105px', height: '48px', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
+              <div style={{ display: 'table-cell', width: '110px', padding: '4px 6px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
+                <img src="https://i.imgur.com/hii0TM1.png" alt="PLIHSA" crossOrigin="anonymous" style={{ maxWidth: '90px', height: 'auto', display: 'block', margin: '0 auto' }} />
               </div>
-              <div style={{ display: 'table-cell', padding: '5px 12px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
-                <span style={{ display: 'block', width: '100%', fontSize: '13px', fontWeight: '700', color: '#1e293b', textAlign: 'center' }}>
+              <div style={{ display: 'table-cell', padding: '4px 8px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
+                <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#1e293b' }}>
                   {employeeType === 'operativo'
                     ? 'Revisión del Desempeño Operativo'
                     : 'Revisión del Desempeño Administrativo'}
                 </span>
               </div>
-              <div style={{ display: 'table-cell', width: '170px', verticalAlign: 'middle', fontSize: '9px', textAlign: 'left' }}>
+              <div style={{ display: 'table-cell', width: '150px', verticalAlign: 'middle', fontSize: '8px' }}>
                 <div style={{ borderBottom: '1px solid #cbd5e1', padding: '3px 7px' }}>
                   <span style={{ fontWeight: '700' }}>Codigo:</span> {'PL-RH-P-002-F01'}
                 </div>
@@ -1446,4 +1401,4 @@ export const JuneReviewFormNew = forwardRef<JuneReviewFormNewRef, JuneReviewForm
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
-});
+}

@@ -11,10 +11,6 @@
     {
       "source": "/((?!api|docs|storage|assets|favicon|.*\\..*).*)",
       "destination": "/index.html"
-    },
-    {
-      "source": "/plihsa/:path*",
-      "destination": "/index.html"
     }
   ],
   "headers": [
