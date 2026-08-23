@@ -21,6 +21,7 @@ import { SQLExecutor } from './components/debug/SQLExecutor';
 import { GoalDefinitionsHome } from './components/goals/GoalDefinitionsHome';
 import { GoalDefinitionsList } from './components/goals/GoalDefinitionsList';
 import { EvaluacionJunio } from './components/evaluations/EvaluacionJunio';
+import { EvaluacionJunioV2 } from './components/evaluations/EvaluacionJunioV2';
 import { EvaluationAuditLog } from './components/audit/EvaluationAuditLog';
 import { ReportesView } from './components/reports/ReportesView';
 
@@ -81,6 +82,8 @@ function AppContent() {
         return 'Definiciones de Metas Guardadas';
       case 'evaluacion-junio':
         return 'Revisión de Metas';
+      case 'evaluacion-junio-v2':
+        return 'Revisión de Metas v2';
       case 'evaluacion-final':
         return 'Evaluación Final';
       case 'audit-log':
@@ -142,6 +145,8 @@ function AppContent() {
         return <GoalDefinitionsList />;
       case 'evaluacion-junio':
         return <EvaluacionJunio />;
+      case 'evaluacion-junio-v2':
+        return <EvaluacionJunioV2 />;
       case 'audit-log':
         return <EvaluationAuditLog />;
       case 'evaluacion-final':
@@ -161,21 +166,30 @@ function AppContent() {
     }
   };
 
+  const mainClass = [
+    'employees',
+    'evaluation-admin-enero',
+    'evaluation-operative-enero',
+    'evaluacion-administrativa-nueva',
+    'nueva-evaluacion-administrativa',
+  ].includes(currentView)
+    ? 'flex-1 bg-slate-50 overflow-hidden'
+    : [
+        'evaluacion-junio',
+        'evaluacion-junio-v2',
+        'goal-definition-enero',
+        'dashboard',
+        'audit-log',
+      ].includes(currentView)
+      ? 'flex-1 bg-slate-50 overflow-y-auto'
+      : 'flex-1 bg-slate-50 overflow-y-auto p-8';
+
   return (
     <div className="flex h-screen bg-slate-100">
       <Sidebar currentView={currentView} onViewChange={setCurrentView} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header title={getViewTitle()} />
-        <main className={`flex-1 bg-slate-50 ${[
-          'employees',
-          'evaluation-admin-enero',
-          'evaluation-operative-enero',
-          'evaluacion-administrativa-nueva',
-          'nueva-evaluacion-administrativa',
-        ].includes(currentView) ? 'overflow-hidden' : [
-          'evaluacion-junio',
-          'goal-definition-enero',
-        ].includes(currentView) ? 'overflow-y-auto' : ['dashboard', 'audit-log'].includes(currentView) ? 'overflow-y-auto' : 'overflow-y-auto p-8'}`}>
+        <main className={mainClass}>
           {renderView()}
         </main>
       </div>

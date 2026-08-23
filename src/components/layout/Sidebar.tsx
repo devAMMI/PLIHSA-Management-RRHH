@@ -17,6 +17,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
     { id: 'employees', label: 'Empleados', icon: Users },
     { id: 'goal-definition-enero', label: 'Definición de Metas', icon: null, phaseNumber: 1, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
     { id: 'evaluacion-junio', label: 'Revisión de Metas', icon: null, phaseNumber: 2, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
+    { id: 'evaluacion-junio-v2', label: 'Revisión de Metas v2', icon: null, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
     { id: 'evaluacion-final', label: 'Evaluación Final', icon: null, phaseNumber: 3, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
     { id: 'evaluation-admin-enero', label: 'Evaluación Administrativa', icon: ClipboardCheck, requiredRoles: ['superadmin', 'rrhh', 'manager'] },
     { id: 'evaluation-operative-enero', label: 'Evaluación Operativa', icon: ClipboardCheck, requiredRoles: ['superadmin', 'rrhh', 'manager'] },
