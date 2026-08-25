@@ -511,9 +511,9 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
     }
   };
 
-  const generatePdfUrl = (): string | null => {
+  const generatePdfUrl = async (): Promise<string | null> => {
     try {
-      return generateJuneReviewPdf({
+      return await generateJuneReviewPdf({
         employeeType,
         employeeCode: selectedEmployee?.employee_code || '',
         employeeName: selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : '',
@@ -532,10 +532,10 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     setGeneratingPDF(true);
     try {
-      const pdfUrl = generatePdfUrl();
+      const pdfUrl = await generatePdfUrl();
       if (!pdfUrl) throw new Error('No se pudo generar el PDF');
       const empName = selectedEmployee
         ? `${selectedEmployee.first_name}_${selectedEmployee.last_name}`
@@ -557,10 +557,10 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
     }
   };
 
-  const handleViewPDF = () => {
+  const handleViewPDF = async () => {
     setGeneratingPDF(true);
     try {
-      const url = generatePdfUrl();
+      const url = await generatePdfUrl();
       if (url) {
         if (embeddedPdfUrl) URL.revokeObjectURL(embeddedPdfUrl);
         setEmbeddedPdfUrl(url);
@@ -573,10 +573,10 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
     }
   };
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     setGeneratingPDF(true);
     try {
-      const url = generatePdfUrl();
+      const url = await generatePdfUrl();
       if (!url) throw new Error('No se pudo generar el PDF');
       const printWindow = window.open(url, '_blank');
       if (printWindow) {
@@ -983,8 +983,8 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <button
-                      onClick={() => {
-                        const url = generatePdfUrl();
+                      onClick={async () => {
+                        const url = await generatePdfUrl();
                         setDigitalPdfUrl(url);
                         setShowDocViewer(true);
                       }}
@@ -1015,8 +1015,8 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
                 <strong>Proceso completado:</strong> El documento ha sido firmado y finalizado exitosamente.
               </p>
               <button
-                onClick={() => {
-                  const url = generatePdfUrl();
+                onClick={async () => {
+                  const url = await generatePdfUrl();
                   setDigitalPdfUrl(url);
                   setShowDocViewer(true);
                 }}

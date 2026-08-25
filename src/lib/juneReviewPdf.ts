@@ -76,7 +76,27 @@ function splitText(doc: jsPDF, text: string, maxWidth: number): string[] {
   return doc.splitTextToSize(text, maxWidth);
 }
 
-export function generateJuneReviewPdf(data: JuneReviewPdfData): string {
+let logoDataUrlCache: string | null = null;
+
+async function getLogoDataUrl(): Promise<string | null> {
+  if (logoDataUrlCache) return logoDataUrlCache;
+  try {
+    const response = await fetch('/Logo_PLIHSA_BLUE.png');
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    logoDataUrlCache = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    return logoDataUrlCache;
+  } catch {
+    return null;
+  }
+}
+
+export async function generateJuneReviewPdf(data: JuneReviewPdfData): Promise<string> {
   const doc = new jsPDF({ unit: 'mm', format: 'letter', orientation: 'portrait' });
 
   let y = MARGIN;
@@ -88,11 +108,16 @@ export function generateJuneReviewPdf(data: JuneReviewPdfData): string {
 
   y = 7;
 
-  // Logo cell (text only, no image)
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.setTextColor(nr, ng, nb);
-  doc.text('PLIHSA', MARGIN + 3, y + 5);
+  // Logo
+  const logoData = await getLogoDataUrl();
+  if (logoData) {
+    doc.addImage(logoData, 'PNG', MARGIN + 1, y - 1, 22, 8);
+  } else {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(nr, ng, nb);
+    doc.text('PLIHSA', MARGIN + 3, y + 5);
+  }
 
   // Title cell
   doc.setFontSize(9);
@@ -415,3 +440,6 @@ function drawRatingTable(
 
   return y;
 }
+
+
+export { generateJuneReviewPdf }
