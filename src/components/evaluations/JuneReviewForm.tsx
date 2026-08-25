@@ -1,10 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Save, Upload, CheckCircle, Eye, X, Download, FileText, ArrowLeft, Printer } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { buildStoragePath, storagePathToProxyUrl, BUCKET } from '../../lib/storagePaths';
 import { Toast } from '../ui/Toast';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { generateJuneReviewPdf } from '../../lib/juneReviewPdf';
 
 type Rating = 'below_expectations' | 'needs_improvement' | 'meets_expectations' | 'exceeds_expectations';
 
@@ -47,7 +46,6 @@ const RATING_COLS: Rating[] = [
 ];
 
 export function JuneReviewForm({ evaluationId, onCancel, onSaved }: JuneReviewFormProps) {
-  const formRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -376,40 +374,49 @@ export function JuneReviewForm({ evaluationId, onCancel, onSaved }: JuneReviewFo
     }
   };
 
-  const generateOriginalPdfUrl = async (): Promise<string | null> => {
-    if (!formRef.current) return null;
+  const generatePdfUrl = async (): Promise<string | null> => {
     try {
-      const canvas = await html2canvas(formRef.current, {
-        scale: 2.5, useCORS: true, allowTaint: true, logging: false,
-        backgroundColor: '#ffffff',
-        windowWidth: formRef.current.scrollWidth,
-        windowHeight: formRef.current.scrollHeight,
-        scrollX: 0, scrollY: 0,
+      return await generateJuneReviewPdf({
+        employeeType: 'administrativo',
+        employeeCode: employee?.employee_code || '',
+        employeeName: employee ? `${employee.first_name} ${employee.last_name}` : '',
+        position: employee?.position || '',
+        department: employee?.departments?.name || '',
+        hireDate: employee?.hire_date || '',
+        managerName: employee?.manager ? `${employee.manager.first_name} ${employee.manager.last_name}` : '',
+        reviewDate: reviewDate || '',
+        goals: goalReviews.map(g => ({
+          id: g.goal_id || null,
+          goal_number: g.goal_number,
+          goal_description: g.goal_description,
+          results_description: g.results_description,
+          rating: g.rating,
+        })),
+        competencies: competencyReviews.map(c => ({
+          id: c.competency_id || null,
+          competency_number: c.competency_number,
+          competency_description: c.competency_description,
+          rating: c.rating,
+        })),
+        managerComments,
+        employeeComments,
       });
-      const imgWidth = 215.9;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      const pdf = new jsPDF('p', 'mm', 'letter');
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
-      return URL.createObjectURL(pdf.output('blob'));
     } catch { return null; }
   };
 
   const handleDownloadPDF = async () => {
-    if (!formRef.current || !employee) return;
+    if (!employee) return;
     setGeneratingPDF(true);
     try {
-      const canvas = await html2canvas(formRef.current, {
-        scale: 2.5, useCORS: true, allowTaint: true, logging: false,
-        backgroundColor: '#ffffff',
-        windowWidth: formRef.current.scrollWidth,
-        windowHeight: formRef.current.scrollHeight,
-        scrollX: 0, scrollY: 0,
-      });
-      const imgWidth = 215.9;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      const pdf = new jsPDF('p', 'mm', 'letter');
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
-      pdf.save(`Revision_Junio_${employee.first_name}_${employee.last_name}_${reviewDate || 'borrador'}.pdf`);
+      const pdfUrl = await generatePdfUrl();
+      if (!pdfUrl) throw new Error('No se pudo generar el PDF');
+      const link = document.createElement('a');
+      link.href = pdfUrl;
+      link.download = `Revision_Junio_Administrativo_${employee.first_name}_${employee.last_name}_${reviewDate || 'borrador'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(pdfUrl), 5000);
       setToast({ message: 'PDF descargado correctamente', type: 'success' });
     } catch {
       setToast({ message: 'Error al generar el PDF', type: 'error' });
@@ -496,7 +503,7 @@ export function JuneReviewForm({ evaluationId, onCancel, onSaved }: JuneReviewFo
         </div>
       )}
 
-      <div ref={formRef} className="bg-white border border-slate-300 shadow-sm" style={{ fontFamily: 'Arial, sans-serif' }}>
+      <div className="bg-white border border-slate-300 shadow-sm" style={{ fontFamily: 'Arial, sans-serif' }}>
         <div className="px-6 pt-6 pb-4">
 
           <div className="bg-[#1e5a96] text-white px-4 py-2.5 font-bold text-sm text-center mb-0">
@@ -715,7 +722,7 @@ export function JuneReviewForm({ evaluationId, onCancel, onSaved }: JuneReviewFo
               </div>
               <button
                 onClick={async () => {
-                  const url = await generateOriginalPdfUrl();
+                  const url = await generatePdfUrl();
                   setOriginalPdfUrl(url);
                   setShowDocViewer(true);
                 }}
@@ -808,7 +815,7 @@ export function JuneReviewForm({ evaluationId, onCancel, onSaved }: JuneReviewFo
             </div>
             <button
               onClick={async () => {
-                const url = await generateOriginalPdfUrl();
+                const url = await generatePdfUrl();
                 setOriginalPdfUrl(url);
                 setShowDocViewer(true);
               }}
