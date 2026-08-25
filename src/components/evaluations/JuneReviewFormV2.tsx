@@ -531,7 +531,7 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
 
     const captureHost = document.createElement('div');
     captureHost.style.position = 'absolute';
-    captureHost.style.left = '0';
+    captureHost.style.left = '-10000px';
     captureHost.style.top = '0';
     captureHost.style.width = '794px';
     captureHost.style.background = '#ffffff';
@@ -1233,7 +1233,7 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
           <div style={{ display: 'table', width: '100%', borderCollapse: 'collapse', borderBottom: '2px solid #cbd5e1' }}>
             <div style={{ display: 'table-row' }}>
               <div style={{ display: 'table-cell', width: '110px', padding: '4px 6px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
-                <img src="/Logo_PLIHSA_BLUE.png" alt="PLIHSA" crossOrigin="anonymous" style={{ maxWidth: '90px', height: 'auto', display: 'block', margin: '0 auto' }} />
+                <span style={{ fontSize: '16px', fontWeight: '700', color: '#1e3a5f', letterSpacing: '0.8px' }}>PLIHSA</span>
               </div>
               <div style={{ display: 'table-cell', padding: '4px 8px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
                 <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#1e293b' }}>
