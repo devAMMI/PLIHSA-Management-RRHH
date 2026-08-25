@@ -440,6 +440,3 @@ function drawRatingTable(
 
   return y;
 }
-
-
-export { generateJuneReviewPdf }
