@@ -112,52 +112,6 @@ export async function generateJuneReviewPdf(data: JuneReviewPdfData): Promise<st
 
   let y = drawHeader();
 
-  // ── Employee info ──
-  doc.setFontSize(7.5);
-  const colW = CONTENT_W / 2;
-  const leftColX = MARGIN;
-  const rightColX = MARGIN + colW;
-
-  const leftFields: [string, string][] = [
-    ['Codigo:', data.employeeCode],
-    ['Nombre:', data.employeeName],
-    ['Puesto:', data.position],
-    ['Departamento:', data.department],
-  ];
-  const rightFields: [string, string][] = [
-    ['Fecha de Ingreso:', fmtDate(data.hireDate)],
-    ['Jefe Inmediato:', data.managerName],
-    ['Fecha Definicion:', fmtDate(data.reviewDate)],
-  ];
-
-  const fieldH = 4.2;
-  leftFields.forEach(([label, value], i) => {
-    const ry = y + i * fieldH;
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(30, 41, 59);
-    doc.text(label, leftColX, ry);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(55, 65, 81);
-    doc.text(value || '', leftColX + 24, ry);
-  });
-
-  rightFields.forEach(([label, value], i) => {
-    const ry = y + i * fieldH;
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(30, 41, 59);
-    doc.text(label, rightColX, ry);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(55, 65, 81);
-    doc.text(value || '', rightColX + 28, ry);
-  });
-
-  y += leftFields.length * fieldH + 1;
-
-  // Divider
-  doc.setDrawColor(...hexToRgb(BORDER));
-  doc.line(MARGIN, y, PAGE_W - MARGIN, y);
-  y += 3;
-
   // ── Section: Revision de Metas Individuales ──
   doc.setFillColor(nr, ng, nb);
   doc.rect(MARGIN, y, CONTENT_W, 5, 'F');
@@ -230,34 +184,36 @@ export async function generateJuneReviewPdf(data: JuneReviewPdfData): Promise<st
   y += 5;
   if (y > CONTENT_BOTTOM - 28) y = newPage();
 
-  const commentW = CONTENT_W - 45;
+  const labelColW = 45;
+  const commentW = CONTENT_W - labelColW;
+  const commentTextW = commentW - 6;
   const commentRows: [string, string][] = [
     ['Comentarios Jefe Inmediato', data.managerComments],
     ['Comentarios del Colaborador', data.employeeComments],
   ];
 
   commentRows.forEach(([label, text]) => {
-    const lines = splitText(doc, text || '', commentW);
+    const lines = splitText(doc, text || '', commentTextW);
     const blockH = Math.max(18, lines.length * 3.6 + 6);
 
     if (y + blockH > CONTENT_BOTTOM) y = newPage();
 
     doc.setFillColor(nr, ng, nb);
     doc.setDrawColor(...hexToRgb(NAVY));
-    doc.rect(MARGIN, y, 45, blockH, 'FD');
+    doc.rect(MARGIN, y, labelColW, blockH, 'FD');
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
-    const labelLines = splitText(doc, label, 40);
+    const labelLines = splitText(doc, label, labelColW - 5);
     doc.text(labelLines, MARGIN + 3, y + 4);
 
     doc.setFillColor(255, 255, 255);
     doc.setDrawColor(...hexToRgb(NAVY));
-    doc.rect(MARGIN + 45, y, commentW, blockH, 'FD');
+    doc.rect(MARGIN + labelColW, y, commentW, blockH, 'FD');
     doc.setTextColor(55, 65, 81);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.5);
-    doc.text(lines, MARGIN + 48, y + 4);
+    doc.text(lines, MARGIN + labelColW + 3, y + 4, { maxWidth: commentTextW });
 
     y += blockH + 1;
   });
@@ -322,7 +278,44 @@ function drawPageHeader(doc: jsPDF, data: JuneReviewPdfData, logoData: string | 
   doc.setDrawColor(...hexToRgb(BORDER));
   doc.setLineWidth(0.4);
   doc.line(MARGIN, y + 9, PAGE_W - MARGIN, y + 9);
-  return HEADER_H;
+
+  const infoY = HEADER_H + 1;
+  const colW = CONTENT_W / 2;
+  const leftColX = MARGIN;
+  const rightColX = MARGIN + colW;
+  const leftFields: [string, string][] = [
+    ['Codigo:', data.employeeCode],
+    ['Nombre:', data.employeeName],
+    ['Puesto:', data.position],
+    ['Departamento:', data.department],
+  ];
+  const rightFields: [string, string][] = [
+    ['Fecha de Ingreso:', fmtDate(data.hireDate)],
+    ['Jefe Inmediato:', data.managerName],
+    ['Fecha Definicion:', fmtDate(data.reviewDate)],
+  ];
+  const fieldH = 4.2;
+  const drawField = (label: string, value: string, x: number, valueX: number, maxWidth: number, row: number) => {
+    const fieldY = infoY + row * fieldH;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(30, 41, 59);
+    doc.text(label, x, fieldY);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(55, 65, 81);
+    doc.text(value || '', valueX, fieldY, { maxWidth });
+  };
+  leftFields.forEach(([label, value], i) => {
+    drawField(label, value, leftColX, leftColX + 24, colW - 26, i);
+  });
+  rightFields.forEach(([label, value], i) => {
+    drawField(label, value, rightColX, rightColX + 28, colW - 30, i);
+  });
+
+  const dividerY = infoY + leftFields.length * fieldH + 1;
+  doc.setDrawColor(...hexToRgb(BORDER));
+  doc.line(MARGIN, dividerY, PAGE_W - MARGIN, dividerY);
+  return dividerY + 3;
 }
 
 function drawPageFooter(doc: jsPDF, page: number, pageCount: number): void {
