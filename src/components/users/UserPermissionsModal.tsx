@@ -16,7 +16,7 @@ const ALL_MENU_ITEMS: MenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', group: 'General', defaultRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe', 'employee', 'viewer'], description: 'Pantalla principal con indicadores' },
   { id: 'employees', label: 'Empleados', group: 'General', defaultRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe', 'employee', 'viewer'], description: 'Directorio y gestión de colaboradores' },
   { id: 'goal-definition-enero', label: 'Definición de Metas (Fase 1)', group: 'Evaluaciones', defaultRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'], description: 'Crear y gestionar definición de metas' },
-  { id: 'evaluacion-junio', label: 'Revisión de Metas (Fase 2)', group: 'Evaluaciones', defaultRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'], description: 'Revisión de metas a mitad de año' },
+  { id: 'evaluacion-junio-v2', label: 'Revisión de Metas (Fase 2)', group: 'Evaluaciones', defaultRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'], description: 'Revisión de metas a mitad de año' },
   { id: 'evaluacion-final', label: 'Evaluación Final (Fase 3)', group: 'Evaluaciones', defaultRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'], description: 'Evaluación de desempeño final' },
   { id: 'evaluacion-administrativa-nueva', label: 'Nueva Evaluación Administrativa', group: 'Evaluaciones', defaultRoles: ['superadmin', 'rrhh'], description: 'Crear evaluación administrativa' },
   { id: 'evaluations-list', label: 'Ver Evaluaciones', group: 'Evaluaciones', defaultRoles: ['superadmin', 'rrhh'], description: 'Listar todas las evaluaciones' },
