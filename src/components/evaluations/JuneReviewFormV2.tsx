@@ -4,8 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { buildStoragePath, storagePathToProxyUrl, BUCKET } from '../../lib/storagePaths';
 import { useAuth } from '../../contexts/AuthContext';
 import { Toast } from '../ui/Toast';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { generateJuneReviewPdf } from '../../lib/juneReviewPdf';
 
 type Rating = 'below_expectations' | 'needs_improvement' | 'meets_expectations' | 'exceeds_expectations';
 type ReviewStatus = 'draft' | 'pending_signature' | 'completed';
@@ -66,7 +65,6 @@ const emptyCompetencies = (): CompetencyRow[] =>
 export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', onCancel, onSaved }: JuneReviewFormV2Props) {
   const formRef = useRef<HTMLDivElement>(null);
   const { employee, systemUser } = useAuth();
-  const pdfRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState(false);
@@ -513,97 +511,31 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
     }
   };
 
-  const waitForPdfImages = async (root: HTMLElement) => {
-    const images = Array.from(root.querySelectorAll('img'));
-    await Promise.all(images.map((image) => {
-      if (image.complete) return Promise.resolve();
-      return new Promise<void>((resolve) => {
-        image.addEventListener('load', () => resolve(), { once: true });
-        image.addEventListener('error', () => resolve(), { once: true });
-      });
-    }));
-    if (document.fonts?.ready) await document.fonts.ready;
-  };
-
-  const capturePdfCanvas = async (): Promise<HTMLCanvasElement | null> => {
-    const source = pdfRef.current;
-    if (!source) return null;
-
-    const captureHost = document.createElement('div');
-    captureHost.style.position = 'absolute';
-    captureHost.style.left = '-10000px';
-    captureHost.style.top = '0';
-    captureHost.style.width = '794px';
-    captureHost.style.background = '#ffffff';
-    captureHost.style.zIndex = '1';
-    captureHost.style.pointerEvents = 'none';
-    captureHost.setAttribute('aria-hidden', 'true');
-
-    const captureContent = source.cloneNode(true) as HTMLDivElement;
-    captureContent.style.position = 'static';
-    captureContent.style.left = 'auto';
-    captureContent.style.top = 'auto';
-    captureContent.style.width = '794px';
-    captureContent.style.padding = '14px 18px';
-    captureContent.style.boxSizing = 'border-box';
-    captureContent.style.background = '#ffffff';
-    captureHost.appendChild(captureContent);
-    document.body.appendChild(captureHost);
-
+  const generatePdfUrl = (): string | null => {
     try {
-      await waitForPdfImages(captureContent);
-      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-      return await html2canvas(captureContent, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: false,
-        logging: false,
-        backgroundColor: '#ffffff',
-        width: 794,
-        windowWidth: 794,
-        scrollX: 0,
-        scrollY: 0,
+      return generateJuneReviewPdf({
+        employeeType,
+        employeeCode: selectedEmployee?.employee_code || '',
+        employeeName: selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : '',
+        position: position || '',
+        department: department || '',
+        hireDate: selectedEmployee?.hire_date || '',
+        managerName: selectedEmployee?.manager ? `${selectedEmployee.manager.first_name} ${selectedEmployee.manager.last_name}` : '',
+        reviewDate: reviewDate || '',
+        goals,
+        competencies,
+        managerComments,
+        employeeComments,
       });
-    } finally {
-      captureHost.remove();
+    } catch {
+      return null;
     }
   };
 
-  const generatePdfUrl = async (): Promise<string | null> => {
-    const canvas = await capturePdfCanvas();
-    if (!canvas) return null;
-
-    const pdfWidth = 215.9;
-    const pdfHeight = 279.4;
-    const pixelsPerMm = canvas.width / pdfWidth;
-    const pagePixelHeight = Math.floor(pdfHeight * pixelsPerMm);
-    const pageCount = Math.ceil(canvas.height / pagePixelHeight);
-    const pdf = new jsPDF('p', 'mm', 'letter');
-
-    for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
-      if (pageIndex > 0) pdf.addPage();
-      const sourceY = pageIndex * pagePixelHeight;
-      const sliceHeight = Math.min(pagePixelHeight, canvas.height - sourceY);
-      const pageCanvas = document.createElement('canvas');
-      pageCanvas.width = canvas.width;
-      pageCanvas.height = sliceHeight;
-      const context = pageCanvas.getContext('2d');
-      if (!context) return null;
-      context.fillStyle = '#ffffff';
-      context.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-      context.drawImage(canvas, 0, sourceY, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
-      const imageHeight = sliceHeight / pixelsPerMm;
-      pdf.addImage(pageCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, imageHeight, undefined, 'FAST');
-    }
-
-    return URL.createObjectURL(pdf.output('blob'));
-  };
-
-  const handleDownloadPDF = async () => {
-    if (!pdfRef.current) return;
+  const handleDownloadPDF = () => {
     setGeneratingPDF(true);
     try {
-      const pdfUrl = await generatePdfUrl();
+      const pdfUrl = generatePdfUrl();
       if (!pdfUrl) throw new Error('No se pudo generar el PDF');
       const empName = selectedEmployee
         ? `${selectedEmployee.first_name}_${selectedEmployee.last_name}`
@@ -625,10 +557,10 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
     }
   };
 
-  const handleViewPDF = async () => {
+  const handleViewPDF = () => {
     setGeneratingPDF(true);
     try {
-      const url = await generatePdfUrl();
+      const url = generatePdfUrl();
       if (url) {
         if (embeddedPdfUrl) URL.revokeObjectURL(embeddedPdfUrl);
         setEmbeddedPdfUrl(url);
@@ -641,10 +573,10 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
     }
   };
 
-  const handlePrint = async () => {
+  const handlePrint = () => {
     setGeneratingPDF(true);
     try {
-      const url = await generatePdfUrl();
+      const url = generatePdfUrl();
       if (!url) throw new Error('No se pudo generar el PDF');
       const printWindow = window.open(url, '_blank');
       if (printWindow) {
@@ -1051,8 +983,8 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <button
-                      onClick={async () => {
-                        const url = await generatePdfUrl();
+                      onClick={() => {
+                        const url = generatePdfUrl();
                         setDigitalPdfUrl(url);
                         setShowDocViewer(true);
                       }}
@@ -1083,8 +1015,8 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
                 <strong>Proceso completado:</strong> El documento ha sido firmado y finalizado exitosamente.
               </p>
               <button
-                onClick={async () => {
-                  const url = await generatePdfUrl();
+                onClick={() => {
+                  const url = generatePdfUrl();
                   setDigitalPdfUrl(url);
                   setShowDocViewer(true);
                 }}
@@ -1210,237 +1142,6 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
           onClose={() => { setShowDocViewer(false); if (digitalPdfUrl) { URL.revokeObjectURL(digitalPdfUrl); setDigitalPdfUrl(null); } }}
         />
       )}
-
-      {/* === HIDDEN PDF CAPTURE DIV === */}
-      {/* FIX: position: absolute instead of position: fixed for reliable html2canvas rendering */}
-      <div
-        ref={pdfRef}
-        style={{
-          position: 'absolute',
-          left: '-9999px',
-          top: '0',
-          width: '860px',
-          fontFamily: 'Arial, Helvetica, sans-serif',
-          fontSize: '10px',
-          background: 'white',
-          padding: '14px 18px',
-          boxSizing: 'border-box',
-        }}
-        aria-hidden="true"
-      >
-        {/* PLIHSA Header */}
-        <div style={{ border: '2px solid #cbd5e1', marginBottom: '8px' }}>
-          <div style={{ display: 'table', width: '100%', borderCollapse: 'collapse', borderBottom: '2px solid #cbd5e1' }}>
-            <div style={{ display: 'table-row' }}>
-              <div style={{ display: 'table-cell', width: '110px', padding: '4px 6px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
-                <span style={{ fontSize: '16px', fontWeight: '700', color: '#1e3a5f', letterSpacing: '0.8px' }}>PLIHSA</span>
-              </div>
-              <div style={{ display: 'table-cell', padding: '4px 8px', borderRight: '2px solid #cbd5e1', verticalAlign: 'middle', textAlign: 'center' }}>
-                <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#1e293b' }}>
-                  {employeeType === 'operativo'
-                    ? 'Revision del Desempeno Operativo'
-                    : 'Revision del Desempeno Administrativo'}
-                </span>
-              </div>
-              <div style={{ display: 'table-cell', width: '150px', verticalAlign: 'middle', fontSize: '8px' }}>
-                <div style={{ borderBottom: '1px solid #cbd5e1', padding: '3px 7px' }}>
-                  <span style={{ fontWeight: '700' }}>Codigo:</span> {'PL-RH-P-002-F01'}
-                </div>
-                <div style={{ borderBottom: '1px solid #cbd5e1', padding: '3px 7px' }}>
-                  <span style={{ fontWeight: '700' }}>Version:</span> 01
-                </div>
-                <div style={{ padding: '3px 7px' }}>
-                  <span style={{ fontWeight: '700' }}>Fecha de Revision:</span> 09/07/2025
-                </div>
-              </div>
-            </div>
-          </div>
-          {/* Employee info */}
-          <div style={{ display: 'table', width: '100%', fontSize: '9px' }}>
-            <div style={{ display: 'table-row' }}>
-              <div style={{ display: 'table-cell', width: '50%', padding: '4px 10px', verticalAlign: 'top', borderRight: '1px solid #e2e8f0' }}>
-                <div style={{ marginBottom: '2px' }}><span style={{ fontWeight: '700', minWidth: '85px', display: 'inline-block' }}>Codigo:</span> <span style={{ color: '#374151' }}>{selectedEmployee?.employee_code || ''}</span></div>
-                <div style={{ marginBottom: '2px' }}><span style={{ fontWeight: '700', minWidth: '85px', display: 'inline-block' }}>Nombre:</span> <span style={{ color: '#374151' }}>{selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : ''}</span></div>
-                <div style={{ marginBottom: '2px' }}><span style={{ fontWeight: '700', minWidth: '85px', display: 'inline-block' }}>Puesto:</span> <span style={{ color: '#374151' }}>{position || ''}</span></div>
-                <div style={{ marginBottom: '2px' }}><span style={{ fontWeight: '700', minWidth: '85px', display: 'inline-block' }}>Departamento:</span> <span style={{ color: '#374151' }}>{department || ''}</span></div>
-              </div>
-              <div style={{ display: 'table-cell', width: '50%', padding: '4px 10px', verticalAlign: 'top' }}>
-                <div style={{ marginBottom: '2px' }}><span style={{ fontWeight: '700', minWidth: '110px', display: 'inline-block' }}>Fecha de Ingreso:</span> <span style={{ color: '#374151' }}>{selectedEmployee?.hire_date ? new Date(selectedEmployee.hire_date + 'T00:00:00').toLocaleDateString('es-HN') : ''}</span></div>
-                <div style={{ marginBottom: '2px' }}><span style={{ fontWeight: '700', minWidth: '110px', display: 'inline-block' }}>Jefe Inmediato:</span> <span style={{ color: '#374151' }}>{selectedEmployee?.manager ? `${selectedEmployee.manager.first_name} ${selectedEmployee.manager.last_name}` : ''}</span></div>
-                <div style={{ marginBottom: '2px' }}><span style={{ fontWeight: '700', minWidth: '110px', display: 'inline-block' }}>Fecha Definicion:</span> <span style={{ color: '#374151' }}>{reviewDate ? new Date(reviewDate + 'T00:00:00').toLocaleDateString('es-HN') : ''}</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Header */}
-        <div style={{ background: '#1e3a5f', color: 'white', padding: '5px 14px', fontWeight: 'bold', fontSize: '12px', textAlign: 'center', letterSpacing: '0.5px' }}>
-          REVISION DE METAS INDIVIDUALES
-        </div>
-
-        {/* Date row */}
-        <div style={{ display: 'table', width: '100%', borderCollapse: 'collapse', border: '1px solid #1e3a5f', borderTop: 'none' }}>
-          <div style={{ display: 'table-row' }}>
-            <div style={{ display: 'table-cell', background: '#1e3a5f', color: 'white', fontWeight: '700', fontSize: '10px', padding: '4px 12px', width: '160px', whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
-              Fecha de Revision
-            </div>
-            <div style={{ display: 'table-cell', background: '#f1f5f9', padding: '4px 12px', fontSize: '10px', color: '#374151', verticalAlign: 'middle' }}>
-              {reviewDate ? new Date(reviewDate + 'T00:00:00').toLocaleDateString('es-HN') : '\u00A0'}
-            </div>
-          </div>
-        </div>
-
-        {/* Goals table */}
-        <div style={{ marginTop: '6px', border: '1px solid #94a3b8' }}>
-          <div style={{ display: 'table', width: '100%', background: '#1e3a5f', color: 'white' }}>
-            <div style={{ display: 'table-row' }}>
-              <div style={{ display: 'table-cell', width: '40px', padding: '4px 3px', textAlign: 'center', fontWeight: 'bold', fontSize: '10px', borderRight: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
-                No.
-              </div>
-              <div style={{ display: 'table-cell', padding: '4px 7px', fontWeight: 'bold', fontSize: '10px', borderRight: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
-                Metas Individuales/Resultados
-              </div>
-              <div style={{ display: 'table-cell', textAlign: 'center', fontWeight: 'bold', fontSize: '9px', padding: '3px', verticalAlign: 'middle' }}>
-                Calificacion<br />
-                <span style={{ fontWeight: 'normal', fontSize: '8px' }}>(Marque una X en la opcion que corresponda)</span>
-              </div>
-            </div>
-          </div>
-          <div style={{ display: 'table', width: '100%', background: '#1e3a5f', color: 'white', borderTop: '1px solid #4a6fa5' }}>
-            <div style={{ display: 'table-row' }}>
-              <div style={{ display: 'table-cell', width: '40px', borderRight: '1px solid #4a6fa5' }}></div>
-              <div style={{ display: 'table-cell', borderRight: '1px solid #4a6fa5' }}></div>
-              {RATING_COLS.map(r => (
-                <div key={r} style={{ display: 'table-cell', width: '13%', padding: '3px 2px', textAlign: 'center', fontSize: '8px', fontWeight: '600', borderLeft: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
-                  {RATING_LABELS[r]}
-                </div>
-              ))}
-            </div>
-          </div>
-          {goals.map((goal) => (
-            <div key={`pdf-goal-block-${goal.goal_number}`}>
-              <div style={{ display: 'table', width: '100%', background: 'white', borderTop: '1px solid #cbd5e1' }}>
-                <div style={{ display: 'table-row' }}>
-                  <div style={{ display: 'table-cell', width: '40px', textAlign: 'center', fontWeight: 'bold', fontSize: '11px', color: '#1e3a5f', verticalAlign: 'middle', padding: '5px 3px', borderRight: '1px solid #cbd5e1' }}>
-                    {goal.goal_number}
-                  </div>
-                  <div style={{ display: 'table-cell', padding: '5px 7px', fontSize: '10px', fontWeight: goal.goal_description ? '600' : '400', color: goal.goal_description ? '#1e293b' : '#94a3b8', background: goal.goal_description ? '#eff6ff' : 'white', borderRight: '1px solid #cbd5e1', verticalAlign: 'middle', wordBreak: 'break-word' }}>
-                    {goal.goal_description || 'Meta individual...'}
-                  </div>
-                  {RATING_COLS.map(r => {
-                    const checked = goal.rating === r;
-                    return (
-                      <div key={r} style={{ display: 'table-cell', width: '13%', textAlign: 'center', verticalAlign: 'middle', padding: '4px 3px', borderLeft: '1px solid #cbd5e1' }}>
-                        <input type="checkbox" className="rating-checkbox" checked={checked} readOnly disabled />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              <div style={{ display: 'table', width: '100%', background: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
-                <div style={{ display: 'table-row' }}>
-                  <div style={{ display: 'table-cell', width: '40px', borderRight: '1px solid #cbd5e1' }}></div>
-                  <div style={{ display: 'table-cell', padding: '3px 7px', colSpan: 5 } as React.CSSProperties}>
-                    <div style={{ fontSize: '8px', fontWeight: '700', color: '#64748b', marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Resultados a la fecha de revision</div>
-                    <div style={{ fontSize: '10px', color: '#374151', minHeight: '16px', wordBreak: 'break-word' }}>
-                      {goal.results_description || '\u00A0'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Competencies section */}
-        <div style={{ background: '#1e3a5f', color: 'white', padding: '5px 14px', fontWeight: 'bold', fontSize: '12px', textAlign: 'center', marginTop: '8px', letterSpacing: '0.5px' }}>
-          REVISION DE FACTORES CONDUCTUALES Y HABILIDADES TECNICAS
-        </div>
-
-        <div style={{ border: '1px solid #94a3b8' }}>
-          <div style={{ display: 'table', width: '100%', background: '#1e3a5f', color: 'white' }}>
-            <div style={{ display: 'table-row' }}>
-              <div style={{ display: 'table-cell', width: '40px', padding: '4px 3px', textAlign: 'center', fontWeight: 'bold', fontSize: '10px', borderRight: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
-                No.
-              </div>
-              <div style={{ display: 'table-cell', padding: '4px 7px', textAlign: 'center', fontWeight: 'bold', fontSize: '10px', borderRight: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
-                Conductas y Habilidades Tecnicas<br />
-                <span style={{ fontSize: '8px', fontWeight: 'normal' }}>(Evaluar las 5 Definidas)</span>
-              </div>
-              <div style={{ display: 'table-cell', textAlign: 'center', fontWeight: 'bold', fontSize: '9px', padding: '3px', verticalAlign: 'middle' }}>
-                Calificacion<br />
-                <span style={{ fontWeight: 'normal', fontSize: '8px' }}>(Marque una X en la opcion que corresponda)</span>
-              </div>
-            </div>
-          </div>
-          <div style={{ display: 'table', width: '100%', background: '#1e3a5f', color: 'white', borderTop: '1px solid #4a6fa5' }}>
-            <div style={{ display: 'table-row' }}>
-              <div style={{ display: 'table-cell', width: '40px', borderRight: '1px solid #4a6fa5' }}></div>
-              <div style={{ display: 'table-cell', borderRight: '1px solid #4a6fa5' }}></div>
-              {RATING_COLS.map(r => (
-                <div key={r} style={{ display: 'table-cell', width: '13%', padding: '3px 2px', textAlign: 'center', fontSize: '8px', fontWeight: '600', borderLeft: '1px solid #4a6fa5', verticalAlign: 'middle' }}>
-                  {RATING_LABELS[r]}
-                </div>
-              ))}
-            </div>
-          </div>
-          {competencies.map((comp) => (
-            <div key={`pdf-comp-${comp.competency_number}`} style={{ display: 'table', width: '100%', background: 'white', borderTop: '1px solid #cbd5e1' }}>
-              <div style={{ display: 'table-row' }}>
-                <div style={{ display: 'table-cell', width: '40px', textAlign: 'center', fontWeight: 'bold', fontSize: '11px', color: '#1e3a5f', verticalAlign: 'middle', padding: '5px 3px', borderRight: '1px solid #cbd5e1' }}>
-                  {comp.competency_number}
-                </div>
-                <div style={{ display: 'table-cell', padding: '5px 7px', fontSize: '10px', fontWeight: comp.competency_description ? '600' : '400', color: comp.competency_description ? '#1e293b' : '#94a3b8', background: comp.competency_description ? '#eff6ff' : 'white', borderRight: '1px solid #cbd5e1', verticalAlign: 'middle', wordBreak: 'break-word' }}>
-                  {comp.competency_description || 'Conducta o habilidad tecnica...'}
-                </div>
-                {RATING_COLS.map(r => {
-                  const checked = comp.rating === r;
-                  return (
-                    <div key={r} style={{ display: 'table-cell', width: '13%', textAlign: 'center', verticalAlign: 'middle', padding: '4px 3px', borderLeft: '1px solid #cbd5e1' }}>
-                      <input type="checkbox" className="rating-checkbox" checked={checked} readOnly disabled />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Comments */}
-        <div style={{ border: '1px solid #94a3b8', marginTop: '7px' }}>
-          <div style={{ display: 'table', width: '100%', borderBottom: '1px solid #94a3b8' }}>
-            <div style={{ display: 'table-row' }}>
-              <div style={{ display: 'table-cell', background: '#1e3a5f', color: 'white', fontWeight: 'bold', fontSize: '10px', padding: '5px 8px', width: '170px', verticalAlign: 'top', whiteSpace: 'nowrap' }}>
-                Comentarios Jefe Inmediato
-              </div>
-              <div style={{ display: 'table-cell', background: 'white', padding: '5px 8px', fontSize: '10px', color: '#374151', minHeight: '32px', wordBreak: 'break-word', borderLeft: '1px solid #94a3b8' }}>
-                {managerComments || '\u00A0'}
-              </div>
-            </div>
-          </div>
-          <div style={{ display: 'table', width: '100%' }}>
-            <div style={{ display: 'table-row' }}>
-              <div style={{ display: 'table-cell', background: '#1e3a5f', color: 'white', fontWeight: 'bold', fontSize: '10px', padding: '5px 8px', width: '170px', verticalAlign: 'top', whiteSpace: 'nowrap' }}>
-                Comentarios del Colaborador
-              </div>
-              <div style={{ display: 'table-cell', background: 'white', padding: '5px 8px', fontSize: '10px', color: '#374151', minHeight: '32px', wordBreak: 'break-word', borderLeft: '1px solid #94a3b8' }}>
-                {employeeComments || '\u00A0'}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Signature lines */}
-        <div style={{ display: 'flex', justifyContent: 'space-around', padding: '120px 24px 16px', gap: '24px', marginTop: '4px' }}>
-          {['Firma Colaborador', 'Firma Jefe Inmediato', 'Firma RRHH'].map(label => (
-            <div key={label} style={{ flex: 1, textAlign: 'center' }}>
-              <div style={{ borderTop: '1.5px solid #1e293b', paddingTop: '5px', marginTop: '0' }}>
-                <span style={{ fontSize: '10px', fontWeight: '600', color: '#1e293b' }}>{label}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
