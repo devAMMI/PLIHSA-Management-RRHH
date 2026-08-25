@@ -56,6 +56,9 @@ const PAGE_W = 215.9;
 const PAGE_H = 279.4;
 const MARGIN = 10;
 const CONTENT_W = PAGE_W - MARGIN * 2;
+const HEADER_H = 18;
+const FOOTER_H = 9;
+const CONTENT_BOTTOM = PAGE_H - FOOTER_H - 3;
 
 function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace('#', '');
@@ -99,49 +102,15 @@ async function getLogoDataUrl(): Promise<string | null> {
 export async function generateJuneReviewPdf(data: JuneReviewPdfData): Promise<string> {
   const doc = new jsPDF({ unit: 'mm', format: 'letter', orientation: 'portrait' });
 
-  let y = MARGIN;
   const [nr, ng, nb] = hexToRgb(NAVY);
-
-  // ── Header band ──
-  doc.setFillColor(nr, ng, nb);
-  doc.rect(0, 0, PAGE_W, 4, 'F');
-
-  y = 7;
-
-  // Logo
   const logoData = await getLogoDataUrl();
-  if (logoData) {
-    doc.addImage(logoData, 'PNG', MARGIN + 1, y - 1, 22, 8);
-  } else {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.setTextColor(nr, ng, nb);
-    doc.text('PLIHSA', MARGIN + 3, y + 5);
-  }
+  const drawHeader = () => drawPageHeader(doc, data, logoData);
+  const newPage = () => {
+    doc.addPage();
+    return drawHeader();
+  };
 
-  // Title cell
-  doc.setFontSize(9);
-  doc.setTextColor(30, 41, 59);
-  const title = data.employeeType === 'operativo'
-    ? 'Revision del Desempeno Operativo'
-    : 'Revision del Desempeno Administrativo';
-  doc.text(title, PAGE_W / 2, y + 3, { align: 'center' });
-
-  // Code/version/date cell
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6.5);
-  doc.setTextColor(55, 65, 81);
-  const codeX = PAGE_W - MARGIN - 48;
-  doc.text('Codigo: PL-RH-P-002-F01', codeX, y);
-  doc.text('Version: 01', codeX, y + 3.5);
-  doc.text('Fecha de Revision: 09/07/2025', codeX, y + 7);
-
-  // Header border
-  doc.setDrawColor(...hexToRgb(BORDER));
-  doc.setLineWidth(0.4);
-  doc.line(MARGIN, y + 9, PAGE_W - MARGIN, y + 9);
-
-  y += 12;
+  let y = drawHeader();
 
   // ── Employee info ──
   doc.setFontSize(7.5);
@@ -229,11 +198,12 @@ export async function generateJuneReviewPdf(data: JuneReviewPdfData): Promise<st
     })),
     startY: y,
     navy: [nr, ng, nb],
+    onPageBreak: newPage,
   });
 
   // ── Section: Competencias ──
   y += 4;
-  if (y > PAGE_H - 40) { doc.addPage(); y = MARGIN; }
+  if (y > CONTENT_BOTTOM - 20) y = newPage();
 
   doc.setFillColor(nr, ng, nb);
   doc.rect(MARGIN, y, CONTENT_W, 5, 'F');
@@ -253,11 +223,12 @@ export async function generateJuneReviewPdf(data: JuneReviewPdfData): Promise<st
     })),
     startY: y,
     navy: [nr, ng, nb],
+    onPageBreak: newPage,
   });
 
   // ── Comments ──
   y += 5;
-  if (y > PAGE_H - 40) { doc.addPage(); y = MARGIN; }
+  if (y > CONTENT_BOTTOM - 28) y = newPage();
 
   const commentW = CONTENT_W - 45;
   const commentRows: [string, string][] = [
@@ -269,7 +240,7 @@ export async function generateJuneReviewPdf(data: JuneReviewPdfData): Promise<st
     const lines = splitText(doc, text || '', commentW);
     const blockH = Math.max(18, lines.length * 3.6 + 6);
 
-    if (y + blockH > PAGE_H - MARGIN) { doc.addPage(); y = MARGIN; }
+    if (y + blockH > CONTENT_BOTTOM) y = newPage();
 
     doc.setFillColor(nr, ng, nb);
     doc.setDrawColor(...hexToRgb(NAVY));
@@ -293,7 +264,7 @@ export async function generateJuneReviewPdf(data: JuneReviewPdfData): Promise<st
 
   // ── Signatures ──
   y += 20;
-  if (y > PAGE_H - 30) { doc.addPage(); y = MARGIN; }
+  if (y + 10 > CONTENT_BOTTOM) y = newPage();
 
   const sigW = (CONTENT_W - 20) / 3;
   const sigLabels = ['Firma Colaborador', 'Firma Jefe Inmediato', 'Firma RRHH'];
@@ -308,7 +279,60 @@ export async function generateJuneReviewPdf(data: JuneReviewPdfData): Promise<st
     doc.text(label, sx + sigW / 2, y + 4.5, { align: 'center' });
   });
 
+  const pageCount = doc.getNumberOfPages();
+  for (let page = 1; page <= pageCount; page += 1) {
+    doc.setPage(page);
+    drawPageFooter(doc, page, pageCount);
+  }
+
   return URL.createObjectURL(doc.output('blob'));
+}
+
+function drawPageHeader(doc: jsPDF, data: JuneReviewPdfData, logoData: string | null): number {
+  const [nr, ng, nb] = hexToRgb(NAVY);
+  doc.setFillColor(nr, ng, nb);
+  doc.rect(0, 0, PAGE_W, 4, 'F');
+
+  const y = 7;
+  if (logoData) {
+    doc.addImage(logoData, 'PNG', MARGIN + 1, y - 1, 22, 8);
+  } else {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(nr, ng, nb);
+    doc.text('PLIHSA', MARGIN + 3, y + 5);
+  }
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(30, 41, 59);
+  const title = data.employeeType === 'operativo'
+    ? 'Revision del Desempeno Operativo'
+    : 'Revision del Desempeno Administrativo';
+  doc.text(title, PAGE_W / 2, y + 3, { align: 'center' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.5);
+  doc.setTextColor(55, 65, 81);
+  const codeX = PAGE_W - MARGIN - 48;
+  doc.text('Codigo: PL-RH-P-002-F01', codeX, y);
+  doc.text('Version: 01', codeX, y + 3.5);
+  doc.text('Fecha de Revision: 09/07/2025', codeX, y + 7);
+
+  doc.setDrawColor(...hexToRgb(BORDER));
+  doc.setLineWidth(0.4);
+  doc.line(MARGIN, y + 9, PAGE_W - MARGIN, y + 9);
+  return HEADER_H;
+}
+
+function drawPageFooter(doc: jsPDF, page: number, pageCount: number): void {
+  doc.setDrawColor(...hexToRgb(BORDER));
+  doc.setLineWidth(0.3);
+  doc.line(MARGIN, PAGE_H - FOOTER_H, PAGE_W - MARGIN, PAGE_H - FOOTER_H);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(100, 116, 139);
+  doc.text(`Pagina ${page} de ${pageCount}`, PAGE_W - MARGIN, PAGE_H - 4, { align: 'right' });
 }
 
 // ── Helper: rating table with pagination ──
@@ -326,6 +350,7 @@ function drawRatingTable(
     }[];
     startY: number;
     navy: [number, number, number];
+    onPageBreak: () => number;
   },
 ): number {
   const { title, subtitle, rows, navy } = opts;
@@ -336,10 +361,8 @@ function drawRatingTable(
   const descColW = CONTENT_W - numColW - 72; // 72mm for 4 rating columns
   const ratingColW = 18;
 
-  // Header row 1
-  if (y > PAGE_H - 30) { doc.addPage(); y = MARGIN; }
-
-  doc.setFillColor(nr, ng, nb);
+  const drawTableHeader = () => {
+    doc.setFillColor(nr, ng, nb);
   doc.setDrawColor(nr, ng, nb);
   doc.rect(MARGIN, y, numColW, 8, 'FD');
   doc.rect(MARGIN + numColW, y, descColW, 8, 'FD');
@@ -372,6 +395,10 @@ function drawRatingTable(
     doc.text(lines, cx, y + 3, { align: 'center', lineHeight: 1.15 });
   });
   y += 7;
+  };
+
+  if (y + 15 > CONTENT_BOTTOM) y = opts.onPageBreak();
+  drawTableHeader();
 
   // Data rows
   rows.forEach((row) => {
@@ -382,7 +409,10 @@ function drawRatingTable(
     const subH = subLines.length > 0 ? subLines.length * 3.2 + 5 : 0;
     const totalH = rowH + subH;
 
-    if (y + totalH > PAGE_H - MARGIN - 10) { doc.addPage(); y = MARGIN; }
+    if (y + totalH > CONTENT_BOTTOM) {
+      y = opts.onPageBreak();
+      drawTableHeader();
+    }
 
     // Number cell
     doc.setFillColor(255, 255, 255);
