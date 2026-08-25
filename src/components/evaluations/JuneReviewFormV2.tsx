@@ -513,49 +513,90 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
     }
   };
 
-  // --- PDF GENERATION (fixed) ---
-  // Key fix: use position: absolute instead of position: fixed for the hidden capture div.
-  // html2canvas renders absolute elements more reliably than fixed elements at extreme offsets.
+  const waitForPdfImages = async (root: HTMLElement) => {
+    const images = Array.from(root.querySelectorAll('img'));
+    await Promise.all(images.map((image) => {
+      if (image.complete) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        image.addEventListener('load', () => resolve(), { once: true });
+        image.addEventListener('error', () => resolve(), { once: true });
+      });
+    }));
+    if (document.fonts?.ready) await document.fonts.ready;
+  };
 
-  const generatePdfUrl = async (): Promise<string | null> => {
-    const el = pdfRef.current;
-    if (!el) return null;
+  const capturePdfCanvas = async (): Promise<HTMLCanvasElement | null> => {
+    const source = pdfRef.current;
+    if (!source) return null;
+
+    const captureHost = document.createElement('div');
+    captureHost.style.position = 'absolute';
+    captureHost.style.left = '0';
+    captureHost.style.top = '0';
+    captureHost.style.width = '794px';
+    captureHost.style.background = '#ffffff';
+    captureHost.style.zIndex = '1';
+    captureHost.style.pointerEvents = 'none';
+    captureHost.setAttribute('aria-hidden', 'true');
+
+    const captureContent = source.cloneNode(true) as HTMLDivElement;
+    captureContent.style.position = 'static';
+    captureContent.style.left = 'auto';
+    captureContent.style.top = 'auto';
+    captureContent.style.width = '794px';
+    captureContent.style.padding = '14px 18px';
+    captureContent.style.boxSizing = 'border-box';
+    captureContent.style.background = '#ffffff';
+    captureHost.appendChild(captureContent);
+    document.body.appendChild(captureHost);
+
     try {
-      const canvas = await html2canvas(el, {
-        scale: 2.5,
+      await waitForPdfImages(captureContent);
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      return await html2canvas(captureContent, {
+        scale: 2,
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false,
         logging: false,
         backgroundColor: '#ffffff',
-        windowWidth: el.offsetWidth,
-        windowHeight: el.offsetHeight,
+        width: 794,
+        windowWidth: 794,
         scrollX: 0,
         scrollY: 0,
       });
-      const imgWidth = 215.9;
-      const pageHeight = 279.4;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'letter');
-      if (imgHeight <= pageHeight) {
-        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-      } else {
-        let position = 0;
-        let remaining = imgHeight;
-        let first = true;
-        while (remaining > 0) {
-          if (!first) pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, -position, imgWidth, imgHeight);
-          position += pageHeight;
-          remaining -= pageHeight;
-          first = false;
-        }
-      }
-      const pdfBlob = pdf.output('blob');
-      return URL.createObjectURL(pdfBlob);
-    } catch {
-      return null;
+    } finally {
+      captureHost.remove();
     }
+  };
+
+  const generatePdfUrl = async (): Promise<string | null> => {
+    const canvas = await capturePdfCanvas();
+    if (!canvas) return null;
+
+    const pdfWidth = 215.9;
+    const pdfHeight = 279.4;
+    const pixelsPerMm = canvas.width / pdfWidth;
+    const pagePixelHeight = Math.floor(pdfHeight * pixelsPerMm);
+    const pageCount = Math.ceil(canvas.height / pagePixelHeight);
+    const pdf = new jsPDF('p', 'mm', 'letter');
+
+    for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
+      if (pageIndex > 0) pdf.addPage();
+      const sourceY = pageIndex * pagePixelHeight;
+      const sliceHeight = Math.min(pagePixelHeight, canvas.height - sourceY);
+      const pageCanvas = document.createElement('canvas');
+      pageCanvas.width = canvas.width;
+      pageCanvas.height = sliceHeight;
+      const context = pageCanvas.getContext('2d');
+      if (!context) return null;
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+      context.drawImage(canvas, 0, sourceY, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
+      const imageHeight = sliceHeight / pixelsPerMm;
+      pdf.addImage(pageCanvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, imageHeight, undefined, 'FAST');
+    }
+
+    return URL.createObjectURL(pdf.output('blob'));
   };
 
   const handleDownloadPDF = async () => {
@@ -600,17 +641,21 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
     }
   };
 
-  const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
-    if (printWindow && pdfRef.current) {
-      const styles = Array.from(document.styleSheets)
-        .map(ss => {
-          try { return Array.from(ss.cssRules).map(r => r.cssText).join('\n'); }
-          catch { return ''; }
-        }).join('\n');
-      printWindow.document.write(`<html><head><title>Revision Junio</title><style>${styles}body{margin:0;padding:20px}@media print{body{margin:0;padding:0}}</style></head><body>${pdfRef.current.innerHTML}</body></html>`);
-      printWindow.document.close();
-      setTimeout(() => printWindow.print(), 500);
+  const handlePrint = async () => {
+    setGeneratingPDF(true);
+    try {
+      const url = await generatePdfUrl();
+      if (!url) throw new Error('No se pudo generar el PDF');
+      const printWindow = window.open(url, '_blank');
+      if (printWindow) {
+        printWindow.addEventListener('load', () => printWindow.print(), { once: true });
+        setTimeout(() => printWindow.print(), 1500);
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch {
+      setToast({ message: 'Error al preparar la impresion', type: 'error' });
+    } finally {
+      setGeneratingPDF(false);
     }
   };
 
