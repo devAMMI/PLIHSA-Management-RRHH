@@ -221,7 +221,10 @@ export async function generateJuneReviewPdf(data: JuneReviewPdfData): Promise<st
   // ── Signatures ──
   const signatureGap = CONTENT_BOTTOM - y >= 38 ? 28 : 20;
   y += signatureGap;
-  if (y + 10 > CONTENT_BOTTOM) y = newPage();
+  if (y + 10 > CONTENT_BOTTOM) {
+    y = newPage();
+    y += 28;
+  }
 
   const sigW = (CONTENT_W - 20) / 3;
   const sigLabels = ['Firma Colaborador', 'Firma Jefe Inmediato', 'Firma RRHH'];
