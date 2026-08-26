@@ -219,7 +219,8 @@ export async function generateJuneReviewPdf(data: JuneReviewPdfData): Promise<st
   });
 
   // ── Signatures ──
-  y += 28;
+  const signatureGap = CONTENT_BOTTOM - y >= 38 ? 28 : 20;
+  y += signatureGap;
   if (y + 10 > CONTENT_BOTTOM) y = newPage();
 
   const sigW = (CONTENT_W - 20) / 3;
