@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .from('system_users')
             .select('*')
             .eq('user_id', session.user.id)
-            .maybeSingle();
+            .maybeSingle() as unknown as { data: SystemUser | null };
 
           setSystemUser(systemUserData);
 
@@ -92,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               .from('employees')
               .select('id, first_name, last_name, photo_url, position, email, work_location:work_locations(id, name, city, code)')
               .eq('id', systemUserData.employee_id)
-              .maybeSingle();
+              .maybeSingle() as unknown as { data: Employee | null };
 
             setEmployee(employeeData);
           }
@@ -114,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .from('system_users')
             .select('*')
             .eq('user_id', session.user.id)
-            .maybeSingle();
+            .maybeSingle() as unknown as { data: SystemUser | null };
 
           setSystemUser(systemUserData);
 
@@ -128,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               .from('employees')
               .select('id, first_name, last_name, photo_url, position, email, work_location:work_locations(id, name, city, code)')
               .eq('id', systemUserData.employee_id)
-              .maybeSingle();
+              .maybeSingle() as unknown as { data: Employee | null };
 
             setEmployee(employeeData);
           } else {

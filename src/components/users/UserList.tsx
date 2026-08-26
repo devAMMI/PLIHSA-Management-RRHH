@@ -435,7 +435,7 @@ export function UserList() {
 
       {showModal && (
         <UserModal
-          user={selectedUser}
+          user={selectedUser as any}
           onClose={() => { setShowModal(false); setSelectedUser(null); }}
           onSuccess={handleModalSuccess}
         />

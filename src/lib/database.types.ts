@@ -208,8 +208,10 @@ export interface Database {
           user_id: string
           employee_id: string | null
           company_id: string
-          role: 'admin' | 'rrhh' | 'manager' | 'jefe' | 'employee' | 'viewer'
+          role: 'superadmin' | 'admin' | 'rrhh' | 'manager' | 'jefe' | 'employee' | 'viewer'
           is_active: boolean
+          email: string | null
+          accessible_company_ids: string[] | null
           created_at: string
           updated_at: string
         }
@@ -218,8 +220,10 @@ export interface Database {
           user_id: string
           employee_id?: string | null
           company_id: string
-          role: 'admin' | 'rrhh' | 'manager' | 'jefe' | 'employee' | 'viewer'
+          role: 'superadmin' | 'admin' | 'rrhh' | 'manager' | 'jefe' | 'employee' | 'viewer'
           is_active?: boolean
+          email?: string | null
+          accessible_company_ids?: string[] | null
           created_at?: string
           updated_at?: string
         }
@@ -228,8 +232,39 @@ export interface Database {
           user_id?: string
           employee_id?: string | null
           company_id?: string
-          role?: 'admin' | 'rrhh' | 'manager' | 'employee' | 'viewer'
+          role?: 'superadmin' | 'admin' | 'rrhh' | 'manager' | 'jefe' | 'employee' | 'viewer'
           is_active?: boolean
+          email?: string | null
+          accessible_company_ids?: string[] | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      user_sidebar_permissions: {
+        Row: {
+          id: string
+          system_user_id: string
+          menu_item_id: string
+          granted: boolean
+          granted_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          system_user_id: string
+          menu_item_id: string
+          granted: boolean
+          granted_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          system_user_id?: string
+          menu_item_id?: string
+          granted?: boolean
+          granted_by?: string | null
           created_at?: string
           updated_at?: string
         }

@@ -27,7 +27,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const canSwitchCompany = systemUser?.role === 'superadmin' || systemUser?.role === 'rrhh';
 
   useEffect(() => {
-    if (user) {
+    if (user && systemUser) {
       loadCompanies();
     }
   }, [user, systemUser]);
@@ -40,7 +40,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         const { data: companies } = await supabase
           .from('companies')
           .select('id, name, code')
-          .order('name');
+          .order('name') as unknown as { data: Company[] | null };
 
         setAllCompanies(companies || []);
 
@@ -53,15 +53,15 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
           setActiveCompanyState(companies[0]);
         }
       } else {
-        const { data: systemUser } = await supabase
+        const { data: suData } = await supabase
           .from('system_users')
           .select('company_id, accessible_company_ids, companies(id, name, code)')
-          .eq('user_id', user?.id)
-          .single();
+          .eq('user_id', user?.id || '')
+          .maybeSingle() as unknown as { data: { company_id: string; accessible_company_ids: string[] | null; companies: Company } | null };
 
-        if (systemUser?.companies) {
-          const primaryCompany = systemUser.companies as unknown as Company;
-          const accessibleIds = (systemUser as any).accessible_company_ids as string[] | null;
+        if (suData?.companies) {
+          const primaryCompany = suData.companies;
+          const accessibleIds = suData.accessible_company_ids;
 
           let companiesList: Company[] = [primaryCompany];
 
@@ -70,7 +70,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
               .from('companies')
               .select('id, name, code')
               .in('id', accessibleIds)
-              .order('name');
+              .order('name') as unknown as { data: Company[] | null };
 
             if (accessibleCompanies) {
               const seen = new Set([primaryCompany.id]);
