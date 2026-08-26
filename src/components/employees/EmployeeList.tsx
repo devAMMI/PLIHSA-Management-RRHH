@@ -43,7 +43,7 @@ interface WorkLocation {
 }
 
 export function EmployeeList() {
-  const { activeCompany } = useCompany();
+  const { activeCompany, allCompanies } = useCompany();
   const { systemUser, employee } = useAuth();
   const isManager = systemUser?.role === 'manager' || systemUser?.role === 'jefe';
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -67,7 +67,7 @@ export function EmployeeList() {
       loadWorkLocations();
       loadEmployees();
     }
-  }, [activeCompany]);
+  }, [activeCompany, allCompanies]);
 
   const loadCompanies = async () => {
     try {
@@ -115,6 +115,11 @@ export function EmployeeList() {
     try {
       if (!activeCompany) return;
 
+      const isRrhh = systemUser?.role === 'rrhh';
+      const companyIds = isRrhh && allCompanies.length > 1
+        ? allCompanies.map(c => c.id)
+        : [activeCompany.id];
+
       const { data, error } = await supabase
         .from('employees')
         .select(`
@@ -125,7 +130,7 @@ export function EmployeeList() {
           work_location:work_locations(id, name, city, code),
           manager:manager_id(id, first_name, last_name, position)
         `)
-        .eq('company_id', activeCompany.id)
+        .in('company_id', companyIds)
         .eq('status', 'active')
         .order('first_name');
 

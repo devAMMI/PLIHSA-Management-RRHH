@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Users, FileSpreadsheet, FileText, Search, Loader2, Building, Filter, ChevronDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useCompany } from '../../contexts/CompanyContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { generateEmployeeReportPdf, generateEmployeeReportExcel, type EmployeeReportRow } from '../../lib/employeeReportPdf';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -17,7 +18,8 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export function EmployeeReport() {
-  const { activeCompany } = useCompany();
+  const { activeCompany, allCompanies } = useCompany();
+  const { systemUser } = useAuth();
   const [rows, setRows] = useState<EmployeeReportRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState<'pdf' | 'excel' | null>(null);
@@ -31,7 +33,7 @@ export function EmployeeReport() {
   useEffect(() => {
     loadDepartments();
     loadEmployees();
-  }, [activeCompany]);
+  }, [activeCompany, allCompanies]);
 
   const loadDepartments = async () => {
     const { data } = await supabase.from('departments').select('id, name').order('name');
@@ -41,6 +43,11 @@ export function EmployeeReport() {
   const loadEmployees = async () => {
     setLoading(true);
     try {
+      const isRrhh = systemUser?.role === 'rrhh';
+      const companyIds = isRrhh && allCompanies.length > 1
+        ? allCompanies.map(c => c.id)
+        : activeCompany ? [activeCompany.id] : [];
+
       let query = supabase
         .from('employees')
         .select(`
@@ -54,8 +61,8 @@ export function EmployeeReport() {
         `)
         .order('first_name');
 
-      if (activeCompany) {
-        query = query.eq('company_id', activeCompany.id);
+      if (companyIds.length > 0) {
+        query = query.in('company_id', companyIds);
       }
 
       const { data, error } = await query;

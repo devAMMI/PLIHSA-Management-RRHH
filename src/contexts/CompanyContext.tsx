@@ -19,24 +19,24 @@ interface CompanyContextType {
 const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
 
 export function CompanyProvider({ children }: { children: ReactNode }) {
-  const { user, userRole } = useAuth();
+  const { user, systemUser } = useAuth();
   const [activeCompany, setActiveCompanyState] = useState<Company | null>(null);
   const [allCompanies, setAllCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const canSwitchCompany = userRole === 'superadmin';
+  const canSwitchCompany = systemUser?.role === 'superadmin' || systemUser?.role === 'rrhh';
 
   useEffect(() => {
     if (user) {
       loadCompanies();
     }
-  }, [user, userRole]);
+  }, [user, systemUser]);
 
   const loadCompanies = async () => {
     try {
       setLoading(true);
 
-      if (canSwitchCompany) {
+      if (systemUser?.role === 'superadmin') {
         const { data: companies } = await supabase
           .from('companies')
           .select('id, name, code')
@@ -55,14 +55,34 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       } else {
         const { data: systemUser } = await supabase
           .from('system_users')
-          .select('company_id, companies(id, name, code)')
+          .select('company_id, accessible_company_ids, companies(id, name, code)')
           .eq('user_id', user?.id)
           .single();
 
         if (systemUser?.companies) {
-          const company = systemUser.companies as unknown as Company;
-          setActiveCompanyState(company);
-          setAllCompanies([company]);
+          const primaryCompany = systemUser.companies as unknown as Company;
+          const accessibleIds = (systemUser as any).accessible_company_ids as string[] | null;
+
+          let companiesList: Company[] = [primaryCompany];
+
+          if (accessibleIds && accessibleIds.length > 0) {
+            const { data: accessibleCompanies } = await supabase
+              .from('companies')
+              .select('id, name, code')
+              .in('id', accessibleIds)
+              .order('name');
+
+            if (accessibleCompanies) {
+              const seen = new Set([primaryCompany.id]);
+              companiesList = [primaryCompany, ...accessibleCompanies.filter(c => !seen.has(c.id) && seen.add(c.id))];
+            }
+          }
+
+          setAllCompanies(companiesList);
+
+          const savedCompanyId = localStorage.getItem('activeCompanyId');
+          const savedCompany = companiesList.find(c => c.id === savedCompanyId);
+          setActiveCompanyState(savedCompany || primaryCompany);
         }
       }
     } catch (error) {

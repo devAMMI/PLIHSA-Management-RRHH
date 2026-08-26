@@ -7,6 +7,7 @@ interface SystemUser {
   user_id: string;
   employee_id: string | null;
   company_id: string;
+  accessible_company_ids?: string[] | null;
   role: 'superadmin' | 'admin' | 'rrhh' | 'manager' | 'jefe' | 'employee' | 'viewer';
   is_active: boolean;
 }
