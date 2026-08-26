@@ -263,8 +263,8 @@ function drawPageHeader(doc: jsPDF, data: JuneReviewPdfData, logoData: string | 
   doc.setFontSize(9);
   doc.setTextColor(30, 41, 59);
   const title = data.employeeType === 'operativo'
-    ? 'Revision del Desempeno Operativo'
-    : 'Revision del Desempeno Administrativo';
+    ? 'Revision del Desempeño Operativo'
+    : 'Revision del Desempeño Administrativo';
   doc.text(title, PAGE_W / 2, y + 3, { align: 'center' });
 
   doc.setFont('helvetica', 'normal');
