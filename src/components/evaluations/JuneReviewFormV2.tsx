@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Save, Download, Printer, Upload, CheckCircle, Eye, FileText, X } from 'lucide-react';
+import { ArrowLeft, Save, Download, Printer, Upload, CheckCircle, Eye, FileText, X, Trash2, Lock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { buildStoragePath, storagePathToProxyUrl, BUCKET } from '../../lib/storagePaths';
 import { useAuth } from '../../contexts/AuthContext';
@@ -100,7 +100,8 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
   const [showDocViewer, setShowDocViewer] = useState(false);
   const [digitalPdfUrl, setDigitalPdfUrl] = useState<string | null>(null);
 
-  const isReadOnly = status === 'completed';
+  const isSuperAdmin = systemUser?.role === 'superadmin';
+  const isReadOnly = status === 'completed' && !isSuperAdmin;
   const isEditing = reviewId !== null;
 
   useEffect(() => {
@@ -491,6 +492,54 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
     }
   };
 
+  const handleReopen = async () => {
+    if (!reviewId) return;
+    if (!window.confirm('¿Está seguro de reabrir esta revisión? El estado cambiará a "Pendiente de Firma" para poder editar el documento firmado.')) return;
+    try {
+      const { error } = await supabase.from('june_reviews').update({
+        status: 'pending_signature',
+        completed_at: null,
+      }).eq('id', reviewId);
+      if (error) throw error;
+      setStatus('pending_signature');
+      setToast({ message: 'Revisión reabierta. Ya puede editar el documento firmado.', type: 'success' });
+    } catch (err: any) {
+      setToast({ message: err.message || 'Error al reabrir la revisión', type: 'error' });
+    }
+  };
+
+  const handleDeleteSignedDoc = async () => {
+    if (!reviewId || !signedDocUrl) return;
+    if (!window.confirm('¿Está seguro de eliminar el documento firmado? Esta acción no se puede deshacer.')) return;
+    try {
+      const storagePath = signedDocUrl.replace(/^\/docs\//, '');
+      const { error: storageError } = await supabase.storage
+        .from(BUCKET)
+        .remove([storagePath]);
+      if (storageError) console.error('Storage error:', storageError);
+
+      const { error: dbError } = await supabase.from('june_reviews').update({
+        signed_document_url: null,
+        signed_document_filename: null,
+        signed_document_mime_type: null,
+        signed_document_uploaded_at: null,
+        signed_document_uploaded_by: null,
+        status: 'draft',
+        completed_at: null,
+      }).eq('id', reviewId);
+      if (dbError) throw dbError;
+
+      setSignedDocUrl(null);
+      setSignedDocFilename(null);
+      setSignedDocMimeType(null);
+      setSignedDocUploadedAt(null);
+      setStatus('draft');
+      setToast({ message: 'Documento firmado eliminado. Puede subir uno nuevo.', type: 'success' });
+    } catch (err: any) {
+      setToast({ message: err.message || 'Error al eliminar el documento', type: 'error' });
+    }
+  };
+
   const handleFinalize = async () => {
     if (!signedDocUrl || !reviewId) {
       setToast({ message: 'Debe subir el documento firmado antes de finalizar', type: 'error' });
@@ -650,11 +699,6 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
         </div>
       </div>
 
-      {/* Version badge */}
-      <div className="mb-4 flex items-center gap-2 text-xs text-slate-400">
-        <span className="px-2 py-1 bg-slate-100 rounded font-medium">v2</span>
-        <span>Version corregida de generacion de PDF</span>
-      </div>
 
       {status === 'completed' && (
         <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-5 flex items-center gap-4">
@@ -1014,17 +1058,42 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
               <p className="text-sm text-green-800 mb-3">
                 <strong>Proceso completado:</strong> El documento ha sido firmado y finalizado exitosamente.
               </p>
-              <button
-                onClick={async () => {
-                  const url = await generatePdfUrl();
-                  setDigitalPdfUrl(url);
-                  setShowDocViewer(true);
-                }}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition text-sm font-medium"
-              >
-                <Eye className="w-4 h-4" />
-                Ver Ambos Documentos
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={async () => {
+                    const url = await generatePdfUrl();
+                    setDigitalPdfUrl(url);
+                    setShowDocViewer(true);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-white border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition text-sm font-medium"
+                >
+                  <Eye className="w-4 h-4" />
+                  Ver Ambos Documentos
+                </button>
+                {isSuperAdmin && (
+                  <>
+                    <button
+                      onClick={handleReopen}
+                      className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition text-sm font-medium"
+                    >
+                      <Lock className="w-4 h-4" />
+                      Reabrir Revisión
+                    </button>
+                    <button
+                      onClick={handleDeleteSignedDoc}
+                      className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-medium"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Eliminar Documento Firmado
+                    </button>
+                  </>
+                )}
+              </div>
+              {isSuperAdmin && (
+                <p className="text-xs text-amber-700 mt-2">
+                  Como superadministrador, puede reabrir esta revisión o eliminar el documento firmado para subir uno nuevo.
+                </p>
+              )}
             </div>
           )}
 
@@ -1039,6 +1108,15 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
                       <p className="text-xs text-green-600">Subido el {new Date(signedDocUploadedAt).toLocaleString('es-HN')}</p>
                     )}
                   </div>
+                  {isSuperAdmin && (
+                    <button
+                      onClick={handleDeleteSignedDoc}
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-700 bg-red-50 border border-red-300 rounded-lg hover:bg-red-100 transition flex-shrink-0"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Eliminar
+                    </button>
+                  )}
                 </div>
               )}
 
