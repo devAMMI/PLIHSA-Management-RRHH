@@ -23,6 +23,7 @@ import { GoalDefinitionsList } from './components/goals/GoalDefinitionsList';
 import { EvaluacionJunioV2 } from './components/evaluations/EvaluacionJunioV2';
 import { EvaluationAuditLog } from './components/audit/EvaluationAuditLog';
 import { ReportesView } from './components/reports/ReportesView';
+import { EmployeeReport } from './components/reports/EmployeeReport';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -67,6 +68,8 @@ function AppContent() {
         return 'Usuarios del Sistema';
       case 'reportes':
         return 'Reportes';
+      case 'employee-report':
+        return 'Reporte de Empleados';
       case 'settings':
         return 'Configuración';
       case 'profile':
@@ -130,6 +133,8 @@ function AppContent() {
         return <SQLExecutor />;
       case 'reportes':
         return <ReportesView />;
+      case 'employee-report':
+        return <EmployeeReport />;
       case 'settings':
         return (
           <div className="text-center py-12">
@@ -174,6 +179,7 @@ function AppContent() {
         'goal-definition-enero',
         'dashboard',
         'audit-log',
+        'employee-report',
       ].includes(currentView)
       ? 'flex-1 bg-slate-50 overflow-y-auto'
       : 'flex-1 bg-slate-50 overflow-y-auto p-8';

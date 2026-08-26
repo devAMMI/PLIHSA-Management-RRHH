@@ -23,6 +23,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
     { id: 'evaluations-list', label: 'Ver Evaluaciones', icon: FileText, requiredRoles: ['superadmin', 'rrhh'] },
     { id: 'system-users', label: 'Usuarios', icon: Shield, requiredRoles: ['superadmin', 'admin'] },
     { id: 'reportes', label: 'Reportes', icon: BarChart2, requiredRoles: ['superadmin', 'admin', 'rrhh'] },
+    { id: 'employee-report', label: 'Reporte de Empleados', icon: Users, requiredRoles: ['superadmin', 'admin', 'rrhh'] },
     { id: 'settings', label: 'Configuración', icon: Settings, requiredRoles: ['superadmin'] },
     { id: 'raw-evaluations', label: 'Evaluaciones Hechas', icon: Database, requiredRoles: ['superadmin'] },
     { id: 'sql-executor', label: 'SQL Evaluaciones', icon: Terminal, requiredRoles: ['superadmin'] },
