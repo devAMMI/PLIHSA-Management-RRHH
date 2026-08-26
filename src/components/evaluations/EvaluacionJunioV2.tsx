@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Building2, Users, Calendar, ClipboardList, List, File as FileEdit, FileCheck, Plus, Sparkles } from 'lucide-react';
+import { Building2, Users, Calendar, ClipboardList, List, File as FileEdit, FileCheck, Plus } from 'lucide-react';
 import { JuneReviewsList } from './JuneReviewsList';
 import { JuneReviewFormV2 } from './JuneReviewFormV2';
 
@@ -191,23 +191,15 @@ export function EvaluacionJunioV2() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Version badge */}
-        <div className="mb-4 flex justify-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 border border-amber-300 rounded-full text-sm font-medium text-amber-800">
-            <Sparkles className="w-4 h-4" />
-            Version 2 - PDF Corregido
-          </div>
-        </div>
-
         <div className="bg-white rounded-2xl shadow-sm p-8 mb-8">
           <div className="flex items-center justify-center mb-6">
             <img
               src="/Logo_PLIHSA_BLUE.png"
-              alt="PLIHSA Logo"
-              className="w-16 h-16 object-contain mr-4"
+              alt="Logo de PLIHSA"
+              className="w-20 h-20 object-contain mr-4"
             />
             <div>
-              <h1 className="text-4xl font-bold text-slate-800">2da Evaluacion &mdash; Revision</h1>
+              <h1 className="text-4xl font-bold text-slate-800">PLIHSA &mdash; 2da Evaluacion</h1>
               <p className="text-slate-500 text-sm mt-1">Revision de Desempeno Semestral &mdash; Junio 2026</p>
             </div>
           </div>
