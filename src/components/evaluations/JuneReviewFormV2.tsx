@@ -100,8 +100,8 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
   const [showDocViewer, setShowDocViewer] = useState(false);
   const [digitalPdfUrl, setDigitalPdfUrl] = useState<string | null>(null);
 
-  const isSuperAdmin = systemUser?.role === 'superadmin';
-  const isReadOnly = status === 'completed' && !isSuperAdmin;
+  const canManageCompleted = systemUser?.role === 'superadmin' || systemUser?.role === 'admin';
+  const isReadOnly = status === 'completed' && !canManageCompleted;
   const isEditing = reviewId !== null;
 
   useEffect(() => {
@@ -1070,7 +1070,7 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
                   <Eye className="w-4 h-4" />
                   Ver Ambos Documentos
                 </button>
-                {isSuperAdmin && (
+                {canManageCompleted && (
                   <>
                     <button
                       onClick={handleReopen}
@@ -1089,7 +1089,7 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
                   </>
                 )}
               </div>
-              {isSuperAdmin && (
+              {canManageCompleted && (
                 <p className="text-xs text-amber-700 mt-2">
                   Como superadministrador, puede reabrir esta revisión o eliminar el documento firmado para subir uno nuevo.
                 </p>
@@ -1108,7 +1108,7 @@ export function JuneReviewFormV2({ reviewId, employeeType = 'administrativo', on
                       <p className="text-xs text-green-600">Subido el {new Date(signedDocUploadedAt).toLocaleString('es-HN')}</p>
                     )}
                   </div>
-                  {isSuperAdmin && (
+                  {canManageCompleted && (
                     <button
                       onClick={handleDeleteSignedDoc}
                       className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-700 bg-red-50 border border-red-300 rounded-lg hover:bg-red-100 transition flex-shrink-0"
