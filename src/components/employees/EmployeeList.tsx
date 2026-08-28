@@ -115,8 +115,8 @@ export function EmployeeList() {
     try {
       if (!activeCompany) return;
 
-      const isRrhh = systemUser?.role === 'rrhh';
-      const companyIds = isRrhh && allCompanies.length > 1
+      const isMultiCompany = systemUser?.role === 'rrhh' || systemUser?.role === 'superadmin';
+      const companyIds = isMultiCompany && allCompanies.length > 1
         ? allCompanies.map(c => c.id)
         : [activeCompany.id];
 
