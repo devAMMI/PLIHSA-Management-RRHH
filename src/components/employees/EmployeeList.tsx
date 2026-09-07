@@ -115,12 +115,13 @@ export function EmployeeList() {
     try {
       if (!activeCompany) return;
 
-      const isMultiCompany = systemUser?.role === 'rrhh' || systemUser?.role === 'superadmin';
-      const companyIds = isMultiCompany && allCompanies.length > 1
+      const isSuperAdmin = systemUser?.role === 'superadmin';
+      const isRrhh = systemUser?.role === 'rrhh';
+      const companyIds = isRrhh && allCompanies.length > 1
         ? allCompanies.map(c => c.id)
         : [activeCompany.id];
 
-      const { data, error } = await supabase
+      let employeesQuery = supabase
         .from('employees')
         .select(`
           *,
@@ -130,9 +131,13 @@ export function EmployeeList() {
           work_location:work_locations(id, name, city, code),
           manager:manager_id(id, first_name, last_name, position)
         `)
-        .in('company_id', companyIds)
-        .eq('status', 'active')
-        .order('first_name');
+        .eq('status', 'active');
+
+      if (!isSuperAdmin) {
+        employeesQuery = employeesQuery.in('company_id', companyIds);
+      }
+
+      const { data, error } = await employeesQuery.order('first_name');
 
       if (error) throw error;
       setEmployees(data || []);
