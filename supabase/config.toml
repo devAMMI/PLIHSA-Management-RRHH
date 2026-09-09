@@ -1,0 +1,14 @@
+[functions.send-email]
+verify_jwt = true
+
+[functions.create-admin-user]
+verify_jwt = true
+
+[functions.execute-sql]
+verify_jwt = true
+
+[functions.manage-users]
+verify_jwt = true
+
+[functions.reset-passwords-temp]
+verify_jwt = true

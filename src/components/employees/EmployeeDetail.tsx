@@ -1,4 +1,5 @@
-import { X, User, Briefcase, Mail, Phone, MapPin, GraduationCap, Calendar, CreditCard as Edit2, Trash2, Users } from 'lucide-react';
+import { X, User, Briefcase, Mail, Phone, MapPin, GraduationCap, Calendar, CreditCard as Edit2, Trash2, Users, Download } from 'lucide-react';
+import { downloadEmployeeCvPdf } from '../../lib/employeeCvPdf';
 import { formatSeniorityFromDate } from '../../lib/seniority';
 
 interface EmployeeDetailProps {
@@ -39,6 +40,14 @@ export function EmployeeDetail({ employee, onClose, onEdit, onDelete }: Employee
         <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-slate-800">Perfil de Empleado</h2>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => downloadEmployeeCvPdf(employee)}
+              className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium"
+              title="Descargar perfil CV en PDF"
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">Descargar CV</span>
+            </button>
             <button
               onClick={onEdit}
               className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition"

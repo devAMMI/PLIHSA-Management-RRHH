@@ -6,9 +6,11 @@ import jsPDF from 'jspdf';
 import { GoalWorkflowStatus } from './GoalWorkflowStatus';
 import { SignedDocumentUpload } from './SignedDocumentUpload';
 import { SignedDocumentViewer } from './SignedDocumentViewer';
+import { GoalDefinitionEmailButton } from './GoalDefinitionEmailButton';
 
 interface Employee {
   employee_code: string;
+  email?: string | null;
   first_name: string;
   last_name: string;
   position: string;
@@ -195,7 +197,7 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
     }
   };
 
-  const generatePdfBlob = async (): Promise<{ url: string; fileName: string } | null> => {
+  const generatePdfBlob = async (): Promise<{ url: string; fileName: string; blob: Blob } | null> => {
     if (!formRef.current) return null;
 
     try {
@@ -236,7 +238,7 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
       const pdfBlob = pdf.output('blob');
       const url = URL.createObjectURL(pdfBlob);
       const fileName = `Definicion_Metas_Adm_${definition.employee.first_name}_${definition.employee.last_name}_${new Date().toISOString().split('T')[0]}.pdf`;
-      return { url, fileName };
+      return { url, fileName, blob: pdfBlob };
     } catch (error) {
       console.error('Error generating PDF:', error);
       return null;
@@ -398,6 +400,15 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                 >
                   <Printer className="w-5 h-5" />
                 </button>
+                {currentDefinition.workflow_status === 'completed' && (
+                  <GoalDefinitionEmailButton
+                    employeeName={`${definition.employee.first_name} ${definition.employee.last_name}`}
+                    employeeEmail={definition.employee.email}
+                    evaluationPeriod={definition.evaluation_period}
+                    generatePdf={generatePdfBlob}
+                    accent="blue"
+                  />
+                )}
               </>
             )}
             {mode === 'edit' && (
