@@ -26,7 +26,8 @@ Deno.serve(async (req: Request) => {
     const attachments = Array.isArray(body.attachments) ? body.attachments : [];
     if (!to || !subject || !html || attachments.length === 0) return json({ error: 'El destinatario, contenido y PDF son obligatorios' }, 400);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return json({ error: 'El correo del destinatario no es válido' }, 400);
-    if (attachments.some((item: any) => item.contentType !== 'application/pdf' || !item.filename || !item.content)) return json({ error: 'El archivo adjunto no es válido' }, 400);
+    const allowedAttachmentTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+    if (attachments.some((item: any) => !allowedAttachmentTypes.includes(item.contentType) || !item.filename || !item.content)) return json({ error: 'El archivo adjunto no es válido' }, 400);
 
     const tenant = Deno.env.get('AZURE_TENANT_ID');
     const clientId = Deno.env.get('AZURE_CLIENT_ID');

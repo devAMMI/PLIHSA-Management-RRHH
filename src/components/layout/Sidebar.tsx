@@ -1,4 +1,4 @@
-import { Home, Users, ClipboardCheck, BarChart2, Settings, LogOut, User as UserIcon, Shield, FileText, Database, Terminal, Activity } from 'lucide-react';
+import { Home, Users, ClipboardCheck, BarChart2, Settings, LogOut, User as UserIcon, Shield, FileText, Database, Terminal, Activity, CalendarDays } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCompany } from '../../contexts/CompanyContext';
 import { useMemo } from 'react';
@@ -28,6 +28,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
     { id: 'raw-evaluations', label: 'Evaluaciones Hechas', icon: Database, requiredRoles: ['superadmin'] },
     { id: 'sql-executor', label: 'SQL Evaluaciones', icon: Terminal, requiredRoles: ['superadmin'] },
     { id: 'audit-log', label: 'Registro de Actividad', icon: Activity, requiredRoles: ['superadmin', 'rrhh'] },
+    { id: 'vacations', label: 'Vacaciones', icon: CalendarDays, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe', 'employee'] },
   ];
 
   const isSuperAdmin = systemUser?.role === 'superadmin';

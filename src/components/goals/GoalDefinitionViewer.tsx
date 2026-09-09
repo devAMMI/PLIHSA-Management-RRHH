@@ -238,7 +238,7 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
       const pdfBlob = pdf.output('blob');
       const url = URL.createObjectURL(pdfBlob);
       const fileName = `Definicion_Metas_Adm_${definition.employee.first_name}_${definition.employee.last_name}_${new Date().toISOString().split('T')[0]}.pdf`;
-      return { url, fileName, blob: pdfBlob };
+      return { url, fileName, blob: pdfBlob, contentType: 'application/pdf' };
     } catch (error) {
       console.error('Error generating PDF:', error);
       return null;
@@ -400,15 +400,16 @@ export function GoalDefinitionViewer({ definition, onClose, onUpdate, mode: init
                 >
                   <Printer className="w-5 h-5" />
                 </button>
-                {currentDefinition.workflow_status === 'completed' && (
-                  <GoalDefinitionEmailButton
+                <GoalDefinitionEmailButton
                     employeeName={`${definition.employee.first_name} ${definition.employee.last_name}`}
                     employeeEmail={definition.employee.email}
                     evaluationPeriod={definition.evaluation_period}
                     generatePdf={generatePdfBlob}
+                    signedDocumentUrl={currentDefinition.signed_document_url}
+                    signedDocumentFileName={currentDefinition.signed_document_filename}
+                    signedDocumentMimeType={currentDefinition.signed_document_mime_type}
                     accent="blue"
                   />
-                )}
               </>
             )}
             {mode === 'edit' && (
