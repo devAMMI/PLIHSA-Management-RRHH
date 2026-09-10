@@ -6,9 +6,11 @@ import jsPDF from 'jspdf';
 import { GoalWorkflowStatus } from './GoalWorkflowStatus';
 import { SignedDocumentUpload } from './SignedDocumentUpload';
 import { SignedDocumentViewer } from './SignedDocumentViewer';
+import { GoalDefinitionEmailButton } from './GoalDefinitionEmailButton';
 
 interface Employee {
   employee_code: string;
+  email?: string | null;
   first_name: string;
   last_name: string;
   position: string;
@@ -194,7 +196,7 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
     }
   };
 
-  const generatePdfBlob = async (): Promise<{ url: string; fileName: string } | null> => {
+  const generatePdfBlob = async (): Promise<{ url: string; fileName: string; blob: Blob } | null> => {
     if (!formRef.current) return null;
 
     try {
@@ -235,7 +237,7 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
       const pdfBlob = pdf.output('blob');
       const url = URL.createObjectURL(pdfBlob);
       const fileName = `Definicion_Factores_Operativo_${definition.employee.first_name}_${definition.employee.last_name}_${new Date().toISOString().split('T')[0]}.pdf`;
-      return { url, fileName };
+      return { url, fileName, blob: pdfBlob, contentType: 'application/pdf' };
     } catch (error) {
       console.error('Error generating PDF:', error);
       return null;
@@ -348,6 +350,16 @@ export function OperativeGoalDefinitionViewer({ definition, onClose, onUpdate, m
                 <button onClick={handlePrint} disabled={loading} className="p-2 hover:bg-orange-600 rounded-lg transition disabled:opacity-50" title="Imprimir">
                   <Printer className="w-5 h-5" />
                 </button>
+                <GoalDefinitionEmailButton
+                    employeeName={`${definition.employee.first_name} ${definition.employee.last_name}`}
+                    employeeEmail={definition.employee.email}
+                    evaluationPeriod={definition.evaluation_period}
+                    generatePdf={generatePdfBlob}
+                    signedDocumentUrl={currentDefinition.signed_document_url}
+                    signedDocumentFileName={currentDefinition.signed_document_filename}
+                    signedDocumentMimeType={currentDefinition.signed_document_mime_type}
+                    accent="orange"
+                  />
               </>
             )}
             {mode === 'edit' && (
