@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Mail, Phone, MapPin, Calendar, Briefcase, User, GraduationCap, Users, Building2, Clock, MapPinned, Home, Pencil, Trash2, Heart, UserCheck } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, MapPin, Calendar, CalendarDays, Briefcase, User, GraduationCap, Users, Building2, Clock, MapPinned, Home, Pencil, Trash2, Heart, UserCheck } from 'lucide-react';
 import { formatSeniorityFromDate } from '../../lib/seniority';
 import { EmployeeEvaluationsHistory } from './EmployeeEvaluationsHistory';
 import { supabase } from '../../lib/supabase';
@@ -22,8 +22,18 @@ interface Subordinate {
   status?: string;
 }
 
+interface VacationBalance {
+  id: string;
+  year: number;
+  total_days: number;
+  used_days: number;
+  notes: string | null;
+}
+
 export function EmployeeProfilePage({ employee, onBack, onEdit, onDelete }: EmployeeProfilePageProps) {
   const [subordinates, setSubordinates] = useState<Subordinate[]>([]);
+  const [vacationBalances, setVacationBalances] = useState<VacationBalance[]>([]);
+  const [vacationLoading, setVacationLoading] = useState(true);
 
   useEffect(() => {
     supabase
@@ -33,6 +43,30 @@ export function EmployeeProfilePage({ employee, onBack, onEdit, onDelete }: Empl
       .eq('status', 'active')
       .order('first_name', { ascending: true })
       .then(({ data }) => setSubordinates(data || []));
+  }, [employee.id]);
+
+  useEffect(() => {
+    let mounted = true;
+    setVacationLoading(true);
+    supabase
+      .from('vacation_balances')
+      .select('id, year, total_days, used_days, notes')
+      .eq('employee_id', employee.id)
+      .order('year', { ascending: true })
+      .then(({ data, error }) => {
+        if (!mounted) return;
+        if (error) {
+          console.error('Error loading vacation balances:', error);
+          setVacationBalances([]);
+        } else {
+          setVacationBalances((data as VacationBalance[]) || []);
+        }
+        setVacationLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
   }, [employee.id]);
 
   const formatDate = (date: string | null) => {
@@ -58,6 +92,9 @@ export function EmployeeProfilePage({ employee, onBack, onEdit, onDelete }: Empl
 
   const age = employee.birth_date ? calculateAge(employee.birth_date) : employee.age;
   const workSeniority = formatSeniorityFromDate(employee.hire_date);
+  const totalVacationDays = vacationBalances.reduce((sum, balance) => sum + balance.total_days, 0);
+  const usedVacationDays = vacationBalances.reduce((sum, balance) => sum + balance.used_days, 0);
+  const availableVacationDays = totalVacationDays - usedVacationDays;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -302,6 +339,59 @@ export function EmployeeProfilePage({ employee, onBack, onEdit, onDelete }: Empl
               </div>
 
               <div className="space-y-6">
+                <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <CalendarDays className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-slate-900">Mis vacaciones</h2>
+                      <p className="text-xs text-slate-500 mt-0.5">Días asignados y disponibles por período</p>
+                    </div>
+                  </div>
+
+                  {vacationLoading ? (
+                    <p className="text-sm text-slate-500 py-3">Cargando saldos...</p>
+                  ) : vacationBalances.length === 0 ? (
+                    <div className="bg-white rounded-lg border border-blue-100 p-4">
+                      <p className="text-sm text-slate-600">Aún no hay días de vacaciones registrados.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-3 gap-2 mb-4">
+                        <div className="bg-white rounded-lg border border-blue-100 p-3 text-center">
+                          <p className="text-[10px] uppercase font-semibold text-slate-500">Asignados</p>
+                          <p className="text-xl font-bold text-blue-700 mt-1">{totalVacationDays}</p>
+                        </div>
+                        <div className="bg-white rounded-lg border border-blue-100 p-3 text-center">
+                          <p className="text-[10px] uppercase font-semibold text-slate-500">Usados</p>
+                          <p className="text-xl font-bold text-amber-600 mt-1">{usedVacationDays}</p>
+                        </div>
+                        <div className="bg-white rounded-lg border border-blue-100 p-3 text-center">
+                          <p className="text-[10px] uppercase font-semibold text-slate-500">Disponibles</p>
+                          <p className="text-xl font-bold text-emerald-600 mt-1">{availableVacationDays}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        {vacationBalances.map((balance, index) => (
+                          <div key={balance.id} className="bg-white rounded-lg border border-blue-100 px-3 py-2.5">
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold text-slate-800">{index + 1}{index === 0 ? 'er' : index === 1 ? 'do' : index === 2 ? 'er' : 'to'} año</p>
+                                <p className="text-xs text-slate-500">{balance.year} - {balance.year + 1}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm font-bold text-blue-700">{balance.total_days} días asignados</p>
+                                <p className="text-xs text-slate-500">{balance.used_days} usados · <span className="font-semibold text-emerald-600">{balance.total_days - balance.used_days} disponibles</span></p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+
                 <div className="bg-slate-50 rounded-xl p-6 border border-slate-200">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="p-2 bg-orange-100 rounded-lg">
