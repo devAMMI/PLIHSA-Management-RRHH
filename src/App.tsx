@@ -90,7 +90,9 @@ function AppContent() {
       case 'audit-log':
         return 'Registro de Actividad';
       case 'vacations':
-        return 'Vacaciones';
+        return 'Solicitar Vacaciones';
+      case 'vacation-approvals':
+        return 'Aprobar Vacaciones';
       default:
         return 'Dashboard';
     }
@@ -153,7 +155,9 @@ function AppContent() {
       case 'audit-log':
         return <EvaluationAuditLog />;
       case 'vacations':
-        return <VacationModule />;
+        return <VacationModule mode="request" />;
+      case 'vacation-approvals':
+        return <VacationModule mode="approvals" />;
       case 'evaluacion-final':
         return (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
