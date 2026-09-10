@@ -30,7 +30,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
     { id: 'audit-log', label: 'Registro de Actividad', icon: Activity, requiredRoles: ['superadmin', 'rrhh'] },
     { id: 'vacations', label: 'Solicitar Vacaciones', icon: CalendarDays, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe', 'employee'] },
     { id: 'vacation-approvals', label: 'Aprobar Vacaciones', icon: ShieldCheck, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
-    { id: 'vacation-employees', label: 'Vacaciones Empleados', icon: CalendarClock, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
+    { id: 'vacation-employees', label: 'Vacaciones Empleados', icon: CalendarClock, requiredRoles: ['superadmin', 'rrhh'] },
   ];
 
   const isSuperAdmin = systemUser?.role === 'superadmin';
