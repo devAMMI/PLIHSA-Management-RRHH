@@ -1,4 +1,4 @@
-import { Home, Users, ClipboardCheck, BarChart2, Settings, LogOut, User as UserIcon, Shield, FileText, Database, Terminal, Activity, CalendarDays, ShieldCheck } from 'lucide-react';
+import { Home, Users, ClipboardCheck, BarChart2, Settings, LogOut, User as UserIcon, Shield, FileText, Database, Terminal, Activity, CalendarDays, ShieldCheck, CalendarClock } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCompany } from '../../contexts/CompanyContext';
 import { useMemo } from 'react';
@@ -30,6 +30,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
     { id: 'audit-log', label: 'Registro de Actividad', icon: Activity, requiredRoles: ['superadmin', 'rrhh'] },
     { id: 'vacations', label: 'Solicitar Vacaciones', icon: CalendarDays, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe', 'employee'] },
     { id: 'vacation-approvals', label: 'Aprobar Vacaciones', icon: ShieldCheck, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
+    { id: 'vacation-employees', label: 'Vacaciones Empleados', icon: CalendarClock, requiredRoles: ['superadmin', 'admin', 'rrhh', 'manager', 'jefe'] },
   ];
 
   const isSuperAdmin = systemUser?.role === 'superadmin';

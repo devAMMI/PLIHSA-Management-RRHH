@@ -25,6 +25,7 @@ import { EvaluationAuditLog } from './components/audit/EvaluationAuditLog';
 import { ReportesView } from './components/reports/ReportesView';
 import { EmployeeReport } from './components/reports/EmployeeReport';
 import { VacationModule } from './components/vacations/VacationModule';
+import { VacationEmployees } from './components/vacations/VacationEmployees';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -93,6 +94,8 @@ function AppContent() {
         return 'Solicitar Vacaciones';
       case 'vacation-approvals':
         return 'Aprobar Vacaciones';
+      case 'vacation-employees':
+        return 'Vacaciones Empleados';
       default:
         return 'Dashboard';
     }
@@ -158,6 +161,8 @@ function AppContent() {
         return <VacationModule mode="request" />;
       case 'vacation-approvals':
         return <VacationModule mode="approvals" />;
+      case 'vacation-employees':
+        return <VacationEmployees />;
       case 'evaluacion-final':
         return (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
