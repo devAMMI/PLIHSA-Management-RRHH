@@ -388,7 +388,8 @@ function VacationEditModal({ employee, onClose, onSaved }: { employee: VacationE
               <div key={index} className="bg-slate-50 rounded-xl p-4 border border-slate-200">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-1 bg-blue-600 text-white text-xs font-bold rounded-lg">{bal.year}</span>
+                    <span className="px-2.5 py-1 bg-blue-600 text-white text-xs font-bold rounded-lg">{bal.year} - {bal.year + 1}</span>
+                    <span className="text-xs font-medium text-slate-500">{index + 1}{index === 0 ? 'er' : index === 1 ? 'do' : index === 2 ? 'er' : 'to'} año</span>
                     {hireYear && bal.year === hireYear && <span className="text-xs text-slate-400">(Año de ingreso)</span>}
                   </div>
                   <button onClick={() => removeYear(index)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
