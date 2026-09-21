@@ -14,7 +14,14 @@ type Goal = {
 const scoreOptions = Array.from({ length: 10 }, (_, index) => String(index + 1));
 const createGoal = (number: number): Goal => ({ number, description: '', result: '', score: '', managerComments: '', employeeComments: '' });
 
-export function FinalEvaluationForm() {
+type EmployeeType = 'administrativo' | 'operativo';
+
+interface FinalEvaluationFormProps {
+  employeeType: EmployeeType;
+  onBack: () => void;
+}
+
+export function FinalEvaluationForm({ employeeType, onBack }: FinalEvaluationFormProps) {
   const { employee } = useAuth();
   const [employeeName, setEmployeeName] = useState(employee ? `${employee.first_name} ${employee.last_name}` : '');
   const [position, setPosition] = useState(employee?.position || '');
@@ -38,7 +45,7 @@ export function FinalEvaluationForm() {
   return (
     <div className="min-h-full bg-slate-100 px-2 py-4 sm:px-5 lg:px-8">
       <div className="mx-auto max-w-6xl overflow-hidden border border-slate-400 bg-white text-slate-900 shadow-sm">
-        <DocumentHeader />
+        <DocumentHeader employeeType={employeeType} />
 
         <section className="text-sm font-semibold">
           <InfoRow label="Nombre del Colaborador:" value={employeeName} onChange={setEmployeeName} />
@@ -60,7 +67,7 @@ export function FinalEvaluationForm() {
         </section>
 
         <footer className="flex flex-col-reverse gap-3 border-t border-slate-400 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <button className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-white"><ChevronLeft className="h-4 w-4" /> Volver</button>
+          <button onClick={onBack} className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-white"><ChevronLeft className="h-4 w-4" /> Volver</button>
           <div className="flex items-center gap-3"><span className="text-sm text-slate-500">{scoredGoals.length}/5 metas calificadas</span><button onClick={() => setMessage('Borrador listo para guardarse en la siguiente etapa.')} className="inline-flex items-center gap-2 rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"><Save className="h-4 w-4" /> Guardar borrador</button></div>
         </footer>
         {message && <div className="border-t border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">{message}</div>}
@@ -69,8 +76,9 @@ export function FinalEvaluationForm() {
   );
 }
 
-function DocumentHeader() {
-  return <header className="grid min-h-[92px] grid-cols-[190px_1fr_240px] border-b border-slate-400 max-md:grid-cols-[130px_1fr]"><div className="flex items-center justify-center border-r border-slate-400 p-3"><div className="flex h-16 w-44 items-center justify-center rounded-full bg-[#4e8ac7] text-3xl font-bold tracking-tight text-white max-md:h-12 max-md:w-28 max-md:text-xl">PLIHSA</div></div><div className="flex items-center justify-center p-4 text-center"><h1 className="text-xl font-semibold max-sm:text-base">Evaluación del Desempeño Administrativo</h1></div><div className="border-l border-slate-400 text-xs max-md:col-span-2 max-md:grid max-md:grid-cols-3 max-md:border-l-0"><DocMeta label="Código" value="PL-RH-P-002-F02" /><DocMeta label="Versión" value="01" /><DocMeta label="Fecha de Revisión" value="09/07/2025" /></div></header>;
+function DocumentHeader({ employeeType }: { employeeType: EmployeeType }) {
+  const title = employeeType === 'administrativo' ? 'Evaluación del Desempeño Administrativo' : 'Evaluación del Desempeño Operativo';
+  return <header className="grid min-h-[92px] grid-cols-[190px_1fr_240px] border-b border-slate-400 max-md:grid-cols-[130px_1fr]"><div className="flex items-center justify-center border-r border-slate-400 p-3"><div className="flex h-16 w-44 items-center justify-center rounded-full bg-[#4e8ac7] text-3xl font-bold tracking-tight text-white max-md:h-12 max-md:w-28 max-md:text-xl">PLIHSA</div></div><div className="flex items-center justify-center p-4 text-center"><h1 className="text-xl font-semibold max-sm:text-base">{title}</h1></div><div className="border-l border-slate-400 text-xs max-md:col-span-2 max-md:grid max-md:grid-cols-3 max-md:border-l-0"><DocMeta label="Código" value="PL-RH-P-002-F02" /><DocMeta label="Versión" value="01" /><DocMeta label="Fecha de Revisión" value="09/07/2025" /></div></header>;
 }
 
 function DocMeta({ label, value }: { label: string; value: string }) { return <div className="flex gap-1 border-b border-slate-300 p-2 last:border-b-0"><span className="font-semibold">{label}:</span><span>{value}</span></div>; }

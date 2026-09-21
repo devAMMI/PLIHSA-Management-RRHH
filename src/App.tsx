@@ -26,12 +26,14 @@ import { EmployeeReport } from './components/reports/EmployeeReport';
 import { VacationModule } from './components/vacations/VacationModule';
 import { VacationEmployees } from './components/vacations/VacationEmployees';
 import { FinalEvaluationForm } from './components/evaluations/FinalEvaluationForm';
+import { FinalEvaluationHome } from './components/evaluations/FinalEvaluationHome';
 
 function AppContent() {
   const { user, loading } = useAuth();
   const [currentView, setCurrentView] = useState('dashboard');
   const [showRegister, setShowRegister] = useState(false);
   const [editingEvaluationId, setEditingEvaluationId] = useState<string | null>(null);
+  const [finalEvalType, setFinalEvalType] = useState<'administrativo' | 'operativo'>('administrativo');
 
   if (loading) {
     return (
@@ -88,6 +90,8 @@ function AppContent() {
         return 'Revisión de Metas';
       case 'evaluacion-final':
         return 'Evaluación Final';
+      case 'evaluacion-final-form':
+        return finalEvalType === 'administrativo' ? 'Evaluación Final - Administrativo' : 'Evaluación Final - Operativo';
       case 'audit-log':
         return 'Registro de Actividad';
       case 'vacations':
@@ -164,7 +168,9 @@ function AppContent() {
       case 'vacation-employees':
         return <VacationEmployees />;
       case 'evaluacion-final':
-        return <FinalEvaluationForm />;
+        return <FinalEvaluationHome onSelectType={(type) => { setFinalEvalType(type); setCurrentView('evaluacion-final-form'); }} />;
+      case 'evaluacion-final-form':
+        return <FinalEvaluationForm employeeType={finalEvalType} onBack={() => setCurrentView('evaluacion-final')} />;
       default:
         return <Dashboard />;
     }
@@ -177,6 +183,7 @@ function AppContent() {
     'evaluacion-administrativa-nueva',
     'nueva-evaluacion-administrativa',
     'evaluacion-final',
+    'evaluacion-final-form',
   ].includes(currentView)
     ? 'flex-1 bg-slate-50 overflow-y-auto'
     : [
