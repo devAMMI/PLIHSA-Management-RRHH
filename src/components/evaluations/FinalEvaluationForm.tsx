@@ -154,14 +154,26 @@ export function FinalEvaluationForm({ employeeType, onBack }: FinalEvaluationFor
     setMessageType('success');
   };
 
+  const handleNewEvaluation = () => {
+    setSelectedEmployee(null);
+    setEmployeeSearch('');
+    setPosition('');
+    setDepartment('');
+    setSubDepartment('');
+    setHireDate('');
+    setManager('');
+    setGoals([1, 2, 3, 4, 5].map(createGoal));
+    setMessage('');
+  };
+
   return (
     <div className="min-h-full bg-slate-100 px-2 py-4 sm:px-5 lg:px-8">
-      <div className="mx-auto max-w-6xl overflow-hidden border border-slate-400 bg-white text-slate-900 shadow-sm">
-        <DocumentHeader employeeType={employeeType} />
+      <div className="mx-auto grid max-w-[1500px] grid-cols-1 overflow-hidden border border-slate-400 bg-white text-slate-900 shadow-sm lg:grid-cols-[300px_minmax(0,1fr)]">
+        <div className="lg:col-span-2"><DocumentHeader employeeType={employeeType} /></div>
 
-        <section className="border-b border-slate-400 bg-slate-50 p-4">
-          <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-600">Seleccionar colaborador</label>
-          <div className="relative">
+        <section className="self-start border-b border-slate-400 bg-slate-50 p-4 lg:row-span-5 lg:border-b-0 lg:border-r">
+          <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-600">Seleccione Empleado</label><select value={selectedEmployee?.id || ''} onChange={(event) => { const employee = employees.find((item) => item.id === event.target.value); if (employee) handleSelectEmployee(employee); }} className="mb-3 w-full rounded border-2 border-blue-500 bg-white px-3 py-2 text-sm outline-none"><option value="">-- Seleccionar empleado --</option>{employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.first_name} {emp.last_name} ({emp.employee_code})</option>)}</select>
+          <div className="relative hidden">
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -204,6 +216,10 @@ export function FinalEvaluationForm({ employeeType, onBack }: FinalEvaluationFor
                 ))}
               </div>
             )}
+          </div>
+          <div className="mt-4 grid gap-2">
+            <button onClick={handleNewEvaluation} className="inline-flex items-center justify-center gap-2 rounded bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"><User className="h-4 w-4" /> Nueva</button>
+            <button onClick={handleSaveDraft} disabled={!selectedEmployee} className="inline-flex items-center justify-center gap-2 rounded bg-slate-300 px-3 py-2 text-sm font-semibold text-white transition enabled:bg-blue-700 enabled:hover:bg-blue-800 disabled:cursor-not-allowed"><Save className="h-4 w-4" /> Guardar</button>
           </div>
         </section>
 
