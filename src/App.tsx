@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Archive } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CompanyProvider } from './contexts/CompanyContext';
 import { LoginForm } from './components/auth/LoginForm';
@@ -25,12 +24,16 @@ import { EvaluationAuditLog } from './components/audit/EvaluationAuditLog';
 import { ReportesView } from './components/reports/ReportesView';
 import { EmployeeReport } from './components/reports/EmployeeReport';
 import { VacationModule } from './components/vacations/VacationModule';
+import { VacationEmployees } from './components/vacations/VacationEmployees';
+import { FinalEvaluationForm } from './components/evaluations/FinalEvaluationForm';
+import { FinalEvaluationHome } from './components/evaluations/FinalEvaluationHome';
 
 function AppContent() {
   const { user, loading } = useAuth();
   const [currentView, setCurrentView] = useState('dashboard');
   const [showRegister, setShowRegister] = useState(false);
   const [editingEvaluationId, setEditingEvaluationId] = useState<string | null>(null);
+  const [finalEvalType, setFinalEvalType] = useState<'administrativo' | 'operativo'>('administrativo');
 
   if (loading) {
     return (
@@ -87,12 +90,16 @@ function AppContent() {
         return 'Revisión de Metas';
       case 'evaluacion-final':
         return 'Evaluación Final';
+      case 'evaluacion-final-form':
+        return finalEvalType === 'administrativo' ? 'Evaluación Final - Administrativo' : 'Evaluación Final - Operativo';
       case 'audit-log':
         return 'Registro de Actividad';
       case 'vacations':
         return 'Solicitar Vacaciones';
       case 'vacation-approvals':
         return 'Aprobar Vacaciones';
+      case 'vacation-employees':
+        return 'Vacaciones Empleados';
       default:
         return 'Dashboard';
     }
@@ -158,18 +165,12 @@ function AppContent() {
         return <VacationModule mode="request" />;
       case 'vacation-approvals':
         return <VacationModule mode="approvals" />;
+      case 'vacation-employees':
+        return <VacationEmployees />;
       case 'evaluacion-final':
-        return (
-          <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center">
-              <Archive className="w-8 h-8 text-slate-400" />
-            </div>
-            <h2 className="text-xl font-bold text-slate-700">Evaluación Final</h2>
-            <p className="text-slate-500 text-sm text-center max-w-sm">
-              Este módulo está en preparación. Aquí se realizará la evaluación final del desempeño.
-            </p>
-          </div>
-        );
+        return <FinalEvaluationHome onSelectType={(type) => { setFinalEvalType(type); setCurrentView('evaluacion-final-form'); }} />;
+      case 'evaluacion-final-form':
+        return <FinalEvaluationForm employeeType={finalEvalType} onBack={() => setCurrentView('evaluacion-final')} />;
       default:
         return <Dashboard />;
     }
@@ -181,8 +182,10 @@ function AppContent() {
     'evaluation-operative-enero',
     'evaluacion-administrativa-nueva',
     'nueva-evaluacion-administrativa',
+    'evaluacion-final',
+    'evaluacion-final-form',
   ].includes(currentView)
-    ? 'flex-1 bg-slate-50 overflow-hidden'
+    ? 'flex-1 bg-slate-50 overflow-y-auto'
     : [
         'evaluacion-junio-v2',
         'goal-definition-enero',
