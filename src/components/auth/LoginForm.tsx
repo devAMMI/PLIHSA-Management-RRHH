@@ -99,9 +99,9 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
                 className="h-10 brightness-0 invert opacity-70 hover:opacity-100 transition-opacity"
               />
               <img
-                src="https://i.imgur.com/HqBOuOw.png"
+                src="/Logo_PLIHSA_BLUE.png"
                 alt="PLIHSA"
-                className="h-10 brightness-0 invert opacity-70 hover:opacity-100 transition-opacity"
+                className="h-10 w-auto opacity-90 hover:opacity-100 transition-opacity"
               />
               <img
                 src="https://i.imgur.com/6Q0kLnl.png"
