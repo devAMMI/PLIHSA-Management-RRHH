@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { generatePDF, downloadBlob } from '../../lib/pdfExport';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCompany } from '../../contexts/CompanyContext';
+import { calculateWorkSeniority } from '../../lib/seniority';
 
 type Goal = {
   number: number;
@@ -144,7 +145,7 @@ export function FinalEvaluationForm({ employeeType, onBack }: FinalEvaluationFor
   const scoredGoals = goals.filter((goal) => goal.score !== '');
   const totalScore = scoredGoals.reduce((sum, goal) => sum + Number(goal.score), 0);
   const averageScore = scoredGoals.length ? (totalScore / scoredGoals.length).toFixed(1) : '0';
-  const tenure = useMemo(() => calculateTenure(hireDate), [hireDate]);
+  const tenure = useMemo(() => calculateWorkSeniority(hireDate), [hireDate]);
 
   const updateGoal = (index: number, key: keyof Goal, value: string) => {
     setGoals((current) => current.map((goal, goalIndex) => goalIndex === index ? { ...goal, [key]: value } : goal));
@@ -245,7 +246,7 @@ export function FinalEvaluationForm({ employeeType, onBack }: FinalEvaluationFor
           <InfoRow label="Nombre del Colaborador:" value={selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : ''} onChange={() => {}} readOnly />
           <InfoRow label="Posición del Colaborador:" value={position} onChange={setPosition} readOnly={!!selectedEmployee} />
           <div className="grid grid-cols-2 max-md:grid-cols-1"><InfoRow label="Departamento:" value={department} onChange={setDepartment} readOnly={!!selectedEmployee} /><InfoRow label="Sub-departamento:" value={subDepartment} onChange={setSubDepartment} /></div>
-          <div className="grid grid-cols-2 max-md:grid-cols-1"><div className="grid grid-cols-[245px_1fr] max-md:grid-cols-[175px_1fr]"><BlueLabel>Fecha de Antigüedad<br /><span className="text-xs">(Día | Mes | Año)</span></BlueLabel><input type="date" value={hireDate} onChange={(event) => setHireDate(event.target.value)} readOnly={!!selectedEmployee} className="min-h-[68px] bg-[#d9d9d9] px-3 text-sm font-normal outline-none" /></div><div className="grid grid-cols-[1fr_166px] max-md:grid-cols-[175px_1fr]"><BlueLabel>Tiempo en la posición actual:</BlueLabel><div className="grid grid-cols-2 bg-[#d9d9d9] text-center text-xs"><div className="border-l border-slate-400 p-2">Año<div className="mt-2 h-8 border-t border-slate-400">{tenure.split(' ')[0] !== 'Sin' ? tenure.split(' ')[0] : ''}</div></div><div className="border-l border-slate-400 p-2">Meses<div className="mt-2 h-8 border-t border-slate-400">{tenure.includes('mes') ? tenure.split(' ').at(-2) : ''}</div></div></div></div></div>
+          <div className="grid grid-cols-2 max-md:grid-cols-1"><div className="grid grid-cols-[245px_1fr] max-md:grid-cols-[175px_1fr]"><BlueLabel>Fecha de Antigüedad<br /><span className="text-xs">(Día | Mes | Año)</span></BlueLabel><input type="date" value={hireDate} onChange={(event) => setHireDate(event.target.value)} readOnly={!!selectedEmployee} className="min-h-[68px] bg-[#d9d9d9] px-3 text-sm font-normal outline-none" /></div><div className="grid grid-cols-[1fr_166px] max-md:grid-cols-[175px_1fr]"><BlueLabel>Tiempo en la posición actual:</BlueLabel><div className="grid grid-cols-2 bg-[#d9d9d9] text-center text-xs"><div className="border-l border-slate-400 p-2">Año<div className="mt-2 h-8 border-t border-slate-400">{hireDate ? tenure.years : ''}</div></div><div className="border-l border-slate-400 p-2">Meses<div className="mt-2 h-8 border-t border-slate-400">{hireDate ? tenure.months : ''}</div></div></div></div></div>
           <div className="grid grid-cols-2 max-md:grid-cols-1"><InfoRow label="Jefe Inmediato:" value={manager} onChange={setManager} readOnly={!!selectedEmployee} /><div className="grid grid-cols-[1fr_166px] max-md:grid-cols-[175px_1fr]"><BlueLabel>Fecha de Evaluación<br /><span className="text-xs">(Día | Mes | Año)</span></BlueLabel><input type="date" value={evaluationDate} onChange={(event) => setEvaluationDate(event.target.value)} className="bg-[#d9d9d9] px-3 text-sm font-normal outline-none" /></div></div>
         </section>
 
@@ -285,4 +286,3 @@ function GoalBlock({ goal, onChange }: { goal: Goal; onChange: (key: keyof Goal,
 }
 
 function criterionLabel(score: string): string { const value = Number(score); if (!value) return 'Seleccione una calificación para mostrar el criterio.'; if (value === 10) return 'Excede Expectativas'; if (value >= 8) return 'Cumple Expectativas'; if (value >= 6) return 'Desempeño a Mejorar'; return 'Debajo de Expectativas'; }
-function calculateTenure(value: string): string { if (!value) return 'Sin registrar'; const start = new Date(`${value}T00:00:00`); const now = new Date(); let months = (now.getFullYear() - start.getFullYear()) * 12 + now.getMonth() - start.getMonth(); if (now.getDate() < start.getDate()) months -= 1; if (months < 0) return 'Sin registrar'; const years = Math.floor(months / 12); const remainder = months % 12; return years ? `${years} año${years === 1 ? '' : 's'}${remainder ? ` y ${remainder} mes${remainder === 1 ? '' : 'es'}` : ''}` : `${remainder} mes${remainder === 1 ? '' : 'es'}`; }
