@@ -314,6 +314,7 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
         </button>
       </div>
       <div id="final-evaluation-document" className="mx-auto grid max-w-[1500px] grid-cols-1 overflow-hidden border border-slate-400 bg-white text-slate-900 shadow-sm lg:grid-cols-[300px_minmax(0,1fr)]">
+        <div data-pdf-page="1" className="contents">
         <div className="lg:col-span-2"><DocumentHeader employeeType={employeeType} /></div>
 
         <section data-html2canvas-ignore="true" className="self-start border-b border-slate-400 bg-slate-50 p-4 lg:row-span-5 lg:border-b-0 lg:border-r">
@@ -386,14 +387,19 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
           {goals.map((goal, index) => <GoalBlock key={goal.number} goal={goal} onChange={(key, value) => updateGoal(index, key, value)} />)}
           <div className="grid grid-cols-[1fr_95px] border-t border-slate-400 text-xs font-bold"><div className="bg-[#24557e] px-2 py-1.5 text-white">Suma de Calificación Evaluación de Metas</div><div className="bg-[#d9d9d9] px-2 py-1.5 text-center">{totalScore}</div><div className="bg-[#24557e] px-2 py-1.5 text-white">Promedio de Calificación Evaluación de Metas</div><div className="bg-[#d9d9d9] px-2 py-1.5 text-center">{averageScore}</div></div>
         </section>
+        </div>
 
+        <div data-pdf-page="2" className="contents">
         <section className="border-t border-slate-400 lg:col-span-2">
           <CompetenciesPage competencies={competencies} onChange={updateCompetency} managerComments={competencyManagerComments} employeeComments={competencyEmployeeComments} onManagerCommentsChange={setCompetencyManagerComments} onEmployeeCommentsChange={setCompetencyEmployeeComments} total={totalCompetencyScore} average={averageCompetencyScore} />
         </section>
+        </div>
 
+        <div data-pdf-page="3" className="contents">
         <section className="border-t border-slate-400 lg:col-span-2">
           <FinalSummaryPage employeeSummary={employeeSummary} managerSummary={managerSummary} onEmployeeSummaryChange={setEmployeeSummary} onManagerSummaryChange={setManagerSummary} totalGoals={totalScore} averageGoals={averageScore} totalCompetencies={totalCompetencyScore} averageCompetencies={averageCompetencyScore} finalScore={finalPerformanceScore} developmentPlans={developmentPlans} onDevelopmentChange={updateDevelopmentPlan} signatures={signatures} onSignatureChange={updateSignature} />
         </section>
+        </div>
 
         <footer data-html2canvas-ignore="true" className="flex flex-col gap-3 border-t border-slate-400 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-end">
           <div className="flex items-center gap-3"><span className="text-sm text-slate-500">{scoredGoals.length}/5 metas calificadas</span><button onClick={handleSaveDraft} disabled={!selectedEmployee || generatingPdf} className="inline-flex items-center gap-2 rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"><Save className="h-4 w-4" /> {generatingPdf ? 'Generando PDF...' : 'Guardar borrador'}</button></div>

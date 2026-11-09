@@ -11,53 +11,74 @@ export async function generatePDF(elementId: string, fileName: string): Promise<
       return null;
     }
 
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#ffffff',
-      onclone: (clonedDocument) => {
-        const clonedElement = clonedDocument.getElementById(elementId);
-        if (!clonedElement) return;
-        clonedElement.querySelectorAll('[data-html2canvas-ignore="true"]').forEach((node) => node.remove());
-        const sourceWidth = element.clientWidth;
-        clonedElement.style.display = 'block';
-        clonedElement.style.width = `${sourceWidth}px`;
-        clonedElement.style.maxWidth = 'none';
-        clonedElement.style.margin = '0';
-      },
+    const pageElements = Array.from(element.querySelectorAll<HTMLElement>('[data-pdf-page]'));
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+    const renderedPages = pageElements.length > 0
+      ? await renderExplicitPages(element, pageElements)
+      : [await renderLegacyPage(element, elementId)];
+
+    renderedPages.forEach((canvas, index) => {
+      if (!canvas) return;
+      if (index > 0) pdf.addPage();
+      const pageWidth = pdf.internal.pageSize.getWidth() - 20;
+      const pageHeight = pdf.internal.pageSize.getHeight() - 20;
+      const scale = Math.min(pageWidth / canvas.width, pageHeight / canvas.height);
+      const imageWidth = canvas.width * scale;
+      const imageHeight = canvas.height * scale;
+      const x = (pdf.internal.pageSize.getWidth() - imageWidth) / 2;
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, 10, imageWidth, imageHeight);
     });
-
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'letter'
-    });
-
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = pdfWidth - 20;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    let heightLeft = imgHeight;
-    let position = 10;
-
-    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-    heightLeft -= pdfHeight;
-
-    while (heightLeft >= 0) {
-      position = heightLeft - imgHeight + 10;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight;
-    }
 
     return pdf.output('blob');
   } catch (error) {
     console.error('Error generating PDF:', error);
     return null;
   }
+}
+
+async function renderExplicitPages(element: HTMLElement, pages: HTMLElement[]): Promise<HTMLCanvasElement[]> {
+  const originalRootStyle = { display: element.style.display, width: element.style.width, maxWidth: element.style.maxWidth, margin: element.style.margin };
+  const ignoredElements = Array.from(element.querySelectorAll<HTMLElement>('[data-html2canvas-ignore="true"]'));
+  const originalPageStyles = pages.map((page) => ({ page, display: page.style.display, width: page.style.width }));
+  element.style.display = 'block';
+  element.style.width = `${element.clientWidth}px`;
+  element.style.maxWidth = 'none';
+  element.style.margin = '0';
+  ignoredElements.forEach((item) => { item.style.display = 'none'; });
+  pages.forEach((page) => { page.style.display = 'block'; page.style.width = '100%'; });
+
+  try {
+    const canvases: HTMLCanvasElement[] = [];
+    for (const page of pages) {
+      canvases.push(await html2canvas(page, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' }));
+    }
+    return canvases;
+  } finally {
+    element.style.display = originalRootStyle.display;
+    element.style.width = originalRootStyle.width;
+    element.style.maxWidth = originalRootStyle.maxWidth;
+    element.style.margin = originalRootStyle.margin;
+    ignoredElements.forEach((item) => { item.style.display = ''; });
+    originalPageStyles.forEach(({ page, display, width }) => { page.style.display = display; page.style.width = width; });
+  }
+}
+
+async function renderLegacyPage(element: HTMLElement, elementId: string): Promise<HTMLCanvasElement> {
+  return html2canvas(element, {
+    scale: 2,
+    useCORS: true,
+    logging: false,
+    backgroundColor: '#ffffff',
+    onclone: (clonedDocument) => {
+      const clonedElement = clonedDocument.getElementById(elementId);
+      if (!clonedElement) return;
+      clonedElement.querySelectorAll('[data-html2canvas-ignore="true"]').forEach((node) => node.remove());
+      clonedElement.style.display = 'block';
+      clonedElement.style.width = `${element.clientWidth}px`;
+      clonedElement.style.maxWidth = 'none';
+      clonedElement.style.margin = '0';
+    },
+  });
 }
 
 export async function saveFormExport(
