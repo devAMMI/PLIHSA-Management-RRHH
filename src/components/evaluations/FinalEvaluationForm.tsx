@@ -15,6 +15,12 @@ type Goal = {
   employeeComments: string;
 };
 
+type Competency = {
+  number: number;
+  description: string;
+  score: string;
+};
+
 type EmployeeType = 'administrativo' | 'operativo';
 
 interface FinalEvaluationFormProps {
@@ -25,6 +31,7 @@ interface FinalEvaluationFormProps {
 
 const scoreOptions = Array.from({ length: 10 }, (_, index) => String(index + 1));
 const createGoal = (number: number): Goal => ({ number, description: '', result: '', score: '', managerComments: '', employeeComments: '' });
+const createCompetency = (number: number): Competency => ({ number, description: '', score: '' });
 
 interface EmployeeOption {
   id: string;
@@ -55,6 +62,9 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
   const [manager, setManager] = useState('');
   const [evaluationDate, setEvaluationDate] = useState(new Date().toISOString().slice(0, 10));
   const [goals, setGoals] = useState<Goal[]>([1, 2, 3, 4, 5].map(createGoal));
+  const [competencies, setCompetencies] = useState<Competency[]>([1, 2, 3, 4, 5].map(createCompetency));
+  const [competencyManagerComments, setCompetencyManagerComments] = useState('');
+  const [competencyEmployeeComments, setCompetencyEmployeeComments] = useState('');
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
   const [generatingPdf, setGeneratingPdf] = useState(false);
@@ -80,6 +90,22 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
       setHireDate(existing.hire_date || employee.hire_date || '');
       setManager(existing.manager_name || (employee.manager ? `${employee.manager.first_name} ${employee.manager.last_name}` : ''));
       setEvaluationDate(existing.evaluation_date || existing.review_date || new Date().toISOString().slice(0, 10));
+
+      if (employeeType === 'administrativo') {
+        const { data: competencyData } = await supabase
+          .from('final_evaluation_competencies')
+          .select('competency_number, competency_description, numeric_score, manager_comments, employee_comments')
+          .eq('evaluation_id', evaluationId)
+          .order('competency_number');
+        if (competencyData && competencyData.length > 0) {
+          setCompetencies([1, 2, 3, 4, 5].map((number) => {
+            const saved = competencyData.find((item: { competency_number: number }) => item.competency_number === number);
+            return saved ? { number, description: saved.competency_description || '', score: saved.numeric_score ? String(saved.numeric_score) : '' } : createCompetency(number);
+          }));
+          setCompetencyManagerComments(competencyData.find((item: { manager_comments: string | null }) => item.manager_comments)?.manager_comments || '');
+          setCompetencyEmployeeComments(competencyData.find((item: { employee_comments: string | null }) => item.employee_comments)?.employee_comments || '');
+        }
+      }
     };
     loadExistingEvaluation();
   }, [evaluationId, employeeType, employees.length]);
@@ -169,10 +195,17 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
   const scoredGoals = goals.filter((goal) => goal.score !== '');
   const totalScore = scoredGoals.reduce((sum, goal) => sum + Number(goal.score), 0);
   const averageScore = scoredGoals.length ? (totalScore / scoredGoals.length).toFixed(1) : '0';
+  const scoredCompetencies = competencies.filter((competency) => competency.score !== '');
+  const totalCompetencyScore = scoredCompetencies.reduce((sum, competency) => sum + Number(competency.score), 0);
+  const averageCompetencyScore = scoredCompetencies.length ? (totalCompetencyScore / scoredCompetencies.length).toFixed(1) : '0';
   const tenure = useMemo(() => calculateWorkSeniority(hireDate), [hireDate]);
 
   const updateGoal = (index: number, key: keyof Goal, value: string) => {
     setGoals((current) => current.map((goal, goalIndex) => goalIndex === index ? { ...goal, [key]: value } : goal));
+  };
+
+  const updateCompetency = (index: number, key: keyof Competency, value: string) => {
+    setCompetencies((current) => current.map((competency, competencyIndex) => competencyIndex === index ? { ...competency, [key]: value } : competency));
   };
 
   const handleSaveDraft = async () => {
@@ -200,8 +233,25 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
         : { evaluation_period_id: period?.id, employee_id: selectedEmployee.id, employee_position: position, department, sub_department: subDepartment, hire_date: hireDate || null, review_date: evaluationDate || null, status: 'draft' };
       const result = evaluationId
         ? await supabase.from(table).update(values).eq('id', evaluationId)
-        : await supabase.from(table).insert(values);
+        : await supabase.from(table).insert(values).select('id').maybeSingle();
       if (result.error) throw result.error;
+      const savedEvaluationId = evaluationId || result.data?.id;
+      if (!savedEvaluationId) throw new Error('No se pudo identificar la evaluación guardada.');
+
+      if (employeeType === 'administrativo') {
+        const competencyRows = competencies.map((competency) => ({
+          evaluation_id: savedEvaluationId,
+          competency_number: competency.number,
+          competency_description: competency.description || null,
+          numeric_score: competency.score ? Number(competency.score) : null,
+          manager_comments: competencyManagerComments || null,
+          employee_comments: competencyEmployeeComments || null,
+        }));
+        const { error: competenciesError } = await supabase
+          .from('final_evaluation_competencies')
+          .upsert(competencyRows, { onConflict: 'evaluation_id,competency_number' });
+        if (competenciesError) throw competenciesError;
+      }
 
       const fileName = `Evaluacion_Final_${employeeType === 'administrativo' ? 'Administrativo' : 'Operativo'}.pdf`;
       const pdfBlob = await generatePDF('final-evaluation-document', fileName);
@@ -227,6 +277,9 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
     setHireDate('');
     setManager('');
     setGoals([1, 2, 3, 4, 5].map(createGoal));
+    setCompetencies([1, 2, 3, 4, 5].map(createCompetency));
+    setCompetencyManagerComments('');
+    setCompetencyEmployeeComments('');
     setMessage('');
   };
 
@@ -311,6 +364,10 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
           <div className="grid grid-cols-[1fr_95px] border-t border-slate-400 text-xs font-bold"><div className="bg-[#24557e] px-2 py-1.5 text-white">Suma de Calificación Evaluación de Metas</div><div className="bg-[#d9d9d9] px-2 py-1.5 text-center">{totalScore}</div><div className="bg-[#24557e] px-2 py-1.5 text-white">Promedio de Calificación Evaluación de Metas</div><div className="bg-[#d9d9d9] px-2 py-1.5 text-center">{averageScore}</div></div>
         </section>
 
+        <section className="border-t border-slate-400 lg:col-span-2">
+          <CompetenciesPage competencies={competencies} onChange={updateCompetency} managerComments={competencyManagerComments} employeeComments={competencyEmployeeComments} onManagerCommentsChange={setCompetencyManagerComments} onEmployeeCommentsChange={setCompetencyEmployeeComments} total={totalCompetencyScore} average={averageCompetencyScore} />
+        </section>
+
         <footer className="flex flex-col gap-3 border-t border-slate-400 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-end">
           <div className="flex items-center gap-3"><span className="text-sm text-slate-500">{scoredGoals.length}/5 metas calificadas</span><button onClick={handleSaveDraft} disabled={!selectedEmployee || generatingPdf} className="inline-flex items-center gap-2 rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"><Save className="h-4 w-4" /> {generatingPdf ? 'Generando PDF...' : 'Guardar borrador'}</button></div>
         </footer>
@@ -332,6 +389,27 @@ function InfoRow({ label, value, onChange, readOnly = false }: { label: string; 
 
 function GoalBlock({ goal, onChange }: { goal: Goal; onChange: (key: keyof Goal, value: string) => void }) {
   return <div className="grid grid-cols-[195px_235px_1fr] border-t border-slate-400 max-md:grid-cols-1"><div className="bg-[#24557e] text-[11px] font-bold leading-tight text-white"><div className="min-h-[32px] border-b border-white/30 p-2">Calificación Escala Numérica</div><div className="min-h-[76px] border-b border-white/30 p-2">Calificación según el criterio de la escala</div><div className="min-h-[56px] border-b border-white/30 p-2">Comentarios Jefe Inmediato</div><div className="min-h-[56px] p-2">Comentarios del Colaborador</div></div><div className="border-r border-slate-400 bg-white text-xs max-md:border-r-0"><div className="min-h-[32px] border-b border-slate-400 p-2"><label className="font-semibold">Puntaje de la meta {goal.number}<select value={goal.score} onChange={(event) => onChange('score', event.target.value)} className="ml-2 rounded border border-slate-300 px-1 py-0.5 font-semibold outline-none focus:border-blue-700"><option value="">—</option>{scoreOptions.map((score) => <option key={score} value={score}>{score}</option>)}</select></label></div><div className="min-h-[76px] border-b border-slate-400 p-2 text-slate-500">{criterionLabel(goal.score)}</div><textarea aria-label={`Comentarios del jefe para meta ${goal.number}`} rows={3} value={goal.managerComments} onChange={(event) => onChange('managerComments', event.target.value)} className="block min-h-[56px] w-full resize-none border-b border-slate-400 p-2 outline-none focus:bg-blue-50" /><textarea aria-label={`Comentarios del colaborador para meta ${goal.number}`} rows={3} value={goal.employeeComments} onChange={(event) => onChange('employeeComments', event.target.value)} className="block min-h-[56px] w-full resize-none p-2 outline-none focus:bg-blue-50" /></div><div className="min-w-0"><div className="min-h-[32px] border-b border-slate-400 bg-[#24557e] p-2 text-xs font-bold text-white">Meta <span className="block text-center">No. {goal.number}</span></div><div className="border-b border-slate-400 p-2 text-xs font-bold">Medición y Resultados:<textarea rows={4} value={goal.result} onChange={(event) => onChange('result', event.target.value)} placeholder="Describa la medición y los resultados obtenidos" className="mt-1 block min-h-[72px] w-full resize-none border border-slate-200 p-2 text-xs font-normal outline-none focus:border-blue-700" /></div><label className="block p-2 text-xs font-bold">Descripción de la meta<textarea rows={3} value={goal.description} onChange={(event) => onChange('description', event.target.value)} placeholder="Escriba aquí la meta definida" className="mt-1 block min-h-[52px] w-full resize-none border border-slate-200 p-2 text-xs font-normal outline-none focus:border-blue-700" /></label></div></div>;
+}
+
+function CompetenciesPage({ competencies, onChange, managerComments, employeeComments, onManagerCommentsChange, onEmployeeCommentsChange, total, average }: { competencies: Competency[]; onChange: (index: number, key: keyof Competency, value: string) => void; managerComments: string; employeeComments: string; onManagerCommentsChange: (value: string) => void; onEmployeeCommentsChange: (value: string) => void; total: number; average: string }) {
+  return <div className="text-sm font-semibold">
+    <SectionTitle centered>EVALUACION COMPETENCIAS CONDUCTUALES Y HABILIDADES TECNICAS <span className="font-normal">(40%)</span></SectionTitle>
+    {competencies.map((competency, index) => <CompetencyBlock key={competency.number} competency={competency} onChange={(key, value) => onChange(index, key, value)} />)}
+    <div className="border-t border-slate-400">
+      <div className="bg-[#24557e] px-2 py-1.5 text-center text-xs font-bold text-white">Comentarios de la sección de Evaluación de Competencias Conductuales y Habilidades Técnicas</div>
+      <div className="grid grid-cols-[195px_1fr] border-b border-slate-400 max-md:grid-cols-1"><BlueLabel>Comentarios Jefe Inmediato</BlueLabel><textarea value={managerComments} onChange={(event) => onManagerCommentsChange(event.target.value)} rows={3} className="min-h-[72px] resize-none bg-white p-2 text-xs font-normal outline-none focus:bg-blue-50" /></div>
+      <div className="grid grid-cols-[195px_1fr] border-b border-slate-400 max-md:grid-cols-1"><BlueLabel>Comentarios del Colaborador</BlueLabel><textarea value={employeeComments} onChange={(event) => onEmployeeCommentsChange(event.target.value)} rows={3} className="min-h-[72px] resize-none bg-white p-2 text-xs font-normal outline-none focus:bg-blue-50" /></div>
+      <div className="grid grid-cols-[1fr_95px] text-xs font-bold"><div className="bg-[#24557e] px-2 py-1.5 text-white">Suma de Calificación Evaluación de Competencias Conductuales y Habilidades Técnicas</div><div className="bg-[#d9d9d9] px-2 py-1.5 text-center">{total}</div><div className="bg-[#24557e] px-2 py-1.5 text-white">Promedio de Calificación evaluación de Competencias Conductuales y Habilidades Técnicas</div><div className="bg-[#d9d9d9] px-2 py-1.5 text-center">{average}</div></div>
+    </div>
+  </div>;
+}
+
+function CompetencyBlock({ competency, onChange }: { competency: Competency; onChange: (key: keyof Competency, value: string) => void }) {
+  return <div className="grid grid-cols-[195px_235px_1fr] border-t border-slate-400 max-md:grid-cols-1">
+    <div className="bg-[#24557e] text-[11px] font-bold leading-tight text-white"><div className="min-h-[32px] border-b border-white/30 p-2">Calificación Escala Numérica</div><div className="min-h-[76px] p-2">Calificación según el criterio de la escala</div></div>
+    <div className="border-r border-slate-400 bg-white text-xs"><div className="min-h-[32px] border-b border-slate-400 p-2"><label className="font-semibold">Puntaje de competencia {competency.number}<select value={competency.score} onChange={(event) => onChange('score', event.target.value)} className="ml-2 rounded border border-slate-300 px-1 py-0.5 font-semibold outline-none focus:border-blue-700"><option value="">—</option>{scoreOptions.map((score) => <option key={score} value={score}>{score}</option>)}</select></label></div><div className="min-h-[76px] p-2 text-slate-500">{criterionLabel(competency.score)}</div></div>
+    <div className="min-w-0"><div className="min-h-[32px] border-b border-slate-400 bg-[#24557e] p-2 text-center text-xs font-bold text-white">Competencia Conductual/Habilidad<br />No. {competency.number}</div><label className="block p-2 text-xs font-bold">Explicación de la competencia conductual/habilidad:<textarea rows={4} value={competency.description} onChange={(event) => onChange('description', event.target.value)} className="mt-1 block min-h-[76px] w-full resize-none border border-slate-200 p-2 text-xs font-normal outline-none focus:border-blue-700" /></label></div>
+  </div>;
 }
 
 function criterionLabel(score: string): string { const value = Number(score); if (!value) return 'Seleccione una calificación para mostrar el criterio.'; if (value === 10) return 'Excede Expectativas'; if (value >= 8) return 'Cumple Expectativas'; if (value >= 6) return 'Desempeño a Mejorar'; return 'Debajo de Expectativas'; }
