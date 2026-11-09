@@ -55,7 +55,10 @@ export function FinalEvaluationsList({ employeeType, statusFilter, onBack, onNew
       }
 
       const dateColumn = employeeType === 'administrativo' ? 'evaluation_date' : 'review_date';
-      let query = supabase.from(table).select(`id, evaluation_code, ${dateColumn}, created_at, status, employee_id, employee:employees(first_name, last_name, employee_code, position, department:departments(name))`).order('created_at', { ascending: false });
+      const employeeRelation = employeeType === 'administrativo'
+        ? 'final_administrative_evaluations_employee_id_fkey'
+        : 'operative_evaluations_employee_id_fkey';
+      let query = supabase.from(table).select(`id, evaluation_code, ${dateColumn}, created_at, status, employee_id, employee:employees!${employeeRelation}(first_name, last_name, employee_code, position, department:departments(name))`).order('created_at', { ascending: false });
       if (statusFilter !== 'all') query = query.eq('status', statusFilter);
       if (subordinateIds) query = query.in('employee_id', subordinateIds);
 
