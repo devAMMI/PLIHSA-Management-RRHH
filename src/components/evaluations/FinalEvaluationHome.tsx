@@ -2,19 +2,20 @@ import { Building2, ClipboardCheck, FileCheck, FileEdit, List, Plus, Users } fro
 
 type EmployeeType = 'administrativo' | 'operativo';
 type CardColor = 'teal' | 'orange';
+export type FinalEvaluationAction = 'new' | 'list' | 'drafts' | 'completed';
 
 interface FinalEvaluationHomeProps {
-  onSelectType: (type: EmployeeType) => void;
+  onAction: (type: EmployeeType, action: FinalEvaluationAction) => void;
 }
 
 const actionItems = [
-  { label: 'Nueva Evaluación', icon: Plus },
-  { label: 'Ver Evaluaciones', icon: List },
-  { label: 'Borradores', icon: FileEdit },
-  { label: 'Finalizadas', icon: FileCheck },
+  { label: 'Nueva Evaluación', icon: Plus, action: 'new' as const },
+  { label: 'Ver Evaluaciones', icon: List, action: 'list' as const },
+  { label: 'Borradores', icon: FileEdit, action: 'drafts' as const },
+  { label: 'Finalizadas', icon: FileCheck, action: 'completed' as const },
 ] as const;
 
-export function FinalEvaluationHome({ onSelectType }: FinalEvaluationHomeProps) {
+export function FinalEvaluationHome({ onAction }: FinalEvaluationHomeProps) {
   return (
     <div className="min-h-full bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
@@ -34,7 +35,7 @@ export function FinalEvaluationHome({ onSelectType }: FinalEvaluationHomeProps) 
             subtitle="Evaluación del Desempeño Administrativo"
             icon={<Building2 className="h-6 w-6" />}
             color="teal"
-            onSelect={onSelectType}
+            onAction={onAction}
           />
           <EvaluationTypeCard
             type="operativo"
@@ -42,7 +43,7 @@ export function FinalEvaluationHome({ onSelectType }: FinalEvaluationHomeProps) 
             subtitle="Evaluación del Desempeño Operativo"
             icon={<Users className="h-6 w-6" />}
             color="orange"
-            onSelect={onSelectType}
+            onAction={onAction}
           />
         </div>
 
@@ -60,7 +61,7 @@ export function FinalEvaluationHome({ onSelectType }: FinalEvaluationHomeProps) 
   );
 }
 
-function EvaluationTypeCard({ type, title, subtitle, icon, color, onSelect }: { type: EmployeeType; title: string; subtitle: string; icon: React.ReactNode; color: CardColor; onSelect: (type: EmployeeType) => void }) {
+function EvaluationTypeCard({ type, title, subtitle, icon, color, onAction }: { type: EmployeeType; title: string; subtitle: string; icon: React.ReactNode; color: CardColor; onAction: (type: EmployeeType, action: FinalEvaluationAction) => void }) {
   const styles = color === 'teal'
     ? { panel: 'border-teal-200 bg-gradient-to-br from-teal-50 to-teal-100', icon: 'bg-teal-600', action: 'hover:border-teal-500', actionIcon: 'from-teal-400 to-teal-600' }
     : { panel: 'border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100', icon: 'bg-orange-600', action: 'hover:border-orange-500', actionIcon: 'from-orange-400 to-orange-600' };
@@ -75,8 +76,8 @@ function EvaluationTypeCard({ type, title, subtitle, icon, color, onSelect }: { 
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        {actionItems.map(({ label, icon: ActionIcon }) => (
-          <button key={label} onClick={() => onSelect(type)} className={`group flex flex-col items-center rounded-xl border-2 border-transparent bg-white p-5 text-center shadow-sm transition-all duration-300 hover:shadow-md ${styles.action}`}>
+        {actionItems.map(({ label, icon: ActionIcon, action }) => (
+          <button key={label} onClick={() => onAction(type, action)} className={`group flex flex-col items-center rounded-xl border-2 border-transparent bg-white p-5 text-center shadow-sm transition-all duration-300 hover:shadow-md ${styles.action}`}>
             <div className={`mb-3 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br ${styles.actionIcon} text-white transition-transform group-hover:scale-110`}><ActionIcon className="h-7 w-7" /></div>
             <span className="text-xs font-bold text-slate-800">{label}</span>
           </button>

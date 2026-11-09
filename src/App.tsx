@@ -26,7 +26,8 @@ import { EmployeeReport } from './components/reports/EmployeeReport';
 import { VacationModule } from './components/vacations/VacationModule';
 import { VacationEmployees } from './components/vacations/VacationEmployees';
 import { FinalEvaluationForm } from './components/evaluations/FinalEvaluationForm';
-import { FinalEvaluationHome } from './components/evaluations/FinalEvaluationHome';
+import { FinalEvaluationAction, FinalEvaluationHome } from './components/evaluations/FinalEvaluationHome';
+import { FinalEvaluationsList } from './components/evaluations/FinalEvaluationsList';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -34,6 +35,8 @@ function AppContent() {
   const [showRegister, setShowRegister] = useState(false);
   const [editingEvaluationId, setEditingEvaluationId] = useState<string | null>(null);
   const [finalEvalType, setFinalEvalType] = useState<'administrativo' | 'operativo'>('administrativo');
+  const [finalEvalStatus, setFinalEvalStatus] = useState<'all' | 'draft' | 'completed'>('all');
+  const [finalEvaluationId, setFinalEvaluationId] = useState<string | null>(null);
 
   if (loading) {
     return (
@@ -92,6 +95,8 @@ function AppContent() {
         return 'Evaluación Final';
       case 'evaluacion-final-form':
         return finalEvalType === 'administrativo' ? 'Evaluación Final - Administrativo' : 'Evaluación Final - Operativo';
+      case 'evaluacion-final-list':
+        return finalEvalStatus === 'draft' ? 'Borradores' : finalEvalStatus === 'completed' ? 'Finalizadas' : 'Evaluaciones Finales';
       case 'audit-log':
         return 'Registro de Actividad';
       case 'vacations':
@@ -168,12 +173,25 @@ function AppContent() {
       case 'vacation-employees':
         return <VacationEmployees />;
       case 'evaluacion-final':
-        return <FinalEvaluationHome onSelectType={(type) => { setFinalEvalType(type); setCurrentView('evaluacion-final-form'); }} />;
+        return <FinalEvaluationHome onAction={(type, action) => handleFinalEvaluationAction(type, action)} />;
+      case 'evaluacion-final-list':
+        return <FinalEvaluationsList employeeType={finalEvalType} statusFilter={finalEvalStatus} onBack={() => setCurrentView('evaluacion-final')} onNew={() => { setFinalEvaluationId(null); setCurrentView('evaluacion-final-form'); }} onEdit={(id) => { setFinalEvaluationId(id); setCurrentView('evaluacion-final-form'); }} />;
       case 'evaluacion-final-form':
-        return <FinalEvaluationForm employeeType={finalEvalType} onBack={() => setCurrentView('evaluacion-final')} />;
+        return <FinalEvaluationForm employeeType={finalEvalType} evaluationId={finalEvaluationId} onBack={() => setCurrentView('evaluacion-final')} />;
       default:
         return <Dashboard />;
     }
+  };
+
+  const handleFinalEvaluationAction = (type: 'administrativo' | 'operativo', action: FinalEvaluationAction) => {
+    setFinalEvalType(type);
+    if (action === 'new') {
+      setFinalEvaluationId(null);
+      setCurrentView('evaluacion-final-form');
+      return;
+    }
+    setFinalEvalStatus(action === 'drafts' ? 'draft' : action === 'completed' ? 'completed' : 'all');
+    setCurrentView('evaluacion-final-list');
   };
 
   const mainClass = [
@@ -184,6 +202,7 @@ function AppContent() {
     'nueva-evaluacion-administrativa',
     'evaluacion-final',
     'evaluacion-final-form',
+    'evaluacion-final-list',
   ].includes(currentView)
     ? 'flex-1 bg-slate-50 overflow-y-auto'
     : [

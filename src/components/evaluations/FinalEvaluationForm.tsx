@@ -19,6 +19,7 @@ type EmployeeType = 'administrativo' | 'operativo';
 
 interface FinalEvaluationFormProps {
   employeeType: EmployeeType;
+  evaluationId?: string | null;
   onBack: () => void;
 }
 
@@ -37,7 +38,7 @@ interface EmployeeOption {
   manager: { first_name: string; last_name: string } | null;
 }
 
-export function FinalEvaluationForm({ employeeType, onBack }: FinalEvaluationFormProps) {
+export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack }: FinalEvaluationFormProps) {
   const { systemUser } = useAuth();
   const { activeCompany } = useCompany();
 
@@ -59,6 +60,29 @@ export function FinalEvaluationForm({ employeeType, onBack }: FinalEvaluationFor
   const [generatingPdf, setGeneratingPdf] = useState(false);
 
   useEffect(() => { loadEmployees(); }, [employeeType, activeCompany?.id, systemUser?.role]);
+
+  useEffect(() => {
+    if (!evaluationId || employees.length === 0) return;
+    const loadExistingEvaluation = async () => {
+      const table = employeeType === 'administrativo' ? 'final_administrative_evaluations' : 'operative_evaluations';
+      const fields = employeeType === 'administrativo'
+        ? 'employee_id, employee_position, department, sub_department, hire_date, evaluation_date, manager_name'
+        : 'employee_id, employee_position, department, sub_department, hire_date, review_date';
+      const { data, error } = await supabase.from(table).select(fields).eq('id', evaluationId).maybeSingle();
+      if (error || !data) return;
+      const existing = data as { employee_id: string; employee_position: string | null; department: string | null; sub_department: string | null; hire_date: string | null; evaluation_date?: string | null; review_date?: string | null; manager_name?: string | null };
+      const employee = employees.find((item) => item.id === existing.employee_id);
+      if (!employee) return;
+      handleSelectEmployee(employee);
+      setPosition(existing.employee_position || employee.position || '');
+      setDepartment(existing.department || employee.department?.name || '');
+      setSubDepartment(existing.sub_department || employee.sub_department?.name || '');
+      setHireDate(existing.hire_date || employee.hire_date || '');
+      setManager(existing.manager_name || (employee.manager ? `${employee.manager.first_name} ${employee.manager.last_name}` : ''));
+      setEvaluationDate(existing.evaluation_date || existing.review_date || new Date().toISOString().slice(0, 10));
+    };
+    loadExistingEvaluation();
+  }, [evaluationId, employeeType, employees.length]);
 
   const loadEmployees = async () => {
     setLoadingEmployees(true);
@@ -155,22 +179,43 @@ export function FinalEvaluationForm({ employeeType, onBack }: FinalEvaluationFor
     if (!selectedEmployee) { setMessage('Debe seleccionar un colaborador antes de guardar.'); setMessageType('error'); return; }
 
     setGeneratingPdf(true);
-    setMessage('Generando PDF...');
+    setMessage('Guardando evaluación y generando PDF...');
     setMessageType('success');
 
-    const fileName = `Evaluacion_Final_${employeeType === 'administrativo' ? 'Administrativo' : 'Operativo'}.pdf`;
-    const pdfBlob = await generatePDF('final-evaluation-document', fileName);
+    try {
+      const table = employeeType === 'administrativo' ? 'final_administrative_evaluations' : 'operative_evaluations';
+      const { data: period, error: periodError } = await supabase
+        .from('evaluation_periods')
+        .select('id')
+        .eq('employee_type', employeeType)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (periodError) throw periodError;
+      if (employeeType === 'operativo' && !period) throw new Error('No hay un período activo para evaluaciones operativas.');
 
-    if (!pdfBlob) {
-      setMessage('No se pudo generar el PDF. Revise la información e intente nuevamente.');
-      setMessageType('error');
-    } else {
+      const values = employeeType === 'administrativo'
+        ? { evaluation_period_id: period?.id || null, employee_id: selectedEmployee.id, employee_position: position, department, sub_department: subDepartment, hire_date: hireDate || null, evaluation_date: evaluationDate || null, manager_name: manager, status: 'draft' }
+        : { evaluation_period_id: period?.id, employee_id: selectedEmployee.id, employee_position: position, department, sub_department: subDepartment, hire_date: hireDate || null, review_date: evaluationDate || null, status: 'draft' };
+      const result = evaluationId
+        ? await supabase.from(table).update(values).eq('id', evaluationId)
+        : await supabase.from(table).insert(values);
+      if (result.error) throw result.error;
+
+      const fileName = `Evaluacion_Final_${employeeType === 'administrativo' ? 'Administrativo' : 'Operativo'}.pdf`;
+      const pdfBlob = await generatePDF('final-evaluation-document', fileName);
+      if (!pdfBlob) throw new Error('No se pudo generar el PDF.');
       downloadBlob(pdfBlob, fileName);
-      setMessage('PDF generado correctamente.');
+      setMessage('Evaluación guardada y PDF generado correctamente.');
       setMessageType('success');
+    } catch (error) {
+      console.error('Error saving final evaluation:', error);
+      setMessage(error instanceof Error ? error.message : 'No se pudo guardar la evaluación.');
+      setMessageType('error');
+    } finally {
+      setGeneratingPdf(false);
     }
-
-    setGeneratingPdf(false);
   };
 
   const handleNewEvaluation = () => {
