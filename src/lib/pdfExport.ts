@@ -15,7 +15,17 @@ export async function generatePDF(elementId: string, fileName: string): Promise<
       scale: 2,
       useCORS: true,
       logging: false,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      onclone: (clonedDocument) => {
+        const clonedElement = clonedDocument.getElementById(elementId);
+        if (!clonedElement) return;
+        clonedElement.querySelectorAll('[data-html2canvas-ignore="true"]').forEach((node) => node.remove());
+        const sourceWidth = element.clientWidth;
+        clonedElement.style.display = 'block';
+        clonedElement.style.width = `${sourceWidth}px`;
+        clonedElement.style.maxWidth = 'none';
+        clonedElement.style.margin = '0';
+      },
     });
 
     const imgData = canvas.toDataURL('image/png');

@@ -21,6 +21,9 @@ type Competency = {
   score: string;
 };
 
+type DevelopmentPlan = { number: number; need: string; action: string; period: string; followup: string };
+type Signatures = { manager: string; managerDate: string; employee: string; employeeDate: string; hr: string; hrDate: string };
+
 type EmployeeType = 'administrativo' | 'operativo';
 
 interface FinalEvaluationFormProps {
@@ -32,6 +35,7 @@ interface FinalEvaluationFormProps {
 const scoreOptions = Array.from({ length: 10 }, (_, index) => String(index + 1));
 const createGoal = (number: number): Goal => ({ number, description: '', result: '', score: '', managerComments: '', employeeComments: '' });
 const createCompetency = (number: number): Competency => ({ number, description: '', score: '' });
+const createDevelopmentPlan = (number: number): DevelopmentPlan => ({ number, need: '', action: '', period: '', followup: '' });
 
 interface EmployeeOption {
   id: string;
@@ -65,6 +69,10 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
   const [competencies, setCompetencies] = useState<Competency[]>([1, 2, 3, 4, 5].map(createCompetency));
   const [competencyManagerComments, setCompetencyManagerComments] = useState('');
   const [competencyEmployeeComments, setCompetencyEmployeeComments] = useState('');
+  const [employeeSummary, setEmployeeSummary] = useState('');
+  const [managerSummary, setManagerSummary] = useState('');
+  const [developmentPlans, setDevelopmentPlans] = useState<DevelopmentPlan[]>([1, 2, 3].map(createDevelopmentPlan));
+  const [signatures, setSignatures] = useState<Signatures>({ manager: '', managerDate: '', employee: '', employeeDate: '', hr: '', hrDate: '' });
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
   const [generatingPdf, setGeneratingPdf] = useState(false);
@@ -76,11 +84,11 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
     const loadExistingEvaluation = async () => {
       const table = employeeType === 'administrativo' ? 'final_administrative_evaluations' : 'operative_evaluations';
       const fields = employeeType === 'administrativo'
-        ? 'employee_id, employee_position, department, sub_department, hire_date, evaluation_date, manager_name'
-        : 'employee_id, employee_position, department, sub_department, hire_date, review_date';
+        ? 'employee_id, employee_position, department, sub_department, hire_date, evaluation_date, manager_name, employee_summary, manager_summary, development_need_1, development_action_1, development_period_1, development_followup_1, development_need_2, development_action_2, development_period_2, development_followup_2, development_need_3, development_action_3, development_period_3, development_followup_3, manager_signature, manager_signature_date, employee_signature, employee_signature_date, hr_signature, hr_signature_date'
+        : 'employee_id, employee_position, department, sub_department, hire_date, review_date, employee_summary, manager_summary, development_need_1, development_action_1, development_period_1, development_followup_1, development_need_2, development_action_2, development_period_2, development_followup_2, development_need_3, development_action_3, development_period_3, development_followup_3, manager_signature, manager_signature_date, employee_signature, employee_signature_date, hr_signature, hr_signature_date';
       const { data, error } = await supabase.from(table).select(fields).eq('id', evaluationId).maybeSingle();
       if (error || !data) return;
-      const existing = data as { employee_id: string; employee_position: string | null; department: string | null; sub_department: string | null; hire_date: string | null; evaluation_date?: string | null; review_date?: string | null; manager_name?: string | null };
+      const existing = data as { employee_id: string; employee_position: string | null; department: string | null; sub_department: string | null; hire_date: string | null; evaluation_date?: string | null; review_date?: string | null; manager_name?: string | null; employee_summary?: string | null; manager_summary?: string | null; [key: string]: string | null | undefined };
       const employee = employees.find((item) => item.id === existing.employee_id);
       if (!employee) return;
       handleSelectEmployee(employee);
@@ -90,6 +98,10 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
       setHireDate(existing.hire_date || employee.hire_date || '');
       setManager(existing.manager_name || (employee.manager ? `${employee.manager.first_name} ${employee.manager.last_name}` : ''));
       setEvaluationDate(existing.evaluation_date || existing.review_date || new Date().toISOString().slice(0, 10));
+      setEmployeeSummary(existing.employee_summary || '');
+      setManagerSummary(existing.manager_summary || '');
+      setDevelopmentPlans([1, 2, 3].map((number) => ({ number, need: existing[`development_need_${number}`] || '', action: existing[`development_action_${number}`] || '', period: existing[`development_period_${number}`] || '', followup: existing[`development_followup_${number}`] || '' })));
+      setSignatures({ manager: existing.manager_signature || '', managerDate: existing.manager_signature_date || '', employee: existing.employee_signature || '', employeeDate: existing.employee_signature_date || '', hr: existing.hr_signature || '', hrDate: existing.hr_signature_date || '' });
 
       if (employeeType === 'administrativo') {
         const { data: competencyData } = await supabase
@@ -198,6 +210,7 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
   const scoredCompetencies = competencies.filter((competency) => competency.score !== '');
   const totalCompetencyScore = scoredCompetencies.reduce((sum, competency) => sum + Number(competency.score), 0);
   const averageCompetencyScore = scoredCompetencies.length ? (totalCompetencyScore / scoredCompetencies.length).toFixed(1) : '0';
+  const finalPerformanceScore = ((Number(averageScore) * 0.6) + (Number(averageCompetencyScore) * 0.4)).toFixed(1);
   const tenure = useMemo(() => calculateWorkSeniority(hireDate), [hireDate]);
 
   const updateGoal = (index: number, key: keyof Goal, value: string) => {
@@ -207,6 +220,12 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
   const updateCompetency = (index: number, key: keyof Competency, value: string) => {
     setCompetencies((current) => current.map((competency, competencyIndex) => competencyIndex === index ? { ...competency, [key]: value } : competency));
   };
+
+  const updateDevelopmentPlan = (index: number, key: keyof Omit<DevelopmentPlan, 'number'>, value: string) => {
+    setDevelopmentPlans((current) => current.map((plan, planIndex) => planIndex === index ? { ...plan, [key]: value } : plan));
+  };
+
+  const updateSignature = (key: keyof Signatures, value: string) => setSignatures((current) => ({ ...current, [key]: value }));
 
   const handleSaveDraft = async () => {
     if (!selectedEmployee) { setMessage('Debe seleccionar un colaborador antes de guardar.'); setMessageType('error'); return; }
@@ -229,8 +248,8 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
       if (employeeType === 'operativo' && !period) throw new Error('No hay un período activo para evaluaciones operativas.');
 
       const values = employeeType === 'administrativo'
-        ? { evaluation_period_id: period?.id || null, employee_id: selectedEmployee.id, employee_position: position, department, sub_department: subDepartment, hire_date: hireDate || null, evaluation_date: evaluationDate || null, manager_name: manager, status: 'draft' }
-        : { evaluation_period_id: period?.id, employee_id: selectedEmployee.id, employee_position: position, department, sub_department: subDepartment, hire_date: hireDate || null, review_date: evaluationDate || null, status: 'draft' };
+        ? { evaluation_period_id: period?.id || null, employee_id: selectedEmployee.id, employee_position: position, department, sub_department: subDepartment, hire_date: hireDate || null, evaluation_date: evaluationDate || null, manager_name: manager, employee_summary: employeeSummary || null, manager_summary: managerSummary || null, ...developmentPlanValues(developmentPlans), ...signatureValues(signatures), status: 'draft' }
+        : { evaluation_period_id: period?.id, employee_id: selectedEmployee.id, employee_position: position, department, sub_department: subDepartment, hire_date: hireDate || null, review_date: evaluationDate || null, employee_summary: employeeSummary || null, manager_summary: managerSummary || null, ...developmentPlanValues(developmentPlans), ...signatureValues(signatures), status: 'draft' };
       const result = evaluationId
         ? await supabase.from(table).update(values).eq('id', evaluationId)
         : await supabase.from(table).insert(values).select('id').maybeSingle();
@@ -280,6 +299,10 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
     setCompetencies([1, 2, 3, 4, 5].map(createCompetency));
     setCompetencyManagerComments('');
     setCompetencyEmployeeComments('');
+    setEmployeeSummary('');
+    setManagerSummary('');
+    setDevelopmentPlans([1, 2, 3].map(createDevelopmentPlan));
+    setSignatures({ manager: '', managerDate: '', employee: '', employeeDate: '', hr: '', hrDate: '' });
     setMessage('');
   };
 
@@ -293,7 +316,7 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
       <div id="final-evaluation-document" className="mx-auto grid max-w-[1500px] grid-cols-1 overflow-hidden border border-slate-400 bg-white text-slate-900 shadow-sm lg:grid-cols-[300px_minmax(0,1fr)]">
         <div className="lg:col-span-2"><DocumentHeader employeeType={employeeType} /></div>
 
-        <section className="self-start border-b border-slate-400 bg-slate-50 p-4 lg:row-span-5 lg:border-b-0 lg:border-r">
+        <section data-html2canvas-ignore="true" className="self-start border-b border-slate-400 bg-slate-50 p-4 lg:row-span-5 lg:border-b-0 lg:border-r">
           <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-600">Seleccione Empleado</label><select value={selectedEmployee?.id || ''} onChange={(event) => { const employee = employees.find((item) => item.id === event.target.value); if (employee) handleSelectEmployee(employee); }} className="mb-3 w-full rounded border-2 border-blue-500 bg-white px-3 py-2 text-sm outline-none"><option value="">-- Seleccionar empleado --</option>{employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.first_name} {emp.last_name} ({emp.employee_code})</option>)}</select>
           <div className="relative hidden">
             <div className="flex items-center gap-2">
@@ -368,10 +391,14 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
           <CompetenciesPage competencies={competencies} onChange={updateCompetency} managerComments={competencyManagerComments} employeeComments={competencyEmployeeComments} onManagerCommentsChange={setCompetencyManagerComments} onEmployeeCommentsChange={setCompetencyEmployeeComments} total={totalCompetencyScore} average={averageCompetencyScore} />
         </section>
 
-        <footer className="flex flex-col gap-3 border-t border-slate-400 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-end">
+        <section className="border-t border-slate-400 lg:col-span-2">
+          <FinalSummaryPage employeeSummary={employeeSummary} managerSummary={managerSummary} onEmployeeSummaryChange={setEmployeeSummary} onManagerSummaryChange={setManagerSummary} totalGoals={totalScore} averageGoals={averageScore} totalCompetencies={totalCompetencyScore} averageCompetencies={averageCompetencyScore} finalScore={finalPerformanceScore} developmentPlans={developmentPlans} onDevelopmentChange={updateDevelopmentPlan} signatures={signatures} onSignatureChange={updateSignature} />
+        </section>
+
+        <footer data-html2canvas-ignore="true" className="flex flex-col gap-3 border-t border-slate-400 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-end">
           <div className="flex items-center gap-3"><span className="text-sm text-slate-500">{scoredGoals.length}/5 metas calificadas</span><button onClick={handleSaveDraft} disabled={!selectedEmployee || generatingPdf} className="inline-flex items-center gap-2 rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"><Save className="h-4 w-4" /> {generatingPdf ? 'Generando PDF...' : 'Guardar borrador'}</button></div>
         </footer>
-        {message && <div className={`border-t px-4 py-3 text-sm font-medium ${messageType === 'error' ? 'border-red-200 bg-red-50 text-red-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>{message}</div>}
+        {message && <div data-html2canvas-ignore="true" className={`border-t px-4 py-3 text-sm font-medium ${messageType === 'error' ? 'border-red-200 bg-red-50 text-red-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>{message}</div>}
       </div>
     </div>
   );
@@ -389,6 +416,47 @@ function InfoRow({ label, value, onChange, readOnly = false }: { label: string; 
 
 function GoalBlock({ goal, onChange }: { goal: Goal; onChange: (key: keyof Goal, value: string) => void }) {
   return <div className="grid grid-cols-[195px_235px_1fr] border-t border-slate-400 max-md:grid-cols-1"><div className="bg-[#24557e] text-[11px] font-bold leading-tight text-white"><div className="min-h-[32px] border-b border-white/30 p-2">Calificación Escala Numérica</div><div className="min-h-[76px] border-b border-white/30 p-2">Calificación según el criterio de la escala</div><div className="min-h-[56px] border-b border-white/30 p-2">Comentarios Jefe Inmediato</div><div className="min-h-[56px] p-2">Comentarios del Colaborador</div></div><div className="border-r border-slate-400 bg-white text-xs max-md:border-r-0"><div className="min-h-[32px] border-b border-slate-400 p-2"><label className="font-semibold">Puntaje de la meta {goal.number}<select value={goal.score} onChange={(event) => onChange('score', event.target.value)} className="ml-2 rounded border border-slate-300 px-1 py-0.5 font-semibold outline-none focus:border-blue-700"><option value="">—</option>{scoreOptions.map((score) => <option key={score} value={score}>{score}</option>)}</select></label></div><div className="min-h-[76px] border-b border-slate-400 p-2 text-slate-500">{criterionLabel(goal.score)}</div><textarea aria-label={`Comentarios del jefe para meta ${goal.number}`} rows={3} value={goal.managerComments} onChange={(event) => onChange('managerComments', event.target.value)} className="block min-h-[56px] w-full resize-none border-b border-slate-400 p-2 outline-none focus:bg-blue-50" /><textarea aria-label={`Comentarios del colaborador para meta ${goal.number}`} rows={3} value={goal.employeeComments} onChange={(event) => onChange('employeeComments', event.target.value)} className="block min-h-[56px] w-full resize-none p-2 outline-none focus:bg-blue-50" /></div><div className="min-w-0"><div className="min-h-[32px] border-b border-slate-400 bg-[#24557e] p-2 text-xs font-bold text-white">Meta <span className="block text-center">No. {goal.number}</span></div><div className="border-b border-slate-400 p-2 text-xs font-bold">Medición y Resultados:<textarea rows={4} value={goal.result} onChange={(event) => onChange('result', event.target.value)} placeholder="Describa la medición y los resultados obtenidos" className="mt-1 block min-h-[72px] w-full resize-none border border-slate-200 p-2 text-xs font-normal outline-none focus:border-blue-700" /></div><label className="block p-2 text-xs font-bold">Descripción de la meta<textarea rows={3} value={goal.description} onChange={(event) => onChange('description', event.target.value)} placeholder="Escriba aquí la meta definida" className="mt-1 block min-h-[52px] w-full resize-none border border-slate-200 p-2 text-xs font-normal outline-none focus:border-blue-700" /></label></div></div>;
+}
+
+function developmentPlanValues(plans: DevelopmentPlan[]): Record<string, string | null> {
+  return plans.reduce<Record<string, string | null>>((values, plan) => ({
+    ...values,
+    [`development_need_${plan.number}`]: plan.need || null,
+    [`development_action_${plan.number}`]: plan.action || null,
+    [`development_period_${plan.number}`]: plan.period || null,
+    [`development_followup_${plan.number}`]: plan.followup || null,
+  }), {});
+}
+
+function signatureValues(signatures: Signatures): Record<string, string | null> {
+  return {
+    manager_signature: signatures.manager || null,
+    manager_signature_date: signatures.managerDate || null,
+    employee_signature: signatures.employee || null,
+    employee_signature_date: signatures.employeeDate || null,
+    hr_signature: signatures.hr || null,
+    hr_signature_date: signatures.hrDate || null,
+  };
+}
+
+function FinalSummaryPage({ employeeSummary, managerSummary, onEmployeeSummaryChange, onManagerSummaryChange, totalGoals, averageGoals, totalCompetencies, averageCompetencies, finalScore, developmentPlans, onDevelopmentChange, signatures, onSignatureChange }: { employeeSummary: string; managerSummary: string; onEmployeeSummaryChange: (value: string) => void; onManagerSummaryChange: (value: string) => void; totalGoals: number; averageGoals: string; totalCompetencies: number; averageCompetencies: string; finalScore: string; developmentPlans: DevelopmentPlan[]; onDevelopmentChange: (index: number, key: keyof Omit<DevelopmentPlan, 'number'>, value: string) => void; signatures: Signatures; onSignatureChange: (key: keyof Signatures, value: string) => void }) {
+  return <div className="text-sm font-semibold">
+    <SectionTitle centered>RESUMEN FINAL DE DESEMPEÑO</SectionTitle>
+    <div className="grid grid-cols-[195px_1fr] border-t border-slate-400 max-md:grid-cols-1"><BlueLabel>Resumen del desempeño por parte<br />del colaborador</BlueLabel><textarea value={employeeSummary} onChange={(event) => onEmployeeSummaryChange(event.target.value)} rows={3} className="min-h-[88px] resize-none p-2 text-xs font-normal outline-none focus:bg-blue-50" /></div>
+    <div className="grid grid-cols-[195px_1fr] border-t border-slate-400 max-md:grid-cols-1"><BlueLabel>Resumen del desempeño por parte<br />del Jefe</BlueLabel><textarea value={managerSummary} onChange={(event) => onManagerSummaryChange(event.target.value)} rows={3} className="min-h-[88px] resize-none p-2 text-xs font-normal outline-none focus:bg-blue-50" /></div>
+    <div className="grid grid-cols-[1fr_95px] border-t border-slate-400 text-xs font-bold"><div className="bg-[#24557e] px-2 py-1.5 text-white">Promedio de calificación evaluación de metas x Ponderación (60%)</div><div className="bg-[#d9d9d9] px-2 py-1.5 text-center">{averageGoals === '0' ? '0' : (Number(averageGoals) * 0.6).toFixed(1)}</div><div className="bg-[#24557e] px-2 py-1.5 text-white">Promedio de calificación evaluación de competencias conductuales y habilidades técnicas x Ponderación (40%)</div><div className="bg-[#d9d9d9] px-2 py-1.5 text-center">{averageCompetencies === '0' ? '0' : (Number(averageCompetencies) * 0.4).toFixed(1)}</div><div className="bg-[#24557e] px-2 py-1.5 text-white">Promedio de desempeño total</div><div className="bg-[#d9d9d9] px-2 py-1.5 text-center">{finalScore}</div><div className="bg-[#24557e] px-2 py-1.5 text-white">Criterio de la escala de cumplimiento</div><div className="bg-[#d9d9d9] px-2 py-1.5 text-center">{criterionLabel(finalScore)}</div></div>
+    <div className="mt-3"><SectionTitle>PLAN DE DESARROLLO (Enfóquese en 2 o 3 necesidades de desarrollo)</SectionTitle>{developmentPlans.map((plan, index) => <DevelopmentPlanBlock key={plan.number} plan={plan} onChange={(key, value) => onDevelopmentChange(index, key, value)} />)}</div>
+    <div className="mt-3 border-t border-slate-400"><SignatureRow label="Firma del Jefe Inmediato" value={signatures.manager} date={signatures.managerDate} onValueChange={(value) => onSignatureChange('manager', value)} onDateChange={(value) => onSignatureChange('managerDate', value)} /><SignatureRow label="Firma del Colaborador" value={signatures.employee} date={signatures.employeeDate} onValueChange={(value) => onSignatureChange('employee', value)} onDateChange={(value) => onSignatureChange('employeeDate', value)} /><SignatureRow label="Firma de Recursos Humanos" value={signatures.hr} date={signatures.hrDate} onValueChange={(value) => onSignatureChange('hr', value)} onDateChange={(value) => onSignatureChange('hrDate', value)} /></div>
+  </div>;
+}
+
+function DevelopmentPlanBlock({ plan, onChange }: { plan: DevelopmentPlan; onChange: (key: keyof Omit<DevelopmentPlan, 'number'>, value: string) => void }) {
+  return <div className="grid grid-cols-[195px_1fr] border-t border-slate-400 max-md:grid-cols-1"><div className="text-[11px] font-bold leading-tight"><div className="min-h-[64px] bg-[#24557e] p-2 text-white">{plan.number}. ¿Cuál es la necesidad de Desarrollo? (Habilidad/Conocimiento/Conducta)</div><div className="border-b border-slate-400 bg-[#d9d9d9] p-2 font-normal">¿Cómo abordará su Desarrollo?</div><div className="border-b border-slate-400 bg-[#d9d9d9] p-2 font-normal">Periodo de Tiempo</div><div className="bg-[#d9d9d9] p-2 font-normal">¿Cómo va a dar seguimiento a sus avances?</div></div><div className="grid grid-rows-[64px_40px_40px_40px]"><textarea value={plan.need} onChange={(event) => onChange('need', event.target.value)} className="resize-none border-b border-slate-400 p-2 text-xs font-normal outline-none focus:bg-blue-50" /><textarea value={plan.action} onChange={(event) => onChange('action', event.target.value)} className="resize-none border-b border-slate-400 p-2 text-xs font-normal outline-none focus:bg-blue-50" /><input value={plan.period} onChange={(event) => onChange('period', event.target.value)} className="border-b border-slate-400 p-2 text-xs font-normal outline-none focus:bg-blue-50" /><textarea value={plan.followup} onChange={(event) => onChange('followup', event.target.value)} className="resize-none p-2 text-xs font-normal outline-none focus:bg-blue-50" /></div></div>;
+}
+
+function SignatureRow({ label, value, date, onValueChange, onDateChange }: { label: string; value: string; date: string; onValueChange: (value: string) => void; onDateChange: (value: string) => void }) {
+  return <div className="grid grid-cols-[195px_1fr_125px_135px] border-b border-slate-400 max-md:grid-cols-[145px_1fr] text-xs"><div className="bg-[#24557e] p-2 text-white">{label}</div><input value={value} onChange={(event) => onValueChange(event.target.value)} className="min-h-[32px] border-r border-slate-400 p-2 font-normal outline-none focus:bg-blue-50" /><div className="bg-[#24557e] p-2 text-center text-white">Fecha</div><input type="date" value={date} onChange={(event) => onDateChange(event.target.value)} className="p-2 font-normal outline-none focus:bg-blue-50" />
+  </div>;
 }
 
 function CompetenciesPage({ competencies, onChange, managerComments, employeeComments, onManagerCommentsChange, onEmployeeCommentsChange, total, average }: { competencies: Competency[]; onChange: (index: number, key: keyof Competency, value: string) => void; managerComments: string; employeeComments: string; onManagerCommentsChange: (value: string) => void; onEmployeeCommentsChange: (value: string) => void; total: number; average: string }) {
