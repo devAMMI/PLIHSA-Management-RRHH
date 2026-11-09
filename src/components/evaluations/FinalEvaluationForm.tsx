@@ -369,7 +369,7 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
           </div>
         </section>
 
-        <section className="text-sm font-semibold">
+        <section data-pdf-header-info="true" className="text-sm font-semibold">
           <InfoRow label="Nombre del Colaborador:" value={selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : ''} onChange={() => {}} readOnly />
           <InfoRow label="Posición del Colaborador:" value={position} onChange={setPosition} readOnly={!!selectedEmployee} />
           <div className="grid grid-cols-2 max-md:grid-cols-1"><InfoRow label="Departamento:" value={department} onChange={setDepartment} readOnly={!!selectedEmployee} /><InfoRow label="Sub-departamento:" value={subDepartment} onChange={setSubDepartment} /></div>
