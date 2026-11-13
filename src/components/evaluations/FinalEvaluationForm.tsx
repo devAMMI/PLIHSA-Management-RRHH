@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CheckCircle, ChevronLeft, Clock, Download, FileText, Save, Search, Upload, User } from 'lucide-react';
+import { CheckCircle, ChevronLeft, Clock, Download, FileText, Save, Upload, User } from 'lucide-react';
 import { FinalEvaluationSignedUpload } from './FinalEvaluationSignedUpload';
 import { supabase } from '../../lib/supabase';
 import { generatePDF, downloadBlob } from '../../lib/pdfExport';
@@ -55,10 +55,7 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
   const { activeCompany } = useCompany();
 
   const [employees, setEmployees] = useState<EmployeeOption[]>([]);
-  const [employeeSearch, setEmployeeSearch] = useState('');
-  const [showDropdown, setShowDropdown] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeOption | null>(null);
-  const [loadingEmployees, setLoadingEmployees] = useState(true);
 
   const [position, setPosition] = useState('');
   const [department, setDepartment] = useState('');
@@ -132,7 +129,6 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
   }, [evaluationId, employeeType, employees.length]);
 
   const loadEmployees = async () => {
-    setLoadingEmployees(true);
     try {
       let query = supabase
         .from('employees')
@@ -153,8 +149,6 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
     } catch (err) {
       console.error('Error loading employees:', err);
       setEmployees([]);
-    } finally {
-      setLoadingEmployees(false);
     }
   };
 
@@ -197,21 +191,13 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
 
   const handleSelectEmployee = (emp: EmployeeOption) => {
     setSelectedEmployee(emp);
-    setEmployeeSearch(`${emp.first_name} ${emp.last_name}`);
     setPosition(emp.position || '');
     setDepartment(emp.department?.name || '');
     setSubDepartment(emp.sub_department?.name || '');
     setHireDate(emp.hire_date || '');
     setManager(emp.manager ? `${emp.manager.first_name} ${emp.manager.last_name}` : '');
-    setShowDropdown(false);
     loadDefinitionForEmployee(emp.id);
   };
-
-  const filteredEmployees = employees.filter((emp) =>
-    `${emp.first_name} ${emp.last_name}`.toLowerCase().includes(employeeSearch.toLowerCase()) ||
-    (emp.employee_code || '').toLowerCase().includes(employeeSearch.toLowerCase()) ||
-    (emp.position || '').toLowerCase().includes(employeeSearch.toLowerCase())
-  );
 
   const scoredGoals = goals.filter((goal) => goal.score !== '');
   const totalScore = scoredGoals.reduce((sum, goal) => sum + Number(goal.score), 0);
@@ -326,7 +312,6 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
 
   const handleNewEvaluation = () => {
     setSelectedEmployee(null);
-    setEmployeeSearch('');
     setPosition('');
     setDepartment('');
     setSubDepartment('');
@@ -350,76 +335,23 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
           <ChevronLeft className="h-4 w-4" /> Volver a Evaluación Final
         </button>
       </div>
-      <div id="final-evaluation-document" className="mx-auto grid max-w-[1500px] grid-cols-1 overflow-hidden border border-slate-400 bg-white text-slate-900 shadow-sm lg:grid-cols-[300px_minmax(0,1fr)]">
-        <div data-pdf-page="1" className="contents">
-        <div className="lg:col-span-2"><DocumentHeader employeeType={employeeType} /></div>
-
-        <section data-html2canvas-ignore="true" className="self-start border-b border-slate-400 bg-slate-50 p-4 lg:row-span-5 lg:border-b-0 lg:border-r">
+      <div className="mx-auto grid max-w-[1800px] grid-cols-1 items-start gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+        <section data-html2canvas-ignore="true" className="sticky top-6 self-start rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-600">Seleccione Empleado</label><select value={selectedEmployee?.id || ''} onChange={(event) => { const employee = employees.find((item) => item.id === event.target.value); if (employee) handleSelectEmployee(employee); }} className="mb-3 w-full rounded border-2 border-blue-500 bg-white px-3 py-2 text-sm outline-none"><option value="">-- Seleccionar empleado --</option>{employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.first_name} {emp.last_name} ({emp.employee_code})</option>)}</select>
-          <div className="relative hidden">
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder={loadingEmployees ? 'Cargando empleados...' : 'Buscar por nombre, código o posición...'}
-                  value={employeeSearch}
-                  onChange={(event) => { setEmployeeSearch(event.target.value); setShowDropdown(true); }}
-                  onFocus={() => setShowDropdown(true)}
-                  onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
-                  className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                />
-              </div>
-              {selectedEmployee && (
-                <div className="hidden items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-800 sm:flex">
-                  <User className="h-4 w-4" />
-                  {selectedEmployee.employee_code}
-                </div>
-              )}
-            </div>
-            {showDropdown && (
-              <div className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg">
-                {filteredEmployees.length === 0 ? (
-                  <div className="p-3 text-center text-sm text-slate-500">{loadingEmployees ? 'Cargando...' : 'No se encontraron empleados'}</div>
-                ) : filteredEmployees.map((emp) => (
-                  <button
-                    key={emp.id}
-                    onMouseDown={() => handleSelectEmployee(emp)}
-                    className="flex w-full items-center gap-3 border-b border-slate-100 px-3 py-2.5 text-left text-sm hover:bg-blue-50"
-                  >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-600">
-                      {emp.first_name.charAt(0)}{emp.last_name.charAt(0)}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold text-slate-800">{emp.first_name} {emp.last_name}</p>
-                      <p className="truncate text-xs text-slate-500">{emp.position || 'Sin posición'} · {emp.employee_code || 'Sin código'}</p>
-                    </div>
-                    {emp.department && <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{emp.department.name}</span>}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
           <div className="mt-4 grid gap-2">
             <button onClick={handleNewEvaluation} className="inline-flex items-center justify-center gap-2 rounded bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"><User className="h-4 w-4" /> Nueva</button>
             <button onClick={handleSaveDraft} disabled={!selectedEmployee || generatingPdf} className="inline-flex items-center justify-center gap-2 rounded bg-slate-300 px-3 py-2 text-sm font-semibold text-white transition enabled:bg-blue-700 enabled:hover:bg-blue-800 disabled:cursor-not-allowed"><Save className="h-4 w-4" /> {generatingPdf ? 'Generando...' : 'Guardar y PDF'}</button>
           </div>
-
-          {/* Workflow panel — only visible once an evaluation has been saved */}
           {currentEvaluationId && (
             <div className="mt-5 rounded-lg border border-slate-200 bg-white p-3 text-xs">
-              <WorkflowPanel
-                status={workflowStatus}
-                signedDocumentUrl={signedDocumentUrl}
-                signedDocumentFilename={signedDocumentFilename}
-                onDownloadPDF={handleSaveDraft}
-                onUploadSigned={() => setShowUploadModal(true)}
-                onMarkAsCompleted={handleMarkAsCompleted}
-                generatingPdf={generatingPdf}
-              />
+              <WorkflowPanel status={workflowStatus} signedDocumentUrl={signedDocumentUrl} signedDocumentFilename={signedDocumentFilename} onDownloadPDF={handleSaveDraft} onUploadSigned={() => setShowUploadModal(true)} onMarkAsCompleted={handleMarkAsCompleted} generatingPdf={generatingPdf} />
             </div>
           )}
         </section>
+
+        <div id="final-evaluation-document" className="min-w-0 overflow-hidden rounded-lg border border-slate-200 bg-white text-slate-900 shadow-lg">
+        <div data-pdf-page="1" className="contents">
+        <div className="lg:col-span-2"><DocumentHeader employeeType={employeeType} /></div>
 
         <section data-pdf-header-info="true" className="text-sm font-semibold">
           <InfoRow label="Nombre del Colaborador:" value={selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : ''} onChange={() => {}} readOnly />
@@ -457,6 +389,7 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
           <div className="flex items-center gap-3"><span className="text-sm text-slate-500">{scoredGoals.length}/5 metas calificadas</span><button onClick={handleSaveDraft} disabled={!selectedEmployee || generatingPdf} className="inline-flex items-center gap-2 rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"><Save className="h-4 w-4" /> {generatingPdf ? 'Generando PDF...' : 'Guardar borrador'}</button></div>
         </footer>
         {message && <div data-html2canvas-ignore="true" className={`border-t px-4 py-3 text-sm font-medium ${messageType === 'error' ? 'border-red-200 bg-red-50 text-red-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>{message}</div>}
+        </div>
       </div>
 
       {showUploadModal && selectedEmployee && currentEvaluationId && (
