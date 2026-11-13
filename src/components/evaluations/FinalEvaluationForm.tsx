@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, Save, Search, User } from 'lucide-react';
+import { CheckCircle, ChevronLeft, Clock, Download, FileText, Save, Search, Upload, User } from 'lucide-react';
+import { FinalEvaluationSignedUpload } from './FinalEvaluationSignedUpload';
 import { supabase } from '../../lib/supabase';
 import { generatePDF, downloadBlob } from '../../lib/pdfExport';
 import { useAuth } from '../../contexts/AuthContext';
@@ -76,6 +77,11 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [workflowStatus, setWorkflowStatus] = useState<'draft' | 'pending_signature' | 'completed'>('draft');
+  const [signedDocumentUrl, setSignedDocumentUrl] = useState<string | null>(null);
+  const [signedDocumentFilename, setSignedDocumentFilename] = useState<string | null>(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [currentEvaluationId, setCurrentEvaluationId] = useState<string | null>(evaluationId);
 
   useEffect(() => { loadEmployees(); }, [employeeType, activeCompany?.id, systemUser?.role]);
 
@@ -84,11 +90,11 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
     const loadExistingEvaluation = async () => {
       const table = employeeType === 'administrativo' ? 'final_administrative_evaluations' : 'operative_evaluations';
       const fields = employeeType === 'administrativo'
-        ? 'employee_id, employee_position, department, sub_department, hire_date, evaluation_date, manager_name, employee_summary, manager_summary, development_need_1, development_action_1, development_period_1, development_followup_1, development_need_2, development_action_2, development_period_2, development_followup_2, development_need_3, development_action_3, development_period_3, development_followup_3, manager_signature, manager_signature_date, employee_signature, employee_signature_date, hr_signature, hr_signature_date'
-        : 'employee_id, employee_position, department, sub_department, hire_date, review_date, employee_summary, manager_summary, development_need_1, development_action_1, development_period_1, development_followup_1, development_need_2, development_action_2, development_period_2, development_followup_2, development_need_3, development_action_3, development_period_3, development_followup_3, manager_signature, manager_signature_date, employee_signature, employee_signature_date, hr_signature, hr_signature_date';
+        ? 'employee_id, employee_position, department, sub_department, hire_date, evaluation_date, manager_name, employee_summary, manager_summary, development_need_1, development_action_1, development_period_1, development_followup_1, development_need_2, development_action_2, development_period_2, development_followup_2, development_need_3, development_action_3, development_period_3, development_followup_3, manager_signature, manager_signature_date, employee_signature, employee_signature_date, hr_signature, hr_signature_date, workflow_status, signed_document_url, signed_document_filename'
+        : 'employee_id, employee_position, department, sub_department, hire_date, review_date, employee_summary, manager_summary, development_need_1, development_action_1, development_period_1, development_followup_1, development_need_2, development_action_2, development_period_2, development_followup_2, development_need_3, development_action_3, development_period_3, development_followup_3, manager_signature, manager_signature_date, employee_signature, employee_signature_date, hr_signature, hr_signature_date, workflow_status, signed_document_url, signed_document_filename';
       const { data, error } = await supabase.from(table).select(fields).eq('id', evaluationId).maybeSingle();
       if (error || !data) return;
-      const existing = data as { employee_id: string; employee_position: string | null; department: string | null; sub_department: string | null; hire_date: string | null; evaluation_date?: string | null; review_date?: string | null; manager_name?: string | null; employee_summary?: string | null; manager_summary?: string | null; [key: string]: string | null | undefined };
+      const existing = data as { employee_id: string; employee_position: string | null; department: string | null; sub_department: string | null; hire_date: string | null; evaluation_date?: string | null; review_date?: string | null; manager_name?: string | null; employee_summary?: string | null; manager_summary?: string | null; workflow_status?: string | null; signed_document_url?: string | null; signed_document_filename?: string | null; [key: string]: string | null | undefined };
       const employee = employees.find((item) => item.id === existing.employee_id);
       if (!employee) return;
       handleSelectEmployee(employee);
@@ -102,6 +108,9 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
       setManagerSummary(existing.manager_summary || '');
       setDevelopmentPlans([1, 2, 3].map((number) => ({ number, need: existing[`development_need_${number}`] || '', action: existing[`development_action_${number}`] || '', period: existing[`development_period_${number}`] || '', followup: existing[`development_followup_${number}`] || '' })));
       setSignatures({ manager: existing.manager_signature || '', managerDate: existing.manager_signature_date || '', employee: existing.employee_signature || '', employeeDate: existing.employee_signature_date || '', hr: existing.hr_signature || '', hrDate: existing.hr_signature_date || '' });
+      setWorkflowStatus((existing.workflow_status as 'draft' | 'pending_signature' | 'completed') || 'draft');
+      setSignedDocumentUrl(existing.signed_document_url || null);
+      setSignedDocumentFilename(existing.signed_document_filename || null);
 
       if (employeeType === 'administrativo') {
         const { data: competencyData } = await supabase
@@ -254,8 +263,9 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
         ? await supabase.from(table).update(values).eq('id', evaluationId)
         : await supabase.from(table).insert(values).select('id').maybeSingle();
       if (result.error) throw result.error;
-      const savedEvaluationId = evaluationId || result.data?.id;
+      const savedEvaluationId = evaluationId || currentEvaluationId || result.data?.id;
       if (!savedEvaluationId) throw new Error('No se pudo identificar la evaluación guardada.');
+      if (!evaluationId && !currentEvaluationId && result.data?.id) setCurrentEvaluationId(result.data.id);
 
       if (employeeType === 'administrativo') {
         const competencyRows = competencies.map((competency) => ({
@@ -276,6 +286,7 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
       const pdfBlob = await generatePDF('final-evaluation-document', fileName);
       if (!pdfBlob) throw new Error('No se pudo generar el PDF.');
       downloadBlob(pdfBlob, fileName);
+      if (workflowStatus === 'draft') setWorkflowStatus('pending_signature');
       setMessage('Evaluación guardada y PDF generado correctamente.');
       setMessageType('success');
     } catch (error) {
@@ -285,6 +296,32 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
     } finally {
       setGeneratingPdf(false);
     }
+  };
+
+  const handleMarkAsCompleted = async () => {
+    const id = currentEvaluationId;
+    if (!id) return;
+    const table = employeeType === 'administrativo' ? 'final_administrative_evaluations' : 'operative_evaluations';
+    const { error } = await supabase.from(table).update({ workflow_status: 'completed', status: 'completed' }).eq('id', id);
+    if (error) { setMessage('Error al finalizar la evaluación.'); setMessageType('error'); return; }
+    setWorkflowStatus('completed');
+    setMessage('Evaluación finalizada exitosamente.');
+    setMessageType('success');
+  };
+
+  const handleUploadSuccess = async () => {
+    setShowUploadModal(false);
+    const id = currentEvaluationId;
+    if (!id) return;
+    const table = employeeType === 'administrativo' ? 'final_administrative_evaluations' : 'operative_evaluations';
+    const { data } = await supabase.from(table).select('signed_document_url, signed_document_filename, workflow_status').eq('id', id).maybeSingle();
+    if (data) {
+      setSignedDocumentUrl(data.signed_document_url || null);
+      setSignedDocumentFilename(data.signed_document_filename || null);
+      setWorkflowStatus((data.workflow_status as 'draft' | 'pending_signature' | 'completed') || 'pending_signature');
+    }
+    setMessage('Documento firmado subido correctamente. Ahora puedes finalizar la evaluación.');
+    setMessageType('success');
   };
 
   const handleNewEvaluation = () => {
@@ -365,8 +402,23 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
           </div>
           <div className="mt-4 grid gap-2">
             <button onClick={handleNewEvaluation} className="inline-flex items-center justify-center gap-2 rounded bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"><User className="h-4 w-4" /> Nueva</button>
-            <button onClick={handleSaveDraft} disabled={!selectedEmployee || generatingPdf} className="inline-flex items-center justify-center gap-2 rounded bg-slate-300 px-3 py-2 text-sm font-semibold text-white transition enabled:bg-blue-700 enabled:hover:bg-blue-800 disabled:cursor-not-allowed"><Save className="h-4 w-4" /> {generatingPdf ? 'Generando...' : 'Guardar'}</button>
+            <button onClick={handleSaveDraft} disabled={!selectedEmployee || generatingPdf} className="inline-flex items-center justify-center gap-2 rounded bg-slate-300 px-3 py-2 text-sm font-semibold text-white transition enabled:bg-blue-700 enabled:hover:bg-blue-800 disabled:cursor-not-allowed"><Save className="h-4 w-4" /> {generatingPdf ? 'Generando...' : 'Guardar y PDF'}</button>
           </div>
+
+          {/* Workflow panel — only visible once an evaluation has been saved */}
+          {currentEvaluationId && (
+            <div className="mt-5 rounded-lg border border-slate-200 bg-white p-3 text-xs">
+              <WorkflowPanel
+                status={workflowStatus}
+                signedDocumentUrl={signedDocumentUrl}
+                signedDocumentFilename={signedDocumentFilename}
+                onDownloadPDF={handleSaveDraft}
+                onUploadSigned={() => setShowUploadModal(true)}
+                onMarkAsCompleted={handleMarkAsCompleted}
+                generatingPdf={generatingPdf}
+              />
+            </div>
+          )}
         </section>
 
         <section data-pdf-header-info="true" className="text-sm font-semibold">
@@ -405,6 +457,87 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
           <div className="flex items-center gap-3"><span className="text-sm text-slate-500">{scoredGoals.length}/5 metas calificadas</span><button onClick={handleSaveDraft} disabled={!selectedEmployee || generatingPdf} className="inline-flex items-center gap-2 rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"><Save className="h-4 w-4" /> {generatingPdf ? 'Generando PDF...' : 'Guardar borrador'}</button></div>
         </footer>
         {message && <div data-html2canvas-ignore="true" className={`border-t px-4 py-3 text-sm font-medium ${messageType === 'error' ? 'border-red-200 bg-red-50 text-red-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>{message}</div>}
+      </div>
+
+      {showUploadModal && selectedEmployee && currentEvaluationId && (
+        <FinalEvaluationSignedUpload
+          evaluationId={currentEvaluationId}
+          evaluationType={employeeType}
+          employee={{ id: selectedEmployee.id, employee_code: selectedEmployee.employee_code, first_name: selectedEmployee.first_name, last_name: selectedEmployee.last_name }}
+          currentDocumentUrl={signedDocumentUrl}
+          onSuccess={handleUploadSuccess}
+          onCancel={() => setShowUploadModal(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+type WorkflowStatus = 'draft' | 'pending_signature' | 'completed';
+function WorkflowPanel({ status, signedDocumentUrl, signedDocumentFilename, onDownloadPDF, onUploadSigned, onMarkAsCompleted, generatingPdf }: { status: WorkflowStatus; signedDocumentUrl: string | null; signedDocumentFilename: string | null; onDownloadPDF: () => void; onUploadSigned: () => void; onMarkAsCompleted: () => void; generatingPdf: boolean }) {
+  const statusConfig = {
+    draft: { label: 'Borrador', cls: 'bg-slate-100 text-slate-700', icon: FileText },
+    pending_signature: { label: 'Pendiente Firma', cls: 'bg-amber-100 text-amber-700', icon: Clock },
+    completed: { label: 'Completado', cls: 'bg-green-100 text-green-700', icon: CheckCircle },
+  };
+  const cfg = statusConfig[status];
+  const Icon = cfg.icon;
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Estado del Documento</span>
+        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${cfg.cls}`}><Icon className="h-3 w-3" />{cfg.label}</span>
+      </div>
+
+      {status === 'draft' && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-2.5 text-[11px] text-blue-800">
+          <p className="mb-2 font-semibold">Pasos siguientes:</p>
+          <ol className="list-decimal list-inside space-y-0.5">
+            <li>Guarda y descarga el PDF</li>
+            <li>Imprímelo y fírmalo</li>
+            <li>Escanéalo y súbelo</li>
+            <li>Finaliza la evaluación</li>
+          </ol>
+        </div>
+      )}
+
+      {status === 'pending_signature' && (
+        <div className="space-y-2">
+          {signedDocumentUrl ? (
+            <div className="rounded-lg border border-green-200 bg-green-50 p-2.5 text-[11px] text-green-800">
+              <div className="flex items-center gap-1.5 mb-2"><CheckCircle className="h-3.5 w-3.5" /><span className="font-semibold">Documento subido.</span></div>
+              {signedDocumentFilename && <p className="text-slate-600 truncate mb-2">{signedDocumentFilename}</p>}
+              <a href={signedDocumentUrl} target="_blank" rel="noopener noreferrer" className="underline text-blue-700">Ver documento</a>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-[11px] text-amber-800">
+              Firma el documento impreso y súbelo para finalizar.
+            </div>
+          )}
+        </div>
+      )}
+
+      {status === 'completed' && (
+        <div className="rounded-lg border border-green-200 bg-green-50 p-2.5 text-[11px] text-green-800">
+          <div className="flex items-center gap-1.5 mb-1"><CheckCircle className="h-3.5 w-3.5" /><span className="font-semibold">Proceso completado.</span></div>
+          {signedDocumentUrl && <a href={signedDocumentUrl} target="_blank" rel="noopener noreferrer" className="underline text-blue-700">Ver documento firmado</a>}
+        </div>
+      )}
+
+      <div className="grid gap-1.5">
+        <button onClick={onDownloadPDF} disabled={generatingPdf} className="inline-flex items-center justify-center gap-1.5 rounded bg-blue-700 px-2 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-800 disabled:opacity-50">
+          <Download className="h-3 w-3" />{generatingPdf ? 'Generando...' : 'Guardar y PDF'}
+        </button>
+        {status !== 'completed' && (
+          <button onClick={onUploadSigned} className="inline-flex items-center justify-center gap-1.5 rounded bg-amber-600 px-2 py-1.5 text-[11px] font-semibold text-white hover:bg-amber-700">
+            <Upload className="h-3 w-3" />{signedDocumentUrl ? 'Reemplazar Firmado' : 'Subir Firmado'}
+          </button>
+        )}
+        {status === 'pending_signature' && signedDocumentUrl && (
+          <button onClick={onMarkAsCompleted} className="inline-flex items-center justify-center gap-1.5 rounded bg-green-600 px-2 py-1.5 text-[11px] font-semibold text-white hover:bg-green-700">
+            <CheckCircle className="h-3 w-3" />Finalizar Evaluación
+          </button>
+        )}
       </div>
     </div>
   );

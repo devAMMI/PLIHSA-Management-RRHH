@@ -12,6 +12,7 @@ type FinalEvaluation = {
   evaluation_date: string | null;
   created_at: string;
   status: string;
+  workflow_status: string;
   employee_id: string;
   employee_name: string;
   employee_code: string | null;
@@ -28,7 +29,8 @@ interface FinalEvaluationsListProps {
 }
 
 const statusConfig: Record<string, { label: string; className: string; icon: typeof Clock }> = {
-  draft: { label: 'En proceso', className: 'bg-amber-100 text-amber-800', icon: Clock },
+  draft: { label: 'Borrador', className: 'bg-slate-100 text-slate-700', icon: Clock },
+  pending_signature: { label: 'Pendiente Firma', className: 'bg-amber-100 text-amber-800', icon: AlertCircle },
   pending_employee: { label: 'En proceso', className: 'bg-amber-100 text-amber-800', icon: AlertCircle },
   pending_manager: { label: 'En proceso', className: 'bg-amber-100 text-amber-800', icon: AlertCircle },
   pending_rrhh: { label: 'En proceso', className: 'bg-amber-100 text-amber-800', icon: AlertCircle },
@@ -58,7 +60,7 @@ export function FinalEvaluationsList({ employeeType, statusFilter, onBack, onNew
       const employeeRelation = employeeType === 'administrativo'
         ? 'final_administrative_evaluations_employee_id_fkey'
         : 'operative_evaluations_employee_id_fkey';
-      let query = supabase.from(table).select(`id, evaluation_code, ${dateColumn}, created_at, status, employee_id, employee:employees!${employeeRelation}(first_name, last_name, employee_code, position, department:departments(name))`).order('created_at', { ascending: false });
+      let query = supabase.from(table).select(`id, evaluation_code, ${dateColumn}, created_at, status, workflow_status, employee_id, employee:employees!${employeeRelation}(first_name, last_name, employee_code, position, department:departments(name))`).order('created_at', { ascending: false });
       if (statusFilter !== 'all') query = query.eq('status', statusFilter);
       if (subordinateIds) query = query.in('employee_id', subordinateIds);
 
@@ -71,6 +73,7 @@ export function FinalEvaluationsList({ employeeType, statusFilter, onBack, onNew
         evaluation_date: row.evaluation_date || row.review_date,
         created_at: row.created_at,
         status: row.status || 'draft',
+        workflow_status: row.workflow_status || row.status || 'draft',
         employee_id: row.employee_id,
         employee_name: row.employee ? `${row.employee.first_name} ${row.employee.last_name}` : 'Sin nombre',
         employee_code: row.employee?.employee_code || null,
@@ -127,7 +130,7 @@ export function FinalEvaluationsList({ employeeType, statusFilter, onBack, onNew
 }
 
 function EvaluationCard({ evaluation, number, accentClasses, onEdit }: { evaluation: FinalEvaluation; number: number; accentClasses: { number: string; button: string }; onEdit: (id: string) => void }) {
-  const config = statusConfig[evaluation.status] || statusConfig.draft;
+  const config = statusConfig[evaluation.workflow_status] || statusConfig[evaluation.status] || statusConfig.draft;
   const StatusIcon = config.icon;
   const date = evaluation.evaluation_date ? new Date(`${evaluation.evaluation_date}T00:00:00`).toLocaleDateString('es-HN') : new Date(evaluation.created_at).toLocaleDateString('es-HN');
   return <div className="rounded-lg border border-slate-200 p-6 transition hover:shadow-md"><div className="flex items-start justify-between gap-4"><div className="min-w-0 flex-1"><div className="mb-2 flex flex-wrap items-center gap-3"><span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${accentClasses.number}`}>#{number}</span><h3 className="text-lg font-bold text-slate-800">{evaluation.employee_name}</h3><span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${config.className}`}><StatusIcon className="h-3 w-3" />{config.label}</span></div><div className="mb-3 grid grid-cols-1 gap-3 text-sm text-slate-600 md:grid-cols-3"><div className="flex items-center gap-2"><User className="h-4 w-4 text-slate-400" />{evaluation.position || 'N/A'}</div><div className="flex items-center gap-2"><Building2 className="h-4 w-4 text-slate-400" />{evaluation.department || 'N/A'}</div><div className="flex items-center gap-2"><Calendar className="h-4 w-4 text-slate-400" />{date}</div></div><div className="flex flex-wrap gap-4 text-xs text-slate-500"><span>Evaluación: {evaluation.evaluation_code || `Final-${String(number).padStart(3, '0')}`}</span><span>Emp. Código: {evaluation.employee_code || '—'}</span></div></div><button onClick={() => onEdit(evaluation.id)} className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition ${accentClasses.button}`}><Eye className="h-4 w-4" />Ver</button></div></div>;
