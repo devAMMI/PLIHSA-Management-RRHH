@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
 type EmployeeType = 'administrativo' | 'operativo';
-type StatusFilter = 'all' | 'draft' | 'completed';
+type StatusFilter = 'all' | 'draft' | 'pending_signature' | 'completed';
 
 type FinalEvaluation = {
   id: string;
@@ -61,7 +61,9 @@ export function FinalEvaluationsList({ employeeType, statusFilter, onBack, onNew
         ? 'final_administrative_evaluations_employee_id_fkey'
         : 'operative_evaluations_employee_id_fkey';
       let query = supabase.from(table).select(`id, evaluation_code, ${dateColumn}, created_at, status, workflow_status, employee_id, employee:employees!${employeeRelation}(first_name, last_name, employee_code, position, department:departments(name))`).order('created_at', { ascending: false });
-      if (statusFilter !== 'all') query = query.eq('status', statusFilter);
+      if (statusFilter === 'draft') query = query.eq('workflow_status', 'draft');
+      else if (statusFilter === 'pending_signature') query = query.eq('workflow_status', 'pending_signature');
+      else if (statusFilter === 'completed') query = query.eq('workflow_status', 'completed');
       if (subordinateIds) query = query.in('employee_id', subordinateIds);
 
       const { data, error } = await query;
@@ -103,7 +105,7 @@ export function FinalEvaluationsList({ employeeType, statusFilter, onBack, onNew
     setFilteredEvaluations(term ? evaluations.filter((item) => [item.employee_name, item.employee_code, item.position, item.department, item.evaluation_code].some((value) => value?.toLowerCase().includes(term))) : evaluations);
   }, [evaluations, search]);
 
-  const title = statusFilter === 'all' ? 'Todas las Evaluaciones' : statusFilter === 'draft' ? 'Borradores' : 'Finalizadas';
+  const title = statusFilter === 'all' ? 'Todas las Evaluaciones' : statusFilter === 'draft' ? 'Borradores' : statusFilter === 'pending_signature' ? 'Pendientes de Firma' : 'Finalizadas';
   const typeLabel = employeeType === 'administrativo' ? 'Administrativo' : 'Operativo';
   const TypeIcon = employeeType === 'administrativo' ? Building2 : Users;
   const accentClasses = accent === 'teal' ? { header: 'from-teal-600 to-teal-700', number: 'bg-teal-600', button: 'bg-teal-50 text-teal-700 hover:bg-teal-100', focus: 'focus:ring-teal-500/20' } : { header: 'from-orange-600 to-orange-700', number: 'bg-orange-600', button: 'bg-orange-50 text-orange-700 hover:bg-orange-100', focus: 'focus:ring-orange-500/20' };

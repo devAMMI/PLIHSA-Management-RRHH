@@ -35,7 +35,7 @@ function AppContent() {
   const [showRegister, setShowRegister] = useState(false);
   const [editingEvaluationId, setEditingEvaluationId] = useState<string | null>(null);
   const [finalEvalType, setFinalEvalType] = useState<'administrativo' | 'operativo'>('administrativo');
-  const [finalEvalStatus, setFinalEvalStatus] = useState<'all' | 'draft' | 'completed'>('all');
+  const [finalEvalStatus, setFinalEvalStatus] = useState<'all' | 'draft' | 'pending_signature' | 'completed'>('all');
   const [finalEvaluationId, setFinalEvaluationId] = useState<string | null>(null);
 
   if (loading) {
@@ -96,7 +96,7 @@ function AppContent() {
       case 'evaluacion-final-form':
         return finalEvalType === 'administrativo' ? 'Evaluación Final - Administrativo' : 'Evaluación Final - Operativo';
       case 'evaluacion-final-list':
-        return finalEvalStatus === 'draft' ? 'Borradores' : finalEvalStatus === 'completed' ? 'Finalizadas' : 'Evaluaciones Finales';
+        return finalEvalStatus === 'draft' ? 'Borradores' : finalEvalStatus === 'pending_signature' ? 'Pendientes de Firma' : finalEvalStatus === 'completed' ? 'Finalizadas' : 'Evaluaciones Finales';
       case 'audit-log':
         return 'Registro de Actividad';
       case 'vacations':
@@ -190,7 +190,7 @@ function AppContent() {
       setCurrentView('evaluacion-final-form');
       return;
     }
-    setFinalEvalStatus(action === 'drafts' ? 'draft' : action === 'completed' ? 'completed' : 'all');
+    setFinalEvalStatus(action === 'drafts' ? 'draft' : action === 'pending' ? 'pending_signature' : action === 'completed' ? 'completed' : 'all');
     setCurrentView('evaluacion-final-list');
   };
 

@@ -256,9 +256,10 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
       if (periodError) throw periodError;
       if (employeeType === 'operativo' && !period) throw new Error('No hay un período activo para evaluaciones operativas.');
 
+      const workflow = workflowStatus === 'completed' ? 'completed' : 'draft';
       const values = employeeType === 'administrativo'
-        ? { evaluation_period_id: period?.id || null, employee_id: selectedEmployee.id, employee_position: position, department, sub_department: subDepartment, hire_date: hireDate || null, evaluation_date: evaluationDate || null, manager_name: manager, employee_summary: employeeSummary || null, manager_summary: managerSummary || null, ...developmentPlanValues(developmentPlans), ...signatureValues(signatures), status: 'draft' }
-        : { evaluation_period_id: period?.id, employee_id: selectedEmployee.id, employee_position: position, department, sub_department: subDepartment, hire_date: hireDate || null, review_date: evaluationDate || null, employee_summary: employeeSummary || null, manager_summary: managerSummary || null, ...developmentPlanValues(developmentPlans), ...signatureValues(signatures), status: 'draft' };
+        ? { evaluation_period_id: period?.id || null, employee_id: selectedEmployee.id, employee_position: position, department, sub_department: subDepartment, hire_date: hireDate || null, evaluation_date: evaluationDate || null, manager_name: manager, employee_summary: employeeSummary || null, manager_summary: managerSummary || null, ...developmentPlanValues(developmentPlans), ...signatureValues(signatures), status: workflow === 'completed' ? 'completed' : 'draft', workflow_status: workflow }
+        : { evaluation_period_id: period?.id, employee_id: selectedEmployee.id, employee_position: position, department, sub_department: subDepartment, hire_date: hireDate || null, review_date: evaluationDate || null, employee_summary: employeeSummary || null, manager_summary: managerSummary || null, ...developmentPlanValues(developmentPlans), ...signatureValues(signatures), status: workflow === 'completed' ? 'completed' : 'draft', workflow_status: workflow };
       const result = evaluationId
         ? await supabase.from(table).update(values).eq('id', evaluationId)
         : await supabase.from(table).insert(values).select('id').maybeSingle();
@@ -286,8 +287,7 @@ export function FinalEvaluationForm({ employeeType, evaluationId = null, onBack 
       const pdfBlob = await generatePDF('final-evaluation-document', fileName);
       if (!pdfBlob) throw new Error('No se pudo generar el PDF.');
       downloadBlob(pdfBlob, fileName);
-      if (workflowStatus === 'draft') setWorkflowStatus('pending_signature');
-      setMessage('Evaluación guardada y PDF generado correctamente.');
+      setMessage('Evaluación guardada y PDF generado correctamente.')
       setMessageType('success');
     } catch (error) {
       console.error('Error saving final evaluation:', error);

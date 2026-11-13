@@ -1,8 +1,8 @@
-import { Building2, ClipboardCheck, FileCheck, FileEdit, List, Plus, Users } from 'lucide-react';
+import { Building2, ClipboardCheck, FileCheck, FileEdit, List, Plus, PenLine, Users } from 'lucide-react';
 
 type EmployeeType = 'administrativo' | 'operativo';
 type CardColor = 'teal' | 'orange';
-export type FinalEvaluationAction = 'new' | 'list' | 'drafts' | 'completed';
+export type FinalEvaluationAction = 'new' | 'list' | 'drafts' | 'pending' | 'completed';
 
 interface FinalEvaluationHomeProps {
   onAction: (type: EmployeeType, action: FinalEvaluationAction) => void;
@@ -12,6 +12,7 @@ const actionItems = [
   { label: 'Nueva Evaluación', icon: Plus, action: 'new' as const },
   { label: 'Ver Evaluaciones', icon: List, action: 'list' as const },
   { label: 'Borradores', icon: FileEdit, action: 'drafts' as const },
+  { label: 'Pendiente Firma', icon: PenLine, action: 'pending' as const },
   { label: 'Finalizadas', icon: FileCheck, action: 'completed' as const },
 ] as const;
 
@@ -75,11 +76,11 @@ function EvaluationTypeCard({ type, title, subtitle, icon, color, onAction }: { 
           <p className={`text-sm ${color === 'teal' ? 'text-teal-700' : 'text-orange-700'}`}>{subtitle}</p>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {actionItems.map(({ label, icon: ActionIcon, action }) => (
-          <button key={label} onClick={() => onAction(type, action)} className={`group flex flex-col items-center rounded-xl border-2 border-transparent bg-white p-5 text-center shadow-sm transition-all duration-300 hover:shadow-md ${styles.action}`}>
-            <div className={`mb-3 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br ${styles.actionIcon} text-white transition-transform group-hover:scale-110`}><ActionIcon className="h-7 w-7" /></div>
-            <span className="text-xs font-bold text-slate-800">{label}</span>
+          <button key={label} onClick={() => onAction(type, action)} className={`group flex flex-col items-center rounded-xl border-2 border-transparent bg-white p-4 text-center shadow-sm transition-all duration-300 hover:shadow-md ${styles.action}`}>
+            <div className={`mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${styles.actionIcon} text-white transition-transform group-hover:scale-110`}><ActionIcon className="h-6 w-6" /></div>
+            <span className="text-[11px] font-bold text-slate-800">{label}</span>
           </button>
         ))}
       </div>
